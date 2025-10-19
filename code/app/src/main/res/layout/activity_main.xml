@@ -16,4 +16,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextClock
+        android:id="@+id/clock"
+        android:layout_width="100dp"
+        android:layout_height="30dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:format24Hour="true"
+        android:timeZone="America/Edmonton"
+        >
+    </TextClock>
+
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
