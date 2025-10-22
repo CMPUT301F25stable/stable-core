@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
-public class DataStructuresTest {
+public class UserStructuresTest {
     private final String DEVICE_ID = "TEST_ID";
 
     private Entrant createTestEntrant() {

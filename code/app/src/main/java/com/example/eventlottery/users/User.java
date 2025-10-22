@@ -1,6 +1,6 @@
 package com.example.eventlottery.users;
 
-import android.util.Log;
+import androidx.annotation.NonNull;
 
 public class User {
     private String id; // Device identifier
@@ -65,10 +65,9 @@ public class User {
         this.entrant = entrant;
     }
 
-    public void print() {
-        Log.d("User", id);
-        Log.d("User", name);
-        Log.d("User", emailAddress);
-        Log.d("User", phoneNumber);
+    @NonNull
+    @Override
+    public String toString() {
+        return "ID: " + getId() + "\nName: " + getName() + "\nEmail Address: " + getEmailAddress() + "\nPhone Number: " + getPhoneNumber();
     }
 }
