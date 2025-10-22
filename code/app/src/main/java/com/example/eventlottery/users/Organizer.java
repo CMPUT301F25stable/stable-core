@@ -7,14 +7,14 @@ import java.util.ArrayList;
 public class Organizer extends User {
     private ArrayList<Event> createdEvents;
 
-    public Organizer(String id, String name, String emailAddress, ArrayList<Event> createdEvents) {
+    public Organizer(String id, String name, String emailAddress) {
         super(id, name, emailAddress);
-        this.createdEvents = createdEvents;
+        createdEvents = new ArrayList<>();
     }
 
-    public Organizer(String id, String name, String emailAddress, String phoneNumber, ArrayList<Event> createdEvents) {
+    public Organizer(String id, String name, String emailAddress, String phoneNumber) {
         super(id, name, emailAddress, phoneNumber);
-        this.createdEvents = createdEvents;
+        createdEvents = new ArrayList<>();
     }
 
     @Override
@@ -28,5 +28,13 @@ public class Organizer extends User {
 
     public void setCreatedEvents(ArrayList<Event> createdEvents) {
         this.createdEvents = createdEvents;
+    }
+
+    public void createEvent(Event newEvent) {
+        createdEvents.add(newEvent);
+    }
+
+    public void removeEvent(Event eventToRemove) {
+        createdEvents.remove(eventToRemove);
     }
 }

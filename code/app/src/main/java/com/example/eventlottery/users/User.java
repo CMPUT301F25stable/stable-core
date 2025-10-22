@@ -14,6 +14,7 @@ public class User {
         this.name = name;
         this.emailAddress = emailAddress;
         this.phoneNumber = "";
+        entrant = new Entrant();
     }
 
     public User(String id, String name, String emailAddress, String phoneNumber) {
@@ -21,6 +22,7 @@ public class User {
         this.name = name;
         this.emailAddress = emailAddress;
         this.phoneNumber = phoneNumber;
+        entrant = new Entrant();
     }
 
     public String getUserType() {
@@ -53,6 +55,10 @@ public class User {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Entrant getEntrant() {
+        return entrant;
     }
 
     public void print() {
