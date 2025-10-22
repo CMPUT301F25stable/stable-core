@@ -42,6 +42,10 @@ public class Entrant {
         waitlistedEvents.remove(eventToRemove);
     }
 
+    public void removeWaitlistedEvent(int eventIndex) {
+        waitlistedEvents.remove(eventIndex);
+    }
+
     public void removeRegisteredEvent(Event eventToRemove) {
         registeredEvents.remove(eventToRemove);
     }

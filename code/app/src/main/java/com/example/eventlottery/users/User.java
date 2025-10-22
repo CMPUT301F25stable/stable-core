@@ -61,6 +61,10 @@ public class User {
         return entrant;
     }
 
+    public void setEntrant(Entrant entrant) {
+        this.entrant = entrant;
+    }
+
     public void print() {
         Log.d("User", id);
         Log.d("User", name);
