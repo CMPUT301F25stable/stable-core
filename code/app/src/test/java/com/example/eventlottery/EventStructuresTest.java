@@ -34,5 +34,6 @@ public class EventStructuresTest {
             System.out.println("--------------------------------");
         }
         assertEquals(lotterySystem.getWinners().size(), iterateNum);
+        assertEquals(10, lotterySystem.getWaitlist().getWaitlistedUsers().size());
     }
 }

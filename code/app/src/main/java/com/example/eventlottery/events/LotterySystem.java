@@ -40,8 +40,7 @@ public class LotterySystem {
             selectedUsers.add(selectedUser);
         }
 
-        ArrayList<User> waitlistClone = new ArrayList<>(waitlistedUsers);
-        for (User user : waitlistClone) {
+        for (User user : selectedUsers) {
             waitlistedUsers.remove(user);
         }
         winners = selectedUsers;
