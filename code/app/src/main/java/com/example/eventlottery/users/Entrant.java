@@ -17,13 +17,11 @@ public class Entrant {
     public ArrayList<Event> getWaitlistedEvents() {
         return waitlistedEvents;
     }
-
-    public void setWaitlistedEvents(ArrayList<Event> waitlistedEvents) {
-        this.waitlistedEvents = waitlistedEvents;
-    }
-
     public HashMap<Event, String> getRegisteredEvents() {
         return registeredEvents;
+    }
+    public void setWaitlistedEvents(ArrayList<Event> waitlistedEvents) {
+        this.waitlistedEvents = waitlistedEvents;
     }
 
     public void setRegisteredEvents(HashMap<Event, String> registeredEvents) {
@@ -48,5 +46,28 @@ public class Entrant {
 
     public void removeRegisteredEvent(Event eventToRemove) {
         registeredEvents.remove(eventToRemove);
+    }
+
+    /** USER STORY 01.05.02 - Accept invitation
+     * @param event an Event object is passed which we verify if its an actual event
+     * */
+    public void acceptInvitation(Event event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Accepted");
+        }
+    }
+
+    /** USER STORY 01.05.03 - Decline invitation
+     * @param event an Event object is passed which we verify if its an actual event
+     * */
+    public void declineInvitation(Event event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Declined");
+        }
+    }
+
+    // Helper function to get check status
+    public String getStatusForEvent(Event event) {
+        return registeredEvents.getOrDefault(event, "Not Registered");
     }
 }
