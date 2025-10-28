@@ -7,25 +7,19 @@
     android:layout_height="match_parent"
     tools:context=".view.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="100dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        android:scrollbarSize="4dp"
+        android:scrollbarStyle="insideOverlay">
+    </androidx.recyclerview.widget.RecyclerView>
 
-    <TextClock
-        android:id="@+id/clock"
-        android:layout_width="100dp"
-        android:layout_height="30dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:format24Hour="true"
-        android:timeZone="America/Edmonton"
-        >
-    </TextClock>
+
 
 
 
