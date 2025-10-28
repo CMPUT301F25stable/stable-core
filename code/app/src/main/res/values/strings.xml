@@ -3,4 +3,5 @@
     <string name="status_notified">Status: Notified</string>
     <string name="activity_accept">Accept</string>
     <string name="activity_decline">Decline</string>
+    <string name="search_events">Search Events</string>
 </resources>

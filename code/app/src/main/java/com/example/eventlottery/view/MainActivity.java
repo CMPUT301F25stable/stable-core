@@ -1,6 +1,7 @@
 package com.example.eventlottery.view;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,5 +45,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DEVICE_ID = getDeviceId(this);
+        // REMOVE LATER
+        Intent intent = new Intent(this, OrganizerPanel.class);
+        startActivity(intent);
     }
 }
