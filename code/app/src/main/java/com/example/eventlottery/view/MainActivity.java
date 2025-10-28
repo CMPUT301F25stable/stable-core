@@ -1,14 +1,22 @@
 package com.example.eventlottery.view;
 
+
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.model.EventListData;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,5 +30,22 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+
+        ArrayList<EventListData> data = new ArrayList<>();
+        data.add(new EventListData("Event 1", R.drawable.anime,  "Description 1", "Date 1", "Time 1", "Location 1", "Organizer 1"));
+        data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
+        data.add(new EventListData("Event 3", R.drawable.dance, "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        recyclerView.setAdapter(new MyAdapter(data, (item, position) -> {
+            Toast.makeText(this, "Clicked: " + item.getEventName(), Toast.LENGTH_SHORT).show();
+        }));
+
+
+
     }
 }
