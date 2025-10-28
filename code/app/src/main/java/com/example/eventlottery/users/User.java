@@ -1,6 +1,7 @@
 package com.example.eventlottery.users;
 
 import androidx.annotation.NonNull;
+import com.example.eventlottery.events.Event;
 
 public class User {
     private String id; // Device identifier
@@ -63,6 +64,20 @@ public class User {
 
     public void setEntrant(Entrant entrant) {
         this.entrant = entrant;
+    }
+
+    /** USER STORY 01.05.02 - Accept invitation
+     * @param event accept the given event
+     * */
+    public void acceptInvitation(Event event) {
+        entrant.acceptInvitation(event);
+    }
+
+    /** USER STORY 01.05.03 - Decline invitation
+     * @param event decline the given event
+     * */
+    public void declineInvitation(Event event) {
+        entrant.declineInvitation(event);
     }
 
     @NonNull

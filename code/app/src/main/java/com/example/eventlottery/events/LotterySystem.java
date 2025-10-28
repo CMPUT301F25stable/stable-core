@@ -47,6 +47,25 @@ public class LotterySystem {
         return selectedUsers;
     }
 
+    /** USER STORY 01.05.01 - Replace declined user with new one from waitlist */
+    public User handleDecline(User declinedUser) {
+        if (winners.contains(declinedUser)) {
+            winners.remove(declinedUser);
+        }
+
+        // Select the next user from waitlist
+        ArrayList<User> waitlistedUsers = waitlist.getWaitlistedUsers();
+        User replacement = randomSelection(winners, waitlistedUsers);
+
+        // If replacement is valid, add the new winner, and remove the replacement from the waitlist
+        if (replacement != null) {
+            winners.add(replacement);
+            waitlistedUsers.remove(replacement);
+            return replacement;
+        }
+        return null;
+    }
+
     public ArrayList<User> getWinners() {
         return winners;
     }
