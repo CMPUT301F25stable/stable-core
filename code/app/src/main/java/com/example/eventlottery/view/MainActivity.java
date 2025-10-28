@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.UUID;
 
@@ -44,5 +45,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DEVICE_ID = getDeviceId(this);
+
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+
+                    // Get the new FCM registration token
+                    String token = task.getResult();
+
+                    // Log it or send it to your backend
+                    Log.d("FCM", "Device token: " + token);
+                });
     }
 }
