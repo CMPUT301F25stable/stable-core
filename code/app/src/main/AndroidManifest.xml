@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventLottery">
         <activity
+            android:name=".view.OrganizerPanel"
+            android:exported="false" />
+        <activity
             android:name=".view.ProfilePage"
             android:exported="false" />
         <activity
