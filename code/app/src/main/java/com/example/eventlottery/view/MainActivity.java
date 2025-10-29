@@ -63,8 +63,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Clicked: " + item.getEventName(), Toast.LENGTH_SHORT).show();
         }));
         DEVICE_ID = getDeviceId(this);
-        // REMOVE LATER
-        Intent intent = new Intent(this, OrganizerPanel.class);
-        startActivity(intent);
+
     }
 }
