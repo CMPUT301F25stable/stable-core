@@ -2,6 +2,7 @@ package com.example.eventlottery.view;
 
 import android.widget.Toast;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -62,5 +63,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Clicked: " + item.getEventName(), Toast.LENGTH_SHORT).show();
         }));
         DEVICE_ID = getDeviceId(this);
+
     }
 }
