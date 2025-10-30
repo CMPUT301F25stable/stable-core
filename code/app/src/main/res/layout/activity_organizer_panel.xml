@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         android:text="Previous"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -32,14 +33,15 @@
         android:id="@+id/eventList"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="24dp"
+        android:layout_margin="24dp"
+        android:divider="#00000000"
+        android:dividerHeight="18dp"
         android:fadingEdge="none"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout5"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchBar">
+        app:layout_constraintTop_toBottomOf="@+id/searchBar"
+        app:layout_constraintVertical_bias="0.0">
 
     </ListView>
 
@@ -63,14 +65,6 @@
             android:text="View All Registrants" />
 
         <Switch
-            android:id="@+id/checkWaitingListSwitch"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:height="48dp"
-            android:paddingStart="24dp"
-            android:text="Check Waiting List" />
-
-        <Switch
             android:id="@+id/exportListSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -85,31 +79,39 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button3"
-                android:layout_width="wrap_content"
+                android:id="@+id/editEventButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="1"
                 android:text="Edit Event"
-                android:textSize="13sp" />
+                android:textSize="16sp" />
 
             <Button
-                android:id="@+id/button4"
-                android:layout_width="wrap_content"
+                android:id="@+id/viewWaitlistButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="1"
+                android:ellipsize="none"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:singleLine="true"
                 android:text="View Waitlist"
-                android:textSize="13sp" />
+                android:textSize="16sp" />
 
             <Button
-                android:id="@+id/button5"
-                android:layout_width="wrap_content"
+                android:id="@+id/deleteEventButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:layout_weight="1"
+                android:ellipsize="none"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:singleLine="true"
                 android:text="Delete Event"
-                android:textSize="13sp" />
+                android:textSize="16sp" />
         </LinearLayout>
     </LinearLayout>
 
