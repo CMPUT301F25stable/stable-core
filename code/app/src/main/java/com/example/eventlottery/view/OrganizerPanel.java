@@ -49,9 +49,9 @@ public class OrganizerPanel extends AppCompatActivity {
 
         ArrayList<Event> data = new ArrayList<>();
         Date date = new Date();
-        data.add(new Event("Event Name", "Event Description", "Event Location", date, date));
-        data.add(new Event("Event Name", "Event Description", "Event Location", date, date));
-        data.add(new Event("Event Name", "Event Description", "Event Location", date, date));
+        data.add(new Event("Event Name", "Event Description", "Event Location", "Organizer ID", 0, date, date));
+        data.add(new Event("Event Name", "Event Description", "Event Location", "Organizer ID", 0, date, date));
+        data.add(new Event("Event Name", "Event Description", "Event Location", "Organizer ID", 0, date, date));
 
         EventAdapter adapter = new EventAdapter(this, data);
         eventList.setAdapter(adapter);
