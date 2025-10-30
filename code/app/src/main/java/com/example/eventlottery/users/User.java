@@ -3,7 +3,9 @@ package com.example.eventlottery.users;
 import androidx.annotation.NonNull;
 import com.example.eventlottery.events.Event;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String id; // Device identifier
     private String name;
     private String emailAddress;

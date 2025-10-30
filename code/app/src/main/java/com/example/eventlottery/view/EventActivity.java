@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.User;
 
 public class EventActivity extends AppCompatActivity {
     @Override
@@ -26,6 +27,7 @@ public class EventActivity extends AppCompatActivity {
         });
 
         Intent intent = getIntent();
+        User user = (User) intent.getSerializableExtra("User");
         Event event = (Event) intent.getSerializableExtra("Event");
         if (event != null) {
             Log.d("EventActivity", event.getName());
