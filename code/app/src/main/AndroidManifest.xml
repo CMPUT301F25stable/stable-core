@@ -17,6 +17,9 @@
             android:name=".view.MainActivity"
             android:exported="false" />
         <activity
+            android:name=".view.UserPanel"
+            android:exported="false" />
+        <activity
             android:name=".view.OrganizerPanel"
             android:exported="false" />
         <activity
