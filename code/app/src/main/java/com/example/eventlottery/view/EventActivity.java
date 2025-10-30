@@ -29,7 +29,7 @@ public class EventActivity extends AppCompatActivity {
         Intent intent = getIntent();
         User user = (User) intent.getSerializableExtra("User");
         Event event = (Event) intent.getSerializableExtra("Event");
-        if (event != null) {
+        if (event != null && user != null) {
             Log.d("EventActivity", event.getName());
             Log.d("EventActivity", event.getDescription());
             Log.d("EventActivity", event.getLocation());
