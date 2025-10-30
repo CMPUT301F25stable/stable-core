@@ -16,6 +16,9 @@
             android:name=".view.EventActivity"
             android:exported="false" />
         <activity
+            android:name=".view.EditUserInfoActivity"
+            android:exported="false"/>
+        <activity
             android:name=".view.MainActivity"
             android:exported="false" />
         <activity
