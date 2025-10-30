@@ -17,8 +17,8 @@ public class Event implements Serializable {
     private int image;
     private Date startTime;
     private Date endTime;
-    private String formattedStartTime;
-    private String formattedEndTime;
+    private String[] formattedStartTime;
+    private String[] formattedEndTime;
     private QRCode qrCode;
 
     @NonNull
@@ -28,9 +28,11 @@ public class Event implements Serializable {
     }
 
     private void formatDates() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
-        this.formattedStartTime = dateFormat.format(this.startTime);
-        this.formattedEndTime = dateFormat.format(this.endTime);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy'-'h:mm a", Locale.CANADA);
+        String formattedStart = dateFormat.format(this.startTime);
+        String formattedEnd = dateFormat.format(this.endTime);
+        this.formattedStartTime = formattedStart.split("-");
+        this.formattedEndTime = formattedEnd.split("-");
     }
 
     public Event(String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For new events (not yet in database)
@@ -119,12 +121,22 @@ public class Event implements Serializable {
         this.endTime = endTime;
     }
 
+    // Returns a String with a date (ex. October 30, 2023)
+    public String getFormattedStartDate() {
+        return formattedStartTime[0];
+    }
+
+    public String getFormattedEndDate() {
+        return formattedEndTime[0];
+    }
+
+    // Returns a String with a time (ex. 3:30 p.m.)
     public String getFormattedStartTime() {
-        return formattedStartTime;
+        return formattedStartTime[1];
     }
 
     public String getFormattedEndTime() {
-        return formattedEndTime;
+        return formattedEndTime[1];
     }
 
     public QRCode getQrCode() {
