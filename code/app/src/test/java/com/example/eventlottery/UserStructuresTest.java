@@ -35,6 +35,8 @@ public class UserStructuresTest {
         System.out.println("Event Location: " + event.getLocation());
         System.out.println("Event Start Time: " + event.getStartTime().toString());
         System.out.println("Event End Time: " + event.getEndTime().toString());
+        System.out.println("Event Start Time (Formatted): " + event.getFormattedStartTime());
+        System.out.println("Event End Time (Formatted): " + event.getFormattedEndTime());
     }
 
     private Event randomEvent() {

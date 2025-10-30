@@ -5,25 +5,24 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlottery.R;
-import com.example.eventlottery.model.EventListData;
-import java.util.ArrayList;
+import com.example.eventlottery.events.Event;
 import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
-    private final List<EventListData> eventListData;
+    private final List<Event> eventListData;
     private final OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(EventListData item, int position);
+        void onItemClick(Event item, int position);
     }
 
-    public MyAdapter(List<EventListData> data, OnItemClickListener listener) {
+    public MyAdapter(List<Event> data, OnItemClickListener listener) {
         this.eventListData = data;
         this.listener = listener;
     }
 
-    public void setItems(List<EventListData> items) {
+    public void setItems(List<Event> items) {
         eventListData.clear();
         if (items != null) eventListData.addAll(items);
         notifyDataSetChanged();
@@ -40,14 +39,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        EventListData item = eventListData.get(position);
-        holder.eventName.setText(item.getEventName());
-        holder.eventDescription.setText(item.getEventDescription());
-        holder.eventDate.setText(item.getEventDate());
-        holder.eventTime.setText(item.getEventTime());
-        holder.eventLocation.setText(item.getEventLocation());
-        holder.eventOrganizer.setText(item.getEventOrganizer());
-        holder.imageView.setImageResource(item.getEventImage());
+        Event item = eventListData.get(position);
+        holder.eventName.setText(item.getName());
+        holder.eventDescription.setText(item.getDescription());
+        holder.eventDate.setText(item.getFormattedStartDate());
+        holder.eventTime.setText(item.getFormattedStartTime());
+        holder.eventLocation.setText(item.getLocation());
+        holder.eventOrganizer.setText(item.getOrganizer());
+        holder.imageView.setImageResource(item.getImage());
 
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getBindingAdapterPosition();
@@ -55,13 +54,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
                 listener.onItemClick(eventListData.get(pos), pos);
             }
         });
-
     }
 
     @Override
     public int getItemCount() {
         return eventListData.size();
     }
-
-
 }
