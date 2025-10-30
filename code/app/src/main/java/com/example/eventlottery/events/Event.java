@@ -2,10 +2,13 @@ package com.example.eventlottery.events;
 
 import androidx.annotation.NonNull;
 
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
-public class Event {
+public class Event implements Serializable {
     private String id; // UUID as a string
     private String name;
     private String description;
@@ -14,6 +17,8 @@ public class Event {
     private int image;
     private Date startTime;
     private Date endTime;
+    private String formattedStartTime;
+    private String formattedEndTime;
     private QRCode qrCode;
 
     @NonNull
@@ -32,6 +37,10 @@ public class Event {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
+        this.formattedStartTime = dateFormat.format(this.startTime);
+        this.formattedEndTime = dateFormat.format(this.endTime);
     }
 
     public Event(String id, String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For pre-existing events
@@ -44,6 +53,10 @@ public class Event {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
+        this.formattedStartTime = dateFormat.format(this.startTime);
+        this.formattedEndTime = dateFormat.format(this.endTime);
     }
 
     public String getId() {
@@ -104,6 +117,14 @@ public class Event {
 
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    public String getFormattedStartTime() {
+        return formattedStartTime;
+    }
+
+    public String getFormattedEndTime() {
+        return formattedEndTime;
     }
 
     public QRCode getQrCode() {
