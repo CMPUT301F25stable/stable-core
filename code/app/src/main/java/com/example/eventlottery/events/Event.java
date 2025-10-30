@@ -27,6 +27,12 @@ public class Event implements Serializable {
         return uuid.toString();
     }
 
+    private void formatDates() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
+        this.formattedStartTime = dateFormat.format(this.startTime);
+        this.formattedEndTime = dateFormat.format(this.endTime);
+    }
+
     public Event(String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For new events (not yet in database)
         this.id = generateUUID();
         this.name = name;
@@ -37,10 +43,7 @@ public class Event implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
-        this.formattedStartTime = dateFormat.format(this.startTime);
-        this.formattedEndTime = dateFormat.format(this.endTime);
+        formatDates();
     }
 
     public Event(String id, String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For pre-existing events
@@ -53,10 +56,7 @@ public class Event implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy h:mm a", Locale.CANADA);
-        this.formattedStartTime = dateFormat.format(this.startTime);
-        this.formattedEndTime = dateFormat.format(this.endTime);
+        formatDates();
     }
 
     public String getId() {
