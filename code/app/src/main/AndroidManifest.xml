@@ -23,6 +23,9 @@
             android:name=".view.OrganizerPanel"
             android:exported="false" />
         <activity
+            android:name=".view.InfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.ProfilePage"
             android:exported="false" />
 
@@ -33,10 +36,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".view.InfoActivity"
-            android:exported="true">
         </activity>
     </application>
 

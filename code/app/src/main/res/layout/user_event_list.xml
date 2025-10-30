@@ -52,49 +52,12 @@
         android:layout_weight="1">
 
         <LinearLayout
+            android:id="@+id/event_list_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:divider="@android:color/transparent"
             android:showDividers="middle">
-
-            <!-- Example Event Card -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="#DDDDDD"
-                android:orientation="vertical"
-                android:padding="8dp"
-                android:layout_marginBottom="8dp">
-
-                <TextView
-                    android:text="Event Name"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp">
-
-                    <TextView
-                        android:text="Event Date and Time"
-                        android:textSize="14sp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-
-                    <TextView
-                        android:text="Registered"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
-            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
