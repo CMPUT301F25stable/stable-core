@@ -46,6 +46,11 @@ public class UserPanel extends AppCompatActivity {
         // Display the events
         displayEvents();
 
+        findViewById(R.id.edit_icon).setOnClickListener(v -> {
+            Intent intent = new Intent(UserPanel.this, EditUserInfoActivity.class);
+            startActivity(intent);
+        });
+
     }
 
     /**
