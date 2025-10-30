@@ -1,10 +1,8 @@
 package com.example.eventlottery.events;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.Date;
-import java.util.Objects;
 import java.util.UUID;
 
 public class Event {
@@ -114,14 +112,5 @@ public class Event {
 
     public void setQrCode(QRCode qrCode) {
         this.qrCode = qrCode;
-    }
-
-    @Override
-    public boolean equals(@Nullable Object obj) {
-        if (obj instanceof Event) {
-            Event otherEvent = (Event) obj;
-            return Objects.equals(this.id, otherEvent.getId());
-        }
-        return false;
     }
 }
