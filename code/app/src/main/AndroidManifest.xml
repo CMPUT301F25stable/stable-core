@@ -25,6 +25,9 @@
             android:name=".view.OrganizerPanel"
             android:exported="false" />
         <activity
+            android:name=".view.InfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.ProfilePage"
             android:exported="false" />
         <activity
@@ -35,10 +38,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <activity
-            android:name=".view.InfoActivity"
-            android:exported="true"></activity>
+      </activity>
     </application>
 
 </manifest>

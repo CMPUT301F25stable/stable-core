@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -12,25 +13,23 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
 
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
-
-/** USER STORY 01.05.05 - InfoActivity Class
- * @author Jensen Lee
- * @version 1
- * */
+/** USER STORY - 01.02.03
+ * @author: Jensen Lee*/
 public class InfoActivity extends AppCompatActivity {
 
-    private TextView infoTextView;
+    private TextView eventNameHeader;
+    private TextView eventNameText;
+    private TextView eventDescriptionText;
+    private TextView eventLocationText;
+    private TextView eventOrganizerText;
     private TextView statusTextView;
     private Button acceptButton;
     private Button declineButton;
 
-    // Mock user and event for testing purposes
-    private User testUser;
-    private Event testEvent;
+    private User currentUser;
+    private Event currentEvent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,56 +37,88 @@ public class InfoActivity extends AppCompatActivity {
         setContentView(R.layout.activity_info);
 
         // Bind UI elements
-        infoTextView = findViewById(R.id.infoTextView);
+        eventNameHeader = findViewById(R.id.eventNameHeader);
+        eventNameText = findViewById(R.id.eventNameText);
+        eventDescriptionText = findViewById(R.id.eventDescriptionText);
+        eventLocationText = findViewById(R.id.eventLocationText);
+        eventOrganizerText = findViewById(R.id.eventOrganizerText);
         statusTextView = findViewById(R.id.statusTextView);
         acceptButton = findViewById(R.id.acceptButton);
         declineButton = findViewById(R.id.declineButton);
 
-        // Create mock user and event
-        testUser = new User("001", "Stephen Curry", "stephencurry@gmail.com");
-        Date startdate = new GregorianCalendar(2026, Calendar.AUGUST, 3).getTime();
-        Date enddate = new GregorianCalendar(2026, Calendar.AUGUST, 3).getTime();
-        testEvent = new Event("Marathon 2025", "Join us for the yearly marathon at City Park", "City Park", "8674cd90-acc9-4889-a748-5638e69fb8cf", 0, startdate, enddate);
+        // Get data from intent
+        Intent intent = getIntent();
 
-        // Initially register the event as "Notified" (as if the user was invited)
-        testUser.getEntrant().addRegisteredEvent(testEvent, "Notified");
+        // Reconstruct User
+        String userId = intent.getStringExtra("USER_ID");
+        String userName = intent.getStringExtra("USER_NAME");
+        String userEmail = intent.getStringExtra("USER_EMAIL");
+        String userPhone = intent.getStringExtra("USER_PHONE");
+        currentUser = new User(userId, userName, userEmail, userPhone);
+
+        // Reconstruct Event
+        String eventId = intent.getStringExtra("EVENT_ID");
+        String eventName = intent.getStringExtra("EVENT_NAME");
+        String eventDescription = intent.getStringExtra("EVENT_DESCRIPTION");
+        String eventLocation = intent.getStringExtra("EVENT_LOCATION");
+        String eventOrganizer = intent.getStringExtra("EVENT_ORGANIZER");
+        long startTimeMillis = intent.getLongExtra("EVENT_START_TIME", 0);
+        long endTimeMillis = intent.getLongExtra("EVENT_END_TIME", 0);
+        String eventStatus = intent.getStringExtra("EVENT_STATUS");
+
+        Date startTime = new Date(startTimeMillis);
+        Date endTime = new Date(endTimeMillis);
+
+        currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
+                eventOrganizer, 0, startTime, endTime);
+
+        // Register the event with current status
+        currentUser.getEntrant().addRegisteredEvent(currentEvent, eventStatus);
+
+        // Populate UI
+        eventNameHeader.setText(eventName);
+        eventNameText.setText(eventName);
+        eventDescriptionText.setText(eventDescription);
+        eventLocationText.setText(eventLocation);
+        eventOrganizerText.setText(eventOrganizer);
+
         updateStatusDisplay();
-
-        // Display info text (subject to change)
-        infoTextView.setText(
-        "🎟️ Lottery Selection Guidelines:\n\n" +
-                "• Entrants are selected randomly from the waiting list.\n" +
-                "• If a chosen entrant declines, another will be selected from the waitlist.\n" +
-                "• Accepted entrants must confirm before the event deadline.\n\n" +
-                "Use the buttons below to simulate accepting or declining an invitation."
-        );
 
         // Accept button
         acceptButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                testUser.acceptInvitation(testEvent);
-                Toast.makeText(InfoActivity.this, "You accepted the invitation!", Toast.LENGTH_SHORT).show();
+                currentUser.acceptInvitation(currentEvent);
+                Toast.makeText(InfoActivity.this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
                 updateStatusDisplay();
+
+                // Disable buttons after accepting
+                acceptButton.setEnabled(false);
+                declineButton.setEnabled(false);
+
+                // TODO: Make it save the accept and save it to firebase and return
             }
         });
 
+        // Decline button
         declineButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                testUser.declineInvitation(testEvent);
-                Toast.makeText(InfoActivity.this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
+                currentUser.declineInvitation(currentEvent);
+                Toast.makeText(InfoActivity.this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
                 updateStatusDisplay();
+
+                // Disable buttons after declining
+                acceptButton.setEnabled(false);
+                declineButton.setEnabled(false);
+
+                // TODO: Make it save the decline and save it to firebase and return
             }
         });
-
     }
 
-    /** Helper function to display status
-     * param None
-     * */
     private void updateStatusDisplay() {
-        String status = testUser.getEntrant().getStatusForEvent(testEvent);
-        statusTextView.setText("Current Status for " + testEvent.getName() + ": " + status);
+        String status = currentUser.getEntrant().getStatusForEvent(currentEvent);
+        statusTextView.setText("Status: " + status);
     }
 }
