@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.User;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -50,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
         DEVICE_ID = getDeviceId(this);
         // Load user data here using DEVICE_ID
 
+        User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
+
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
         ArrayList<Event> data = new ArrayList<>();
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(new MyAdapter(data, (item, position) -> {
             Intent intent = new Intent(this, EventActivity.class);
+            intent.putExtra("User", exampleUser);
             intent.putExtra("Event", item);
             intent.putExtra("Position", position);
             startActivity(intent);
