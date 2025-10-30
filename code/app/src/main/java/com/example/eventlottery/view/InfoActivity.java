@@ -47,7 +47,7 @@ public class InfoActivity extends AppCompatActivity {
         testUser = new User("001", "Stephen Curry", "stephencurry@gmail.com");
         Date startdate = new GregorianCalendar(2026, Calendar.AUGUST, 3).getTime();
         Date enddate = new GregorianCalendar(2026, Calendar.AUGUST, 3).getTime();
-        testEvent = new Event("Marathon 2025", "Join us for the yearly marathon at City Park", "City Park", startdate, enddate);
+        testEvent = new Event("Marathon 2025", "Join us for the yearly marathon at City Park", "City Park", "8674cd90-acc9-4889-a748-5638e69fb8cf", 0, startdate, enddate);
 
         // Initially register the event as "Notified" (as if the user was invited)
         testUser.getEntrant().addRegisteredEvent(testEvent, "Notified");
