@@ -2,10 +2,11 @@ package com.example.eventlottery.users;
 
 import com.example.eventlottery.events.Event;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Entrant {
+public class Entrant implements Serializable {
     private ArrayList<Event> waitlistedEvents;
     private HashMap<Event, String> registeredEvents; // Event: Notified/Rejected/Accepted
 

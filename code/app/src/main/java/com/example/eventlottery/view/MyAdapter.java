@@ -1,6 +1,5 @@
 package com.example.eventlottery.view;
 
-import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
@@ -24,7 +23,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
         notifyDataSetChanged();
         lastAnimatedPosition = -1;
     }
-
     public interface OnItemClickListener {
         void onItemClick(EventListData item, int position);
     }

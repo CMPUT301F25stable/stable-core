@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".view.MainActivity">
+
+    <!-- Home Icon -->
+    <ImageView
+        android:id="@+id/homeIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/outline_home_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/cameraIcon"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintHorizontal_chainStyle="spread" />
+
+    <!-- Camera Icon -->
+    <ImageView
+        android:id="@+id/cameraIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/outline_camera_alt_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/homeIcon"
+        app:layout_constraintEnd_toStartOf="@+id/personIcon"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Person Icon -->
+    <ImageView
+        android:id="@+id/personIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/outline_person_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/cameraIcon"
+        app:layout_constraintEnd_toStartOf="@+id/OrganizerIcon"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Hexagon Icon -->
+    <ImageView
+        android:id="@+id/OrganizerIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="Events"
+        app:srcCompat="@drawable/hexagon"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/personIcon"
+        app:layout_constraintEnd_toStartOf="@+id/notificationIcon"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Notification Icon -->
+    <ImageView
+        android:id="@+id/notificationIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/outline_circle_notifications_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/OrganizerIcon"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

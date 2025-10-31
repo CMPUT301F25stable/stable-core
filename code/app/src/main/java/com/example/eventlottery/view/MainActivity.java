@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.model.EventListData;
+import com.example.eventlottery.users.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        DEVICE_ID = getDeviceId(this);
+        // Load user data here using DEVICE_ID
+
+        User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
@@ -93,8 +98,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-        DEVICE_ID = getDeviceId(this);
     }
 
     private void filterList(String text) {
@@ -120,5 +123,4 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 }
