@@ -2,8 +2,11 @@ package com.example.eventlottery.events;
 
 import androidx.annotation.NonNull;
 
+import com.example.eventlottery.users.User;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 import java.util.UUID;
@@ -20,6 +23,7 @@ public class Event implements Serializable {
     private String[] formattedStartTime;
     private String[] formattedEndTime;
     private QRCode qrCode;
+    private Waitlist waitlist;
 
     @NonNull
     private String generateUUID() {
@@ -45,6 +49,7 @@ public class Event implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
+        this.waitlist = new Waitlist();
         formatDates();
     }
 
@@ -58,6 +63,7 @@ public class Event implements Serializable {
         this.startTime = startTime;
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
+        this.waitlist = new Waitlist();
         formatDates();
     }
 
@@ -145,5 +151,25 @@ public class Event implements Serializable {
 
     public void setQrCode(QRCode qrCode) {
         this.qrCode = qrCode;
+    }
+
+    public Waitlist getWaitlist() { return waitlist; }
+
+    public void setWaitlist(Waitlist waitlist) { this.waitlist = waitlist; }
+
+    /**
+     * Adds one user to the waitlist.
+     * @param user The user to add to waitlist.
+     */
+    public void addToWaitlist(User user) {
+        this.waitlist.addUser(user);
+    }
+
+    /**
+     * Removes a user from the waitlist.
+     * @param user The user to remove.
+     */
+    public void removeFromWaitlist(User user) {
+        this.waitlist.removeUser(user);
     }
 }
