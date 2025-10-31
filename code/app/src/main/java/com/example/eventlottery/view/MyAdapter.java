@@ -1,7 +1,10 @@
 package com.example.eventlottery.view;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlottery.R;
@@ -11,8 +14,16 @@ import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
-    private final List<EventListData> eventListData;
-    private final OnItemClickListener listener;
+    private  List<EventListData> eventListData;
+    private  OnItemClickListener listener;
+
+    private int lastAnimatedPosition = -1;
+
+    public void setFilteredList(List<EventListData> filteredList) {
+        this.eventListData = filteredList;
+        notifyDataSetChanged();
+        lastAnimatedPosition = -1;
+    }
 
     public interface OnItemClickListener {
         void onItemClick(EventListData item, int position);
@@ -55,6 +66,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
                 listener.onItemClick(eventListData.get(pos), pos);
             }
         });
+
+        if (position > lastAnimatedPosition) {
+            holder.itemView.clearAnimation();
+            holder.itemView.startAnimation(
+                    AnimationUtils.loadAnimation(holder.itemView.getContext(), R.anim.anim_one)
+            );
+            lastAnimatedPosition = position;
+        }
 
     }
 
