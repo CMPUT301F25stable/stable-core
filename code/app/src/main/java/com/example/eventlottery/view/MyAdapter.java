@@ -2,27 +2,37 @@ package com.example.eventlottery.view;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlottery.R;
-import com.example.eventlottery.events.Event;
+import com.example.eventlottery.model.EventListData;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
-    private final List<Event> eventListData;
-    private final OnItemClickListener listener;
+    private  List<EventListData> eventListData;
+    private  OnItemClickListener listener;
 
+    private int lastAnimatedPosition = -1;
+
+    public void setFilteredList(List<EventListData> filteredList) {
+        this.eventListData = filteredList;
+        notifyDataSetChanged();
+        lastAnimatedPosition = -1;
+    }
     public interface OnItemClickListener {
-        void onItemClick(Event item, int position);
+        void onItemClick(EventListData item, int position);
     }
 
-    public MyAdapter(List<Event> data, OnItemClickListener listener) {
+    public MyAdapter(List<EventListData> data, OnItemClickListener listener) {
         this.eventListData = data;
         this.listener = listener;
     }
 
-    public void setItems(List<Event> items) {
+    public void setItems(List<EventListData> items) {
         eventListData.clear();
         if (items != null) eventListData.addAll(items);
         notifyDataSetChanged();
@@ -39,14 +49,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        Event item = eventListData.get(position);
-        holder.eventName.setText(item.getName());
-        holder.eventDescription.setText(item.getDescription());
-        holder.eventDate.setText(item.getFormattedStartDate());
-        holder.eventTime.setText(item.getFormattedStartTime());
-        holder.eventLocation.setText(item.getLocation());
-        holder.eventOrganizer.setText(item.getOrganizer());
-        holder.imageView.setImageResource(item.getImage());
+        EventListData item = eventListData.get(position);
+        holder.eventName.setText(item.getEventName());
+        holder.eventDescription.setText(item.getEventDescription());
+        holder.eventDate.setText(item.getEventDate());
+        holder.eventTime.setText(item.getEventTime());
+        holder.eventLocation.setText(item.getEventLocation());
+        holder.eventOrganizer.setText(item.getEventOrganizer());
+        holder.imageView.setImageResource(item.getEventImage());
 
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getBindingAdapterPosition();
@@ -54,10 +64,21 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
                 listener.onItemClick(eventListData.get(pos), pos);
             }
         });
+
+        if (position > lastAnimatedPosition) {
+            holder.itemView.clearAnimation();
+            holder.itemView.startAnimation(
+                    AnimationUtils.loadAnimation(holder.itemView.getContext(), R.anim.anim_one)
+            );
+            lastAnimatedPosition = position;
+        }
+
     }
 
     @Override
     public int getItemCount() {
         return eventListData.size();
     }
+
+
 }

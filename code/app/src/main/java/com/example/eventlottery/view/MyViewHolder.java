@@ -28,5 +28,6 @@ public class MyViewHolder extends RecyclerView.ViewHolder{
         eventTime = itemView.findViewById(R.id.eventTime);
         eventLocation = itemView.findViewById(R.id.eventLocation);
         eventOrganizer = itemView.findViewById(R.id.eventOrganizer);
+
     }
 }
