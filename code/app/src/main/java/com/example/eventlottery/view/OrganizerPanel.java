@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import androidx.activity.EdgeToEdge;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class OrganizerPanel extends AppCompatActivity {
-    Button previousButton;
+    LinearLayout previous;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +34,8 @@ public class OrganizerPanel extends AppCompatActivity {
             return insets;
         });
 
-        previousButton = findViewById(R.id.previousButton);
-        previousButton.setOnClickListener(new View.OnClickListener() {
+        previous = findViewById(R.id.previous);
+        previous.setOnClickListener(new View.OnClickListener() {
             /**
              * Makes the previousButton end this activity, to go back to the previous one.
              * @param v The view that was clicked.
