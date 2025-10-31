@@ -159,9 +159,17 @@ public class Event implements Serializable {
 
     /**
      * Adds one user to the waitlist.
-     * @param user - The user to add to waitlist.
+     * @param user The user to add to waitlist.
      */
-    public void addToWaitList(User user) {
+    public void addToWaitlist(User user) {
         this.waitlist.addUser(user);
+    }
+
+    /**
+     * Removes a user from the waitlist.
+     * @param user The user to remove.
+     */
+    public void removeFromWaitlist(User user) {
+        this.waitlist.removeUser(user);
     }
 }
