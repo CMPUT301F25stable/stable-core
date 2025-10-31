@@ -42,16 +42,35 @@ public class TaskbarFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        /**
+         * Sets event listener for starting OrganizerPanel
+         */
         View organizerIcon = view.findViewById(R.id.OrganizerIcon);
         organizerIcon.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), OrganizerPanel.class);
+            // If exists in stack, retrieve it instead of making a new one
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
 
-        // Create an onclick listener for the user
+        /**
+         * Sets event listener for starting user profile
+         */
         View personIcon = view.findViewById(R.id.personIcon);
         personIcon.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), UserPanel.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(intent);
+        });
+
+        /**
+         * Sets event listener for home page
+         */
+        View homeIcon = view.findViewById(R.id.homeIcon);
+        homeIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
     }
