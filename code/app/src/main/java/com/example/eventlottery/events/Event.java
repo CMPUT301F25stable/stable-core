@@ -2,6 +2,8 @@ package com.example.eventlottery.events;
 
 import androidx.annotation.NonNull;
 
+import com.example.eventlottery.users.User;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -149,5 +151,17 @@ public class Event implements Serializable {
 
     public void setQrCode(QRCode qrCode) {
         this.qrCode = qrCode;
+    }
+
+    public Waitlist getWaitlist() { return waitlist; }
+
+    public void setWaitlist(Waitlist waitlist) { this.waitlist = waitlist; }
+
+    /**
+     * Adds one user to the waitlist.
+     * @param user - The user to add to waitlist.
+     */
+    public void addToWaitList(User user) {
+        this.waitlist.addUser(user);
     }
 }
