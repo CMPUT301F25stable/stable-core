@@ -172,4 +172,15 @@ public class Event implements Serializable {
     public void removeFromWaitlist(User user) {
         this.waitlist.removeUser(user);
     }
+
+    /**
+     * Sets the waitlist max
+     * @param newMax The new waitlist max.
+     */
+    public void setWaitlistMax(int newMax) {this.waitlist.setMaxSize(newMax);}
+
+    /**
+     * Gets current waitlist max.
+     */
+    public int getWaitlistMax() {return this.waitlist.getMaxSize();};
 }
