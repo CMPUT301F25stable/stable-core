@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,8 +33,10 @@ public class OrganizerPanel extends AppCompatActivity {
     ListView eventList;
     Button viewWaitlist;
     Button editEvent;
+    Button createEvent;
     int selectedEventIndex = 0;  // default is first item
     Event selectedEvent;
+    EventAdapter adapter;
     ArrayList<Event> data = new ArrayList<>();
 
 
@@ -48,10 +51,12 @@ public class OrganizerPanel extends AppCompatActivity {
             return insets;
         });
 
+        // Get buttons & such, & set listeners
         eventList = findViewById(R.id.eventList);
         previous = findViewById(R.id.previous);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
+        createEvent = findViewById(R.id.createEventButton);
         setClickListeners();
 
 
@@ -78,7 +83,7 @@ public class OrganizerPanel extends AppCompatActivity {
         data.add(eventTwo);
         data.add(eventThree);
 
-        EventAdapter adapter = new EventAdapter(this, data);
+        adapter = new EventAdapter(this, data);
         eventList.setAdapter(adapter);
     }
 
@@ -110,18 +115,70 @@ public class OrganizerPanel extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Displays the menu for creating an event. The user can save the new settings or cancel.
+     * TODO: Menu is missing a ton of parameters. Also need to save to Firestore!
+     * NOTE: Menu will look the same as edit event.
+     */
+    private void createEvent() {
+        // Inflate dialog view
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
+
+        // Set up variables for getting input
+        EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
+
+        // Build and show AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("New Event Parameters");
+        builder.setView(dialogView);
+        builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String text = waitlistMax.getText().toString();
+            int maxSize = Integer.MAX_VALUE;  // Assume no waitlist limit unless there is valid text input
+            // Get valid integer if there's any input
+            if (!text.isEmpty()) {
+                try {
+                    maxSize = Integer.parseInt(text);
+                    // Input must contain an integer
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+            // Check if input is negative
+            if (maxSize < 0) {
+                Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            // Create event if all inputs are valid
+            // TODO: This can only set waiting list max right now. Implement more later
+            Date date = new Date();
+            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", 0, date, date);
+            newEvent.setWaitlistMax(maxSize);
+            data.add(newEvent);
+            adapter.notifyDataSetChanged();
+        });
+        builder.show();
+
+    }
+
+    /**
+     * Displays the menu for editing an event. The user can save the new settings or cancel.
+     * TODO: Menu is missing a ton of parameters. Also need to save to Firestore!
+     */
     private void editEvent() {
         // Inflate dialog view & get selected event
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
         selectedEvent = data.get(selectedEventIndex);
 
-        // Set up variables for input
+        // Set up variables for getting input
         EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
 
         // Display currentMax if there is one
         String currentMax = String.valueOf(selectedEvent.getWaitlistMax());
-        if (!currentMax.equals("-1")) {
+        if (!currentMax.equals(Integer.toString(Integer.MAX_VALUE))) {
             waitlistMax.setText(currentMax);
         }
 
@@ -132,14 +189,22 @@ public class OrganizerPanel extends AppCompatActivity {
         builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
         builder.setPositiveButton("Save", (dialog, which) -> {
             String text = waitlistMax.getText().toString();
-            // User wants to set limit to infinity
-            if (text.equals("")) {
-                selectedEvent.setWaitlistMax(-1);
+            int maxSize = Integer.MAX_VALUE;
+            // Get valid integer if any input
+            if (!text.isEmpty()) {
+                try {
+                    maxSize = Integer.parseInt(text);
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
-            else {  // set to new limit otherwise
-                int newMax = Integer.parseInt(text);
-                selectedEvent.setWaitlistMax(newMax);
+            // Check if input is negative
+            if (maxSize < 0) {
+                Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
+                return;
             }
+            selectedEvent.setWaitlistMax(maxSize);
         });
         builder.show();
     }
@@ -197,6 +262,18 @@ public class OrganizerPanel extends AppCompatActivity {
             public void onClick(View v) {
                 // Show menu
                 editEvent();
+            }
+        });
+
+        createEvent.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Sets listener for creating events.
+             * @param v The view that was clicked.
+             */
+            @Override
+            public void onClick(View v) {
+                // Show menu
+                createEvent();
             }
         });
     }
