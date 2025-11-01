@@ -2,9 +2,10 @@ package com.example.eventlottery.events;
 
 import com.example.eventlottery.users.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Waitlist {
+public class Waitlist implements Serializable {
     private ArrayList<User> waitlistedUsers;
 
     public Waitlist() {
