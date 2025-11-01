@@ -183,4 +183,20 @@ public class Event implements Serializable {
      * Gets current waitlist max.
      */
     public int getWaitlistMax() {return this.waitlist.getMaxSize();};
+
+    /**
+     * Searches for an Event in an ArrayList of events.
+     * @param events The Event ArrayList to be searched.
+     * @param eventId The Event ID that will be compared to the Event ID of the events in the ArrayList.
+     * @return The index of an event if found, otherwise returns -1.
+     */
+    public static int findEventById(ArrayList<Event> events, String eventId) {
+        for (int i = 0; i < events.size(); i++) {
+            Event event = events.get(i);
+            if (event.getId().equalsIgnoreCase(eventId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

@@ -73,5 +73,12 @@ public class TaskbarFragment extends Fragment {
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
+
+        View cameraIcon = view.findViewById(R.id.cameraIcon);
+        cameraIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), QRActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(intent);
+        });
     }
 }
