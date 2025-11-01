@@ -174,6 +174,17 @@ public class Event implements Serializable {
     }
 
     /**
+     * Sets the waitlist max
+     * @param newMax The new waitlist max.
+     */
+    public void setWaitlistMax(int newMax) {this.waitlist.setMaxSize(newMax);}
+
+    /**
+     * Gets current waitlist max.
+     */
+    public int getWaitlistMax() {return this.waitlist.getMaxSize();};
+
+    /**
      * Searches for an Event in an ArrayList of events.
      * @param events The Event ArrayList to be searched.
      * @param eventId The Event ID that will be compared to the Event ID of the events in the ArrayList.

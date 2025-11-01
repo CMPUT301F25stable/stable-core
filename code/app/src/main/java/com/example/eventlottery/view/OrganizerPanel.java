@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
@@ -19,6 +20,9 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
 import androidx.appcompat.app.AlertDialog;
+
+import org.w3c.dom.Text;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,6 +31,7 @@ public class OrganizerPanel extends AppCompatActivity {
     LinearLayout previous;
     ListView eventList;
     Button viewWaitlist;
+    Button editEvent;
     int selectedEventIndex = 0;  // default is first item
     Event selectedEvent;
     ArrayList<Event> data = new ArrayList<>();
@@ -46,6 +51,7 @@ public class OrganizerPanel extends AppCompatActivity {
         eventList = findViewById(R.id.eventList);
         previous = findViewById(R.id.previous);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
+        editEvent = findViewById(R.id.editEventButton);
         setClickListeners();
 
 
@@ -104,6 +110,40 @@ public class OrganizerPanel extends AppCompatActivity {
         builder.show();
     }
 
+    private void editEvent() {
+        // Inflate dialog view & get selected event
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
+        selectedEvent = data.get(selectedEventIndex);
+
+        // Set up variables for input
+        EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
+
+        // Display currentMax if there is one
+        String currentMax = String.valueOf(selectedEvent.getWaitlistMax());
+        if (!currentMax.equals("-1")) {
+            waitlistMax.setText(currentMax);
+        }
+
+        // Build and show AlertDialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Event Parameters");
+        builder.setView(dialogView);
+        builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String text = waitlistMax.getText().toString();
+            // User wants to set limit to infinity
+            if (text.equals("")) {
+                selectedEvent.setWaitlistMax(-1);
+            }
+            else {  // set to new limit otherwise
+                int newMax = Integer.parseInt(text);
+                selectedEvent.setWaitlistMax(newMax);
+            }
+        });
+        builder.show();
+    }
+
     /**
      * Sets the click listeners for all buttons in the organizer panel.
      * TODO: Not all event listeners are implemented!
@@ -145,6 +185,18 @@ public class OrganizerPanel extends AppCompatActivity {
                 selectedEvent = data.get(selectedEventIndex);
                 ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
                 showWaitlistedUsers(users);
+            }
+        });
+
+        editEvent.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Sets the listener for editing events.
+             * @param v The view that was clicked.
+             */
+            @Override
+            public void onClick(View v) {
+                // Show menu
+                editEvent();
             }
         });
     }

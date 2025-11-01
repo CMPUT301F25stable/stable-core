@@ -7,9 +7,11 @@ import java.util.ArrayList;
 
 public class Waitlist implements Serializable {
     private ArrayList<User> waitlistedUsers;
+    private int maxSize;  // -1 = no limit
 
     public Waitlist() {
         waitlistedUsers = new ArrayList<>();
+        maxSize = -1;
     }
 
     public Waitlist(ArrayList<User> waitlistedUsers) {
@@ -30,5 +32,13 @@ public class Waitlist implements Serializable {
 
     public void removeUser(User userToRemove) {
         waitlistedUsers.remove(userToRemove);
+    }
+
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(int maxSize) {
+        this.maxSize = maxSize;
     }
 }
