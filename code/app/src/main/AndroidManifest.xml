@@ -13,11 +13,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventLottery">
         <activity
+            android:name=".view.QRActivity"
+            android:exported="false" />
+        <activity android:name=".view.QRScanActivity"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true" />
+        <activity
             android:name=".view.EventActivity"
             android:exported="false" />
         <activity
             android:name=".view.EditUserInfoActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".view.MainActivity"
             android:exported="false" />
@@ -41,7 +47,7 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-      </activity>
+        </activity>
     </application>
 
 </manifest>
