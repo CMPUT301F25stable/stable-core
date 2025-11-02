@@ -5,7 +5,7 @@ import com.example.eventlottery.events.Event;
 import java.util.ArrayList;
 
 public class Organizer extends User {
-    private ArrayList<Event> createdEvents;
+    private ArrayList<String> createdEvents;
 
     public Organizer(String id, String name, String emailAddress) {
         super(id, name, emailAddress);
@@ -22,19 +22,19 @@ public class Organizer extends User {
         return "Organizer";
     }
 
-    public ArrayList<Event> getCreatedEvents() {
+    public ArrayList<String> getCreatedEvents() {
         return createdEvents;
     }
 
-    public void setCreatedEvents(ArrayList<Event> createdEvents) {
+    public void setCreatedEvents(ArrayList<String> createdEvents) {
         this.createdEvents = createdEvents;
     }
 
-    public void createEvent(Event newEvent) {
+    public void createEvent(String newEvent) {
         createdEvents.add(newEvent);
     }
 
-    public void removeEvent(Event eventToRemove) {
+    public void removeEvent(String eventToRemove) {
         createdEvents.remove(eventToRemove);
     }
 }

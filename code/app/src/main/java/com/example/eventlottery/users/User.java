@@ -4,20 +4,24 @@ import androidx.annotation.NonNull;
 import com.example.eventlottery.events.Event;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class User implements Serializable {
     private String id; // Device identifier
     private String name;
     private String emailAddress;
     private String phoneNumber;
-    private Entrant entrant;
+    private ArrayList<String> waitlistedEvents;
+    private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
 
     public User(String id, String name, String emailAddress) {
         this.id = id;
         this.name = name;
         this.emailAddress = emailAddress;
         this.phoneNumber = "";
-        entrant = new Entrant();
+        this.waitlistedEvents = new ArrayList<>();
+        this.registeredEvents = new HashMap<>();
     }
 
     public User(String id, String name, String emailAddress, String phoneNumber) {
@@ -25,7 +29,8 @@ public class User implements Serializable {
         this.name = name;
         this.emailAddress = emailAddress;
         this.phoneNumber = phoneNumber;
-        entrant = new Entrant();
+        this.waitlistedEvents = new ArrayList<>();
+        this.registeredEvents = new HashMap<>();
     }
 
     public String getUserType() {
@@ -60,26 +65,68 @@ public class User implements Serializable {
         this.phoneNumber = phoneNumber;
     }
 
-    public Entrant getEntrant() {
-        return entrant;
+    public ArrayList<String> getWaitlistedEvents() {
+        return waitlistedEvents;
     }
 
-    public void setEntrant(Entrant entrant) {
-        this.entrant = entrant;
+    public void setWaitlistedEvents(ArrayList<String> waitlistedEvents) {
+        this.waitlistedEvents = waitlistedEvents;
+    }
+
+    public HashMap<String, String> getRegisteredEvents() {
+        return registeredEvents;
+    }
+
+    public void setRegisteredEvents(HashMap<String, String> registeredEvents) {
+        this.registeredEvents = registeredEvents;
+    }
+
+    /**
+     * Given an event ID, remove it from the waitlist.
+     * @param eventToRemove The event ID to remove.
+     */
+    public void removeWaitlistedEvent(String eventToRemove) {
+        waitlistedEvents.remove(eventToRemove);
+    }
+
+    /**
+     * Given an event index, remove it from the waitlist.
+     * @param eventIndex The event index to remove.
+     */
+    public void removeWaitlistedEvent(int eventIndex) {
+        waitlistedEvents.remove(eventIndex);
+    }
+
+    /**
+     * Given an event ID, remove it from registered events.
+     * @param eventToRemove The event ID to remove.
+     */
+    public void removeRegisteredEvent(String eventToRemove) {
+        registeredEvents.remove(eventToRemove);
     }
 
     /** USER STORY 01.05.02 - Accept invitation
-     * @param event accept the given event
+     * @param event an Event object is passed which we verify if its an actual event
      * */
-    public void acceptInvitation(Event event) {
-        entrant.acceptInvitation(event);
+    public void acceptInvitation(String event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Accepted");
+        }
     }
 
+
     /** USER STORY 01.05.03 - Decline invitation
-     * @param event decline the given event
+     * @param event an Event object is passed which we verify if its an actual event
      * */
-    public void declineInvitation(Event event) {
-        entrant.declineInvitation(event);
+    public void declineInvitation(String event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Declined");
+        }
+    }
+
+    // Helper function to get check status
+    public String getStatusForEvent(String event) {
+        return registeredEvents.getOrDefault(event, "Not Registered");
     }
 
     @NonNull
