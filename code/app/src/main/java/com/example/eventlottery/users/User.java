@@ -1,7 +1,7 @@
 package com.example.eventlottery.users;
 
 import androidx.annotation.NonNull;
-import com.example.eventlottery.events.Event;
+import java.util.UUID;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,6 +14,16 @@ public class User implements Serializable {
     private String phoneNumber;
     private ArrayList<String> waitlistedEvents;
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
+
+    // Empty constructor for new users
+    public User() {
+        this.id = UUID.randomUUID().toString();
+        this.name = "";
+        this.emailAddress = "";
+        this.phoneNumber = "";
+        this.waitlistedEvents = new ArrayList<>();
+        this.registeredEvents = new HashMap<>();
+    }
 
     public User(String id, String name, String emailAddress) {
         this.id = id;
