@@ -27,7 +27,6 @@ public class InfoActivity extends AppCompatActivity {
     private TextView statusTextView;
     private Button acceptButton;
     private Button declineButton;
-
     private User currentUser;
     private Event currentEvent;
 
@@ -117,8 +116,9 @@ public class InfoActivity extends AppCompatActivity {
         });
     }
 
+    // TODO: Structure change broke this
     private void updateStatusDisplay() {
-        String status = currentUser.getEntrant().getStatusForEvent(currentEvent);
+        String status = currentUser.getStatusForEvent(currentEvent);
         statusTextView.setText("Status: " + status);
     }
 }

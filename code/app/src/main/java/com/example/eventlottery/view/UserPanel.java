@@ -54,9 +54,9 @@ public class UserPanel extends AppCompatActivity {
 
     }
 
+    // TODO: Test is broken
     /**
      * Creates example user with different event statuses
-     */
     private void createExampleUserWithEvents() {
         // Create a user
         currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
@@ -119,10 +119,13 @@ public class UserPanel extends AppCompatActivity {
         TextView userName = findViewById(R.id.user_name);
         userName.setText(currentUser.getName());
     }
+     */
 
+    // TODO: Test is broken
+    /*
     /**
      * Displays all events (waitlisted and registered) in the UI
-     */
+
     private void displayEvents() {
         Entrant entrant = currentUser.getEntrant();
 
@@ -138,6 +141,7 @@ public class UserPanel extends AppCompatActivity {
             addEventCard(event, "Waitlisted");
         }
     }
+    */
 
     /**
      * Creates and adds an event card to the UI
