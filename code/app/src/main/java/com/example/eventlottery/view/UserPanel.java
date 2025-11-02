@@ -288,7 +288,7 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Helper method to convert dp to pixels
+     * Helper method to convert dp to pixels to help look the same size on all screens
      */
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
