@@ -33,6 +33,8 @@
         <activity
             android:name=".view.ProfilePage"
             android:exported="false" />
+        <activity android:name=".view.EventJoinAndLeave"
+            android:exported="false" />
         <activity
             android:name=".view.SplashScreen"
             android:exported="true">
