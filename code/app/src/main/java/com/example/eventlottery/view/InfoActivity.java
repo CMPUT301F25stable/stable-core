@@ -72,7 +72,7 @@ public class InfoActivity extends AppCompatActivity {
                 eventOrganizer, 0, startTime, endTime);
 
         // Register the event with current status
-        currentUser.getEntrant().addRegisteredEvent(currentEvent, eventStatus);
+        currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);
 
         // Populate UI
         eventNameHeader.setText(eventName);
@@ -87,7 +87,7 @@ public class InfoActivity extends AppCompatActivity {
         acceptButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentUser.acceptInvitation(currentEvent);
+                currentUser.acceptInvitation(currentEvent.getId());
                 Toast.makeText(InfoActivity.this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
                 updateStatusDisplay();
 
@@ -103,7 +103,7 @@ public class InfoActivity extends AppCompatActivity {
         declineButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentUser.declineInvitation(currentEvent);
+                currentUser.declineInvitation(currentEvent.getId());
                 Toast.makeText(InfoActivity.this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
                 updateStatusDisplay();
 
@@ -118,7 +118,7 @@ public class InfoActivity extends AppCompatActivity {
 
     // TODO: Structure change broke this
     private void updateStatusDisplay() {
-        String status = currentUser.getStatusForEvent(currentEvent);
+        String status = currentUser.getStatusForEvent(currentEvent.getId());
         statusTextView.setText("Status: " + status);
     }
 }
