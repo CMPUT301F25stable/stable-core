@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.content.Intent;
 import android.widget.Toast;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -60,33 +61,26 @@ public class MainActivity extends AppCompatActivity {
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
-        data.add(new EventListData("Event 1", R.drawable.anime,  "Description 1", "Date 1", "Time 1", "Location 1", "Organizer 1"));
-        data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
-        data.add(new EventListData("Event 3", R.drawable.dance,  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
-        data.add(new EventListData("Event 4", R.drawable.hockey, "Description 4", "Date 4", "Time 4", "Location 4", "Organizer 4"));
-        data.add(new EventListData("Event 5", R.drawable.anime,  "Description 5", "Date 5", "Time 5", "Location 5", "Organizer 5"));
-        data.add(new EventListData("Event 1", R.drawable.anime,  "Description 1", "Date 1", "Time 1", "Location 1", "Organizer 1"));
-        data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
-        data.add(new EventListData("Event 3", R.drawable.dance,  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
-        data.add(new EventListData("Event 4", R.drawable.hockey, "Description 4", "Date 4", "Time 4", "Location 4", "Organizer 4"));
-        data.add(new EventListData("Event 5", R.drawable.anime,  "Description 5", "Date 5", "Time 5", "Location 5", "Organizer 5"));
-        data.add(new EventListData("Event 1", R.drawable.anime,  "Description 1", "Date 1", "Time 1", "Location 1", "Organizer 1"));
-        data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
-        data.add(new EventListData("Event 3", R.drawable.dance,  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
-        data.add(new EventListData("Event 4", R.drawable.hockey, "Description 4", "Date 4", "Time 4", "Location 4", "Organizer 4"));
-        data.add(new EventListData("Event 5", R.drawable.anime,  "Description 5", "Date 5", "Time 5", "Location 5", "Organizer 5"));
+        data.add(new EventListData("Demon Slayer: Infinity Castle – The Final Battle Begins", R.drawable.anime,  "Click for more details...",
+                "November 15, 2025", "7:30PM", "Edmonton Cineplex Westmount", "Anime Alberta"));
 
+        data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
+        data.add(new EventListData("Event 3", R.drawable.dance,  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new MyAdapter(data, (item, position) ->
-                Toast.makeText(this, "Clicked: " + item.getEventName(), Toast.LENGTH_SHORT).show()
-        );
-        recyclerView.setAdapter(adapter);
+        adapter = new MyAdapter(data, (item, position) -> {
+            Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
+            intent.putExtra("name", item.getEventName());
+            intent.putExtra("description", "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet. Witness the breathtaking visuals and emotional battles of Demon Slayer’s most intense arc on the big screen.");
+            intent.putExtra("date", item.getEventDate());
+            intent.putExtra("time", item.getEventTime());
+            intent.putExtra("location", item.getEventLocation());
+            intent.putExtra("organizer", item.getEventOrganizer());
+            intent.putExtra("imageRes", item.getEventImage());
+            startActivity(intent);
+        });
 
-        adapter = new MyAdapter(data, (item, position) ->
-                Toast.makeText(this, "Clicked: " + item.getEventName(), Toast.LENGTH_SHORT).show()
-        );
         recyclerView.setAdapter(adapter);
 
         searchView = findViewById(R.id.searchView);
