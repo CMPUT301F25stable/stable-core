@@ -7,11 +7,11 @@ import java.util.ArrayList;
 
 public class Waitlist implements Serializable {
     private ArrayList<User> waitlistedUsers;
-    private int maxSize;  // -1 = no limit
+    private int maxSize;  // Integer.MAX_VALUE == no limit (highest number you can set it to anyway)
 
     public Waitlist() {
         waitlistedUsers = new ArrayList<>();
-        maxSize = -1;
+        maxSize = Integer.MAX_VALUE;
     }
 
     public Waitlist(ArrayList<User> waitlistedUsers) {
