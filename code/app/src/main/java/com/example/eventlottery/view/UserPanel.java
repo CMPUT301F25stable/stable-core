@@ -11,10 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Entrant;
 import com.example.eventlottery.users.User;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -29,6 +29,7 @@ public class UserPanel extends AppCompatActivity {
 
     private User currentUser;
     private LinearLayout eventListContainer;
+    private ArrayList<Event> allEvents;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,7 @@ public class UserPanel extends AppCompatActivity {
 
         // Initialize the container for events
         eventListContainer = findViewById(R.id.event_list_container);
+        allEvents = new ArrayList<>();
 
         // Create example user with events
         createExampleUserWithEvents();
@@ -54,13 +56,12 @@ public class UserPanel extends AppCompatActivity {
 
     }
 
-    // TODO: Test is broken
     /**
      * Creates example user with different event statuses
+     */
     private void createExampleUserWithEvents() {
         // Create a user
         currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
-        Entrant entrant = currentUser.getEntrant();
 
         // Create dates for events
         Calendar calendar = Calendar.getInstance();
@@ -79,6 +80,7 @@ public class UserPanel extends AppCompatActivity {
                 movie1Start,
                 movie1End
         );
+        allEvents.add(confirmedEvent);
 
         // Event 2: Tech Conference 2025 (Notified/Registered)
         calendar.set(2025, Calendar.AUGUST, 20, 9, 0);
@@ -94,6 +96,7 @@ public class UserPanel extends AppCompatActivity {
                 sports1Start,
                 sports1End
         );
+        allEvents.add(registeredEvent);
 
         // Event 3: Food & Wine Expo (Waitlisted)
         calendar.set(2025, Calendar.SEPTEMBER, 10, 14, 0);
@@ -109,39 +112,56 @@ public class UserPanel extends AppCompatActivity {
                 food1Start,
                 food1End
         );
+        allEvents.add(waitlistedEvent);
 
         // Add events with different statuses
-        entrant.addRegisteredEvent(confirmedEvent, "Accepted");
-        entrant.addRegisteredEvent(registeredEvent, "Notified");
-        entrant.addWaitlistedEvent(waitlistedEvent);
+        currentUser.getRegisteredEvents().put(confirmedEvent.getId(), "Accepted");
+        currentUser.getRegisteredEvents().put(registeredEvent.getId(), "Notified");
+        currentUser.getWaitlistedEvents().add(waitlistedEvent.getId());
 
         // Update user name in the UI
         TextView userName = findViewById(R.id.user_name);
         userName.setText(currentUser.getName());
     }
-     */
 
-    // TODO: Test is broken
-    /*
     /**
      * Displays all events (waitlisted and registered) in the UI
-
+    */
     private void displayEvents() {
-        Entrant entrant = currentUser.getEntrant();
-
         // Display registered events
-        for (Map.Entry<Event, String> entry : entrant.getRegisteredEvents().entrySet()) {
-            Event event = entry.getKey();
+        for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
+            String eventId = entry.getKey();
             String status = entry.getValue();
-            addEventCard(event, status);
+
+            // Find the corresponding event object
+            Event event = findEventById(eventId);
+            if (event != null) {
+                addEventCard(event, status);
+            }
         }
 
         // Display waitlisted events
-        for (Event event : entrant.getWaitlistedEvents()) {
-            addEventCard(event, "Waitlisted");
+        for (String eventId : currentUser.getWaitlistedEvents()) {
+            Event event = findEventById(eventId);
+            if (event != null) {
+                addEventCard(event, "Waitlisted");
+            }
         }
     }
-    */
+
+    /**
+     * Helper method to find an event by its ID
+     * @param eventId The event ID to search for
+     * @return The Event object, or null if not found
+     */
+    private Event findEventById(String eventId) {
+        for (Event event : allEvents) {
+            if (event.getId().equals(eventId)) {
+                return event;
+            }
+        }
+        return null;
+    }
 
     /**
      * Creates and adds an event card to the UI
@@ -268,7 +288,7 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Helper method to convert dp to pixels
+     * Helper method to convert dp to pixels to help look the same size on all screens
      */
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
