@@ -1,0 +1,9 @@
+<!-- res/drawable/gradient_background.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#DBDBDB"
+        android:endColor="#474141"
+        android:angle="90" /> <!-- Adjust colors and angle as needed -->
+    <corners android:radius="16dp" /> <!-- Match CardView's corner radius -->
+</shape>

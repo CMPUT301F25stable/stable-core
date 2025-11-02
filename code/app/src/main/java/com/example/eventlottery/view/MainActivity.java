@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
 
         data.add(new EventListData("Demon Slayer: Infinity Castle – The Final Battle Begins", R.drawable.anime,  "Click for more details...",
-                "📅 Date: November 15, 2025", "🕒 Time: 7:30PM", "📍 Location: Edmonton Cineplex Westmount", "🎟️ Organizer: Anime Alberta"));
+                "November 15, 2025", "7:30PM", "Edmonton Cineplex Westmount", "Anime Alberta"));
 
         data.add(new EventListData("Event 2", R.drawable.hockey, "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
         data.add(new EventListData("Event 3", R.drawable.dance,  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
