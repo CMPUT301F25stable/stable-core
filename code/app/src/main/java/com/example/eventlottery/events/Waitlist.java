@@ -2,13 +2,16 @@ package com.example.eventlottery.events;
 
 import com.example.eventlottery.users.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Waitlist {
+public class Waitlist implements Serializable {
     private ArrayList<User> waitlistedUsers;
+    private int maxSize;  // Integer.MAX_VALUE == no limit (highest number you can set it to anyway)
 
     public Waitlist() {
         waitlistedUsers = new ArrayList<>();
+        maxSize = Integer.MAX_VALUE;
     }
 
     public Waitlist(ArrayList<User> waitlistedUsers) {
@@ -29,5 +32,13 @@ public class Waitlist {
 
     public void removeUser(User userToRemove) {
         waitlistedUsers.remove(userToRemove);
+    }
+
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(int maxSize) {
+        this.maxSize = maxSize;
     }
 }

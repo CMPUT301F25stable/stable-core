@@ -2,7 +2,7 @@ package com.example.eventlottery.view;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,15 +27,12 @@ public class EventActivity extends AppCompatActivity {
         });
 
         Intent intent = getIntent();
-        User user = (User) intent.getSerializableExtra("User");
+        // User user = (User) intent.getSerializableExtra("User");
         Event event = (Event) intent.getSerializableExtra("Event");
-        if (event != null && user != null) {
-            Log.d("EventActivity", event.getName());
-            Log.d("EventActivity", event.getDescription());
-            Log.d("EventActivity", event.getLocation());
-            Log.d("EventActivity", event.getOrganizer());
-            Log.d("EventActivity", String.valueOf(event.getImage()));
-            Log.d("EventActivity", event.getFormattedStartTime());
+        if (event != null) {
+            TextView details = findViewById(R.id.eventDetails);
+            String detailsStr = "Event ID: %s\nEvent Description: %s\nEvent Location: %s\nEvent Date: %s\nEvent Time: %s";
+            details.setText(String.format(detailsStr, event.getId(), event.getDescription(), event.getLocation(), event.getFormattedStartDate(), event.getFormattedStartTime()));
         }
     }
 }
