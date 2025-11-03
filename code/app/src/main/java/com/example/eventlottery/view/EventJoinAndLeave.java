@@ -6,6 +6,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
 
 public class EventJoinAndLeave extends AppCompatActivity{
@@ -31,10 +33,18 @@ public class EventJoinAndLeave extends AppCompatActivity{
         String time = getIntent().getStringExtra("time");
         String location = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
-        int imageRes = getIntent().getIntExtra("imageRes", 0);
+        String imageRes = getIntent().getStringExtra("imageRes");
 
-        image.setImageResource(imageRes);
-        background.setImageResource(imageRes);
+        Glide.with(this)
+                .load(imageRes)
+                .placeholder(R.drawable.placeholder)
+                .into(image);
+        Glide.with(this)
+                .load(imageRes)
+                .placeholder(R.drawable.placeholder)
+                .into(background);
+        // image.setImageResource(imageRes);
+        // background.setImageResource(imageRes);
         title.setText(name);
         subtitle.setText("Official Movie Screening Event");
         desc.setText(description);

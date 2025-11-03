@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/anime"
+        android:src="@drawable/placeholder"
         android:alpha="0.85"
         android:contentDescription="@string/app_name" />
 
@@ -42,7 +42,7 @@
                     android:scaleType="centerCrop"
                     android:background="@drawable/rounded_image_mask"
                     android:clipToOutline="true"
-                    android:src="@drawable/anime"
+                    android:src="@drawable/placeholder"
                     android:outlineProvider="background" />
 
                 <TextView
