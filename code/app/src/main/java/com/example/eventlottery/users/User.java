@@ -18,6 +18,9 @@ public class User implements Serializable {
     private ArrayList<String> waitlistedEvents;
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
 
+    // Firestore needs this for some reason
+    public User() {}
+
     // Empty constructor for new users (needs Context though)
     public User(Context context) {
         // Gets unique device ID

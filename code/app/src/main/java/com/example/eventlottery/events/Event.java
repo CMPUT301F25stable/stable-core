@@ -7,7 +7,9 @@ import com.example.eventlottery.users.User;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -20,8 +22,10 @@ public class Event implements Serializable {
     private int image;
     private Date startTime;
     private Date endTime;
-    private String[] formattedStartTime;
-    private String[] formattedEndTime;
+    private String formattedStartDate;
+    private String formattedStartTime;
+    private String formattedEndDate;
+    private String formattedEndTime;
     private QRCode qrCode;
     private Waitlist waitlist;
 
@@ -35,8 +39,19 @@ public class Event implements Serializable {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy'-'h:mm a", Locale.CANADA);
         String formattedStart = dateFormat.format(this.startTime);
         String formattedEnd = dateFormat.format(this.endTime);
-        this.formattedStartTime = formattedStart.split("-");
-        this.formattedEndTime = formattedEnd.split("-");
+
+        String[] startParts = formattedStart.split("-");
+        String[] endParts = formattedEnd.split("-");
+
+        this.formattedStartDate = startParts[0];
+        this.formattedStartTime = startParts[1];
+        this.formattedEndDate = endParts[0];
+        this.formattedEndTime = endParts[1];
+    }
+
+    // Firestore needs an empty constructor
+    public Event() {
+        this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
     }
 
     public Event(String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For new events (not yet in database)
@@ -62,6 +77,7 @@ public class Event implements Serializable {
         this.image = image;
         this.startTime = startTime;
         this.endTime = endTime;
+
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
         formatDates();
@@ -127,22 +143,36 @@ public class Event implements Serializable {
         this.endTime = endTime;
     }
 
-    // Returns a String with a date (ex. October 30, 2023)
     public String getFormattedStartDate() {
-        return formattedStartTime[0];
+        return formattedStartDate;
+    }
+
+    public void setFormattedStartDate(String formattedStartDate) {
+        this.formattedStartDate = formattedStartDate;
+    }
+
+    public String getFormattedStartTime() {
+        return formattedStartTime;
+    }
+
+    public void setFormattedStartTime(String formattedStartTime) {
+        this.formattedStartTime = formattedStartTime;
     }
 
     public String getFormattedEndDate() {
-        return formattedEndTime[0];
+        return formattedEndDate;
     }
 
-    // Returns a String with a time (ex. 3:30 p.m.)
-    public String getFormattedStartTime() {
-        return formattedStartTime[1];
+    public void setFormattedEndDate(String formattedEndDate) {
+        this.formattedEndDate = formattedEndDate;
     }
 
     public String getFormattedEndTime() {
-        return formattedEndTime[1];
+        return formattedEndTime;
+    }
+
+    public void setFormattedEndTime(String formattedEndTime) {
+        this.formattedEndTime = formattedEndTime;
     }
 
     public QRCode getQrCode() {
@@ -152,6 +182,7 @@ public class Event implements Serializable {
     public void setQrCode(QRCode qrCode) {
         this.qrCode = qrCode;
     }
+
 
     public Waitlist getWaitlist() { return waitlist; }
 

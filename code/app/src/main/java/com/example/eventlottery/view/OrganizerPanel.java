@@ -1,6 +1,9 @@
 package com.example.eventlottery.view;
 
+
 import android.os.Bundle;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -18,17 +21,21 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.model.EventDatabase;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
+
 import androidx.appcompat.app.AlertDialog;
 
-import org.w3c.dom.Text;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 
 public class OrganizerPanel extends AppCompatActivity {
+    String userID;
     LinearLayout previous;
     ListView eventList;
     Button viewWaitlist;
@@ -37,6 +44,9 @@ public class OrganizerPanel extends AppCompatActivity {
     int selectedEventIndex = 0;  // default is first item
     Event selectedEvent;
     EventAdapter adapter;
+    EventDatabase organizerEventDatabase;
+    DBConnector userDatabase;
+    Organizer organizer;
     ArrayList<Event> data = new ArrayList<>();
 
 
@@ -59,32 +69,43 @@ public class OrganizerPanel extends AppCompatActivity {
         createEvent = findViewById(R.id.createEventButton);
         setClickListeners();
 
-
-        // TODO: REMOVE FILLER DATA. REPLACE WITH FIREBASE STUFF ONCE IT'S IMPLEMENTED
-        eventList = findViewById(R.id.eventList);
-        User userOne = new User("1", "testing", "testing");
-        User userTwo = new User("2", "filler", "filler");
-        User userThree = new User("3", "name", "name");
-
-
-        Date date = new Date();
-        Event eventOne = new Event("Event One", "Event Description", "Event Location", "Organizer ID", 0, date, date);
-        Event eventTwo = new Event("Event Two", "Event Description", "Event Location", "Organizer ID", 0, date, date);
-        Event eventThree = new Event("Event Three", "Event Description", "Event Location", "Organizer ID", 0, date, date);
-
-        eventOne.addToWaitlist(userOne);
-        eventOne.addToWaitlist(userTwo);
-        eventOne.addToWaitlist(userThree);
-        eventTwo.addToWaitlist(userOne);
-        eventTwo.addToWaitlist(userTwo);
-        eventThree.addToWaitlist(userOne);
-
-        data.add(eventOne);
-        data.add(eventTwo);
-        data.add(eventThree);
-
+        // Initialize other variables such as the databases & users
+        userID = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+        System.out.println(userID);
+        organizerEventDatabase = new EventDatabase();
+        userDatabase = new DBConnector(this);
+        getOrganizerInfo();
         adapter = new EventAdapter(this, data);
         eventList.setAdapter(adapter);
+    }
+
+    /**
+     * Gets the organizer object from Firestore, & sets up 'data'.
+     */
+    public void getOrganizerInfo() {
+        // References: https://firebase.google.com/docs/firestore/query-data/get-data#java
+        // Specifically, Get a Document -> Java
+        userDatabase.loadUserInfo(userID, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    organizer = document.toObject(Organizer.class);
+                    Log.d("OrganizerPanel", "Organizer loaded");
+
+                    // Note: Called here because this function is asynchronous
+                    // Will cause a crash if organizer is not loaded in by then
+                    organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
+                    adapter.notifyDataSetChanged();
+                } else {
+                    Log.d("OrganizerPanel", "No organizer found");
+                }
+            } else {
+                Log.e("OrganizerPanel", "Error loading organizer info", task.getException());
+            }
+        });
     }
 
     /**
@@ -151,13 +172,16 @@ public class OrganizerPanel extends AppCompatActivity {
                 Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // Create event if all inputs are valid
+            // Create event if all inputs are valid, add to this organizer's createdEvents, and input into Firestore.
             // TODO: This can only set waiting list max right now. Implement more later
             Date date = new Date();
             Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", 0, date, date);
             newEvent.setWaitlistMax(maxSize);
             data.add(newEvent);
-            adapter.notifyDataSetChanged();
+            organizer.createEvent(newEvent.getId());
+            System.out.println(newEvent.getId());
+            organizerEventDatabase.insert(newEvent);
+            userDatabase.updateOrganizerCreatedEvents(organizer);
         });
         builder.show();
 

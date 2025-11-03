@@ -7,6 +7,9 @@ import java.util.ArrayList;
 public class Organizer extends User {
     private ArrayList<String> createdEvents;
 
+    // Firestore needs this for some reason
+    public Organizer() {};
+
     public Organizer(String id, String name, String emailAddress) {
         super(id, name, emailAddress);
         createdEvents = new ArrayList<>();

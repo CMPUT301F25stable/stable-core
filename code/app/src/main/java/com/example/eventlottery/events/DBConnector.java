@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.example.eventlottery.users.Organizer;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -92,6 +94,12 @@ public class DBConnector {
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed save info" + id, e);
                 });
+    }
+
+    public void updateOrganizerCreatedEvents(Organizer organizer) {
+        CollectionReference users = db.collection("users");
+        DocumentReference user = users.document(organizer.getId());
+        user.update("createdEvents", organizer.getCreatedEvents());
     }
 
     /**
