@@ -43,6 +43,21 @@ public class EventDatabase {
     }
 
     /**
+     * Retrieves an event from the database.
+     * @param eventId The event id to look for in the database.
+     * @param listener (Description to be completed)
+     */
+    public void get(String eventId, OnCompleteListener<DocumentSnapshot> listener) {
+        eventsRef.document(eventId)
+                .get()
+                .addOnCompleteListener(listener)
+                .addOnFailureListener(e -> {
+                    Log.e("EventDatabase", "Failed to load event: " + eventId);
+                    Log.e("EventDatabase", e.toString());
+                });
+    }
+
+    /**
      * Inserts an event into the database.
      * Note: This is basically identical to lab 5 code.
      * @param event The event to insert.

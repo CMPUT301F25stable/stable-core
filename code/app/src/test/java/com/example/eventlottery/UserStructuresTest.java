@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Entrant;
 import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 
@@ -46,7 +45,7 @@ public class UserStructuresTest {
         Random random = new Random();
         long dateNum = random.nextLong(1700000000000L);
         String randomName = String.valueOf(UUID.randomUUID());
-        return new Event(randomName, randomName.concat(" Description"), randomName.concat(" Location"), randomName.concat(" Organizer ID"), 0, new Date(dateNum), new Date(dateNum + 7200000));
+        return new Event(randomName, randomName.concat(" Description"), randomName.concat(" Location"), randomName.concat(" Organizer ID"), "", new Date(dateNum), new Date(dateNum + 7200000));
     }
 
     // TODO: Test is broken
