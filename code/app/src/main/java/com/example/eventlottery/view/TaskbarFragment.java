@@ -84,7 +84,7 @@ public class TaskbarFragment extends Fragment {
 
         ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
             if (result.getContents() != null) {
-                String content = result.getContents();
+                String content = result.getContents().strip();
                 if (content.length() == 36) {
                     eventDatabase.get(content, task -> {
                         if (task.isSuccessful()) {
