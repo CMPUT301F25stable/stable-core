@@ -206,16 +206,21 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
-        editEvent.setOnClickListener(new View.OnClickListener() {
-            /**
-             * Sets the listener for editing events.
-             * @param v The view that was clicked.
-             */
-            @Override
-            public void onClick(View v) {
-                // Show menu
-                editEvent();
-            }
+        editEvent.setOnClickListener(v -> {
+            // Event we want to edit
+            selectedEvent = data.get(selectedEventIndex);
+
+            // Create dialog and pass in the event
+            EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
+
+            // Set listener for updating firestore & notify that a change was made
+            dialog.setOnEventUpdatedListener(updatedEvent -> {
+                organizerEventDatabase.organizerUpdateEvent(updatedEvent);
+                adapter.notifyDataSetChanged();
+            });
+
+            // Display dialog
+            dialog.show(getSupportFragmentManager(), "EditEventDialog");
         });
 
         createEvent.setOnClickListener(new View.OnClickListener() {
@@ -225,7 +230,10 @@ public class OrganizerPanel extends AppCompatActivity {
              */
             @Override
             public void onClick(View v) {
+                // Create the dialog
                 CreateEventDialog createDialog = new CreateEventDialog();
+
+                // Set listener for creating an event: Updates data & the firestore database as well.
                 createDialog.setOnEventCreatedListener(event -> {
                     data.add(event);
                     organizer.createEvent(event.getId());
@@ -233,6 +241,8 @@ public class OrganizerPanel extends AppCompatActivity {
                     userDatabase.updateOrganizerCreatedEvents(organizer);
                     adapter.notifyDataSetChanged();
                 });
+
+                // Display dialog
                 createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
             }
         });
