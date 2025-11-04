@@ -84,7 +84,7 @@ public class TaskbarFragment extends Fragment {
 
         ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
             if (result.getContents() != null) {
-                String content = result.getContents();
+                String content = result.getContents().strip();
                 if (content.length() == 36) {
                     eventDatabase.get(content, task -> {
                         if (task.isSuccessful()) {
@@ -93,13 +93,16 @@ public class TaskbarFragment extends Fragment {
                                 Event eventToDisplay = doc.toObject(Event.class);
                                 if (eventToDisplay != null) {
                                     Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
+                                    intent.putExtra("id", eventToDisplay.getId());
                                     intent.putExtra("name", eventToDisplay.getName());
                                     intent.putExtra("description", eventToDisplay.getDescription());
-                                    intent.putExtra("date", eventToDisplay.getFormattedStartDate());
-                                    intent.putExtra("time", eventToDisplay.getFormattedEndTime());
+                                    intent.putExtra("dateStart", eventToDisplay.getFormattedStartDate());
+                                    intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
+                                    intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
+                                    intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
                                     intent.putExtra("location", eventToDisplay.getLocation());
                                     intent.putExtra("organizer", eventToDisplay.getOrganizer());
-                                    intent.putExtra("imageRes", eventToDisplay.getImage());
+                                    intent.putExtra("image", eventToDisplay.getImage());
                                     startActivity(intent);
                                 }
                             }
