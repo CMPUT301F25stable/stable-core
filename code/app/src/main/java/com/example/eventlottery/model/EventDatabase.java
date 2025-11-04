@@ -63,7 +63,6 @@ public class EventDatabase {
         }
 
         // Else, iterate through every event from the organizer's created events & add to 'data'.
-        DocumentReference eventRef;
         // Note: This code is basically identical to what they have in lab 5
         eventsRef.addSnapshotListener((value, error) -> {
             if (error != null) {
@@ -78,5 +77,16 @@ public class EventDatabase {
                 adapter.notifyDataSetChanged();
             }
         });
+    }
+
+    /**
+     * Updates the event in firestore, according to what an organizer changes.
+     * TODO: Right now it just updates the waitlistMax
+     * @param event The event to update.
+     */
+    public void organizerUpdateEvent(Event event) {
+        DocumentReference eventRef = eventsRef.document(event.getId());
+        int newMaxSize = event.getWaitlistMax();
+        eventRef.update("waitlist.maxSize", newMaxSize);
     }
 }

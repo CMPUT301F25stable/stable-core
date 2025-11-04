@@ -74,7 +74,6 @@ public class OrganizerPanel extends AppCompatActivity {
                 getContentResolver(),
                 Settings.Secure.ANDROID_ID
         );
-        System.out.println(userID);
         organizerEventDatabase = new EventDatabase();
         userDatabase = new DBConnector(this);
         getOrganizerInfo();
@@ -228,7 +227,9 @@ public class OrganizerPanel extends AppCompatActivity {
                 Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
                 return;
             }
+            // Change waitlistMax & update firestore
             selectedEvent.setWaitlistMax(maxSize);
+            organizerEventDatabase.organizerUpdateEvent(selectedEvent);
         });
         builder.show();
     }
