@@ -8,7 +8,9 @@ import androidx.annotation.NonNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class User implements Serializable {
     private String id; // Device identifier
@@ -17,6 +19,7 @@ public class User implements Serializable {
     private String phoneNumber;
     private ArrayList<String> waitlistedEvents;
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
+    private ArrayList<String> joinedEventIds = new ArrayList<>();
 
     // Firestore needs this for some reason
     public User() {}
@@ -97,6 +100,55 @@ public class User implements Serializable {
         return registeredEvents;
     }
 
+    /**
+     * Checks if the user has joined an event.
+     * @param eventId
+     * @return
+     */
+    public boolean isJoined(String eventId) {
+        return joinedEventIds != null && joinedEventIds.contains(eventId);
+    }
+
+    /**
+     * Sets the list of joined event IDs.
+     * @param ids
+     */
+    public void setJoinedEventIds(List<String> ids) {
+        // called after reading Firestore
+        if (ids == null) this.joinedEventIds = new ArrayList<>();
+        else this.joinedEventIds = new ArrayList<>(ids);
+    }
+
+    /**
+     * Gets the list of joined event IDs.
+     * @return
+     */
+    public List<String> getJoinedEventIds() {
+        return joinedEventIds == null ? Collections.emptyList() : joinedEventIds;
+    }
+
+    /**
+     * Adds an event to the joined list.
+     * @param eventId
+     */
+    public void markJoined(String eventId) {
+        if (joinedEventIds == null) joinedEventIds = new ArrayList<>();
+        if (!joinedEventIds.contains(eventId)) joinedEventIds.add(eventId);
+    }
+
+    /**
+     * Removes an event from the joined list.
+     * @param eventId
+     */
+    public void markLeft(String eventId) {
+        if (joinedEventIds != null) joinedEventIds.remove(eventId);
+    }
+
+
+    /**
+     * Adds an event to the waitlist.
+     * @param registeredEvents
+     */
     public void setRegisteredEvents(HashMap<String, String> registeredEvents) {
         this.registeredEvents = registeredEvents;
     }
