@@ -2,16 +2,22 @@ package com.example.eventlottery.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.LayoutRes;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.Event;
+import com.example.eventlottery.model.EventDatabase;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 public class TaskbarFragment extends Fragment {
     /**
@@ -42,6 +48,8 @@ public class TaskbarFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        EventDatabase eventDatabase = new EventDatabase();
 
         /**
          * Sets event listener for starting OrganizerPanel
@@ -74,11 +82,41 @@ public class TaskbarFragment extends Fragment {
             startActivity(intent);
         });
 
+        ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
+            if (result.getContents() != null) {
+                String content = result.getContents();
+                if (content.length() == 36) {
+                    eventDatabase.get(content, task -> {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot doc = task.getResult();
+                            if (doc.exists()) {
+                                Event eventToDisplay = doc.toObject(Event.class);
+                                if (eventToDisplay != null) {
+                                    Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
+                                    intent.putExtra("name", eventToDisplay.getName());
+                                    intent.putExtra("description", eventToDisplay.getDescription());
+                                    intent.putExtra("date", eventToDisplay.getFormattedStartDate());
+                                    intent.putExtra("time", eventToDisplay.getFormattedEndTime());
+                                    intent.putExtra("location", eventToDisplay.getLocation());
+                                    intent.putExtra("organizer", eventToDisplay.getOrganizer());
+                                    intent.putExtra("imageRes", eventToDisplay.getImage());
+                                    startActivity(intent);
+                                }
+                            }
+                        }
+                    });
+                }
+                Log.d("TaskbarFragment - QRLauncher", content);
+            }
+        });
+
         View cameraIcon = view.findViewById(R.id.cameraIcon);
         cameraIcon.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), QRActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(intent);
+            ScanOptions scanOptions = new ScanOptions();
+            scanOptions.setOrientationLocked(true);
+            scanOptions.setBeepEnabled(false);
+            scanOptions.setCaptureActivity(QRScanActivity.class);
+            qrLauncher.launch(scanOptions);
         });
     }
 }

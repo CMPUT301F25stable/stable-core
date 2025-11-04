@@ -19,7 +19,7 @@ public class Event implements Serializable {
     private String description;
     private String location; // Could also be a HashMap so we can easily grab individual location info (street, city, etc..)
     private String organizer;
-    private int image;
+    private String image;
     private Date startTime;
     private Date endTime;
     private String formattedStartDate;
@@ -54,7 +54,7 @@ public class Event implements Serializable {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
     }
 
-    public Event(String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For new events (not yet in database)
+    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For new events (not yet in database)
         this.id = generateUUID();
         this.name = name;
         this.description = description;
@@ -68,7 +68,7 @@ public class Event implements Serializable {
         formatDates();
     }
 
-    public Event(String id, String name, String description, String location, String organizer, int image, Date startTime, Date endTime) { // For pre-existing events
+    public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For pre-existing events
         this.id = id;
         this.name = name;
         this.description = description;
@@ -119,11 +119,11 @@ public class Event implements Serializable {
         this.organizer = organizer;
     }
 
-    public int getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(int image) {
+    public void setImage(String image) {
         this.image = image;
     }
 

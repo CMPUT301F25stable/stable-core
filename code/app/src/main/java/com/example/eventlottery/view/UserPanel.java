@@ -76,7 +76,7 @@ public class UserPanel extends AppCompatActivity {
                 "Watch the Demon Slayer: Infinity Castle",
                 "West Edmonton Mall Cineplex, Edmonton, AB",
                 "Movie Inc.",
-                R.drawable.anime,
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp",
                 movie1Start,
                 movie1End
         );
@@ -92,7 +92,7 @@ public class UserPanel extends AppCompatActivity {
                 "Watch the Edmonton Oilers face off against the LA Kings",
                 "Rogers Place, Edmonton, AB",
                 "Sports Alberta",
-                R.drawable.hockey, // Replace with your actual drawable
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", // Replace with your actual drawable
                 sports1Start,
                 sports1End
         );
@@ -108,7 +108,7 @@ public class UserPanel extends AppCompatActivity {
                 "Culinary showcase featuring local chefs and wineries",
                 "Edmonton Expo Centre, Edmonton, AB",
                 "Culinary Events Ltd.",
-                R.drawable.dance, // Replace with your actual drawable
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", // Replace with your actual drawable
                 food1Start,
                 food1End
         );
