@@ -28,7 +28,6 @@ import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.ListenerRegistration;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -48,7 +47,6 @@ public class OrganizerPanel extends AppCompatActivity {
     EventDatabase organizerEventDatabase;
     DBConnector userDatabase;
     Organizer organizer;
-    private ListenerRegistration eventsListener;
     ArrayList<Event> data = new ArrayList<>();
 
 
@@ -107,34 +105,6 @@ public class OrganizerPanel extends AppCompatActivity {
                 Log.e("OrganizerPanel", "Error loading organizer info", task.getException());
             }
         });
-    }
-
-    /**
-     * Displays waitlisted users.
-     * @param waitlistedUsers The waitlisted users.
-     */
-    private void showWaitlistedUsers(ArrayList<User> waitlistedUsers) {
-        // Inflate dialog view & get listView
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_waitlist, null);
-        ListView userWaitlist = dialogView.findViewById(R.id.userWaitlist);
-
-        // Get names of all users
-        ArrayList<String> userNames = new ArrayList<>();
-        for (User user : waitlistedUsers) {
-            userNames.add(user.getName());
-        }
-
-        // Get adapter & set it
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, userNames);
-        userWaitlist.setAdapter(adapter);
-
-        // Build and show the AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Waitlisted Users");
-        builder.setView(dialogView);
-        builder.setPositiveButton("Close", (dialog, which) -> dialog.dismiss());
-        builder.show();
     }
 
     /**
@@ -216,16 +186,23 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
+
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
             /**
-             * Displays the waitlist for the most recently clicked event.
+             * Sets the listener for the view waitlist button. Opens the dialog when clicked
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
+                // Event we want to view waitlist for
                 selectedEvent = data.get(selectedEventIndex);
+
+                // Get ArrayList of users & pass into dialog
                 ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
-                showWaitlistedUsers(users);
+                WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
+
+                // Display waitlist
+                waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
             }
         });
 
