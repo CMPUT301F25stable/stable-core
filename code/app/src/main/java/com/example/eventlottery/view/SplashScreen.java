@@ -3,6 +3,7 @@ package com.example.eventlottery.view;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,10 +12,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 
 public class SplashScreen extends AppCompatActivity {
 
     Handler handler = new Handler();
+    String userID;
+    DBConnector dbConnector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,5 +40,9 @@ public class SplashScreen extends AppCompatActivity {
                 finish(); // optional, to close the splash screen
             }
         }, 3000);
+
+        // Link to DB to add new user
+        dbConnector = new DBConnector(this);
+        dbConnector.saveNewUser(this);
     }
 }

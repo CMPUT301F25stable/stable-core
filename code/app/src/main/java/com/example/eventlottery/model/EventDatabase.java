@@ -1,6 +1,9 @@
 package com.example.eventlottery.model;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.ListView;
 
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.Organizer;
@@ -70,6 +73,9 @@ public class EventDatabase {
     /**
      * Gets all of the events associated with a particular organizer.
      */
+    /**
+     * Gets all of the events associated with a particular organizer.
+     */
     public void organizerGetEvents(Organizer organizer, ArrayList<Event> data, EventAdapter adapter) {
         // Get eventIDs. Return prematurely if there are no events
         ArrayList<String> eventIDs = organizer.getCreatedEvents();
@@ -77,22 +83,20 @@ public class EventDatabase {
             return;
         }
 
-        // Else, iterate through every event from the organizer's created events & add to 'data'.
-        // Note: This code is basically identical to what they have in lab 5
-        eventsRef.addSnapshotListener((value, error) -> {
-            if (error != null) {
-                Log.e("EventDatabase", error.toString());;
-            }
-            if (value != null && !value.isEmpty()) {
-                data.clear();
-                for (QueryDocumentSnapshot snapshot: value) {
+        // Iterate through every eventID & add it from firestore, to the list.
+        DocumentReference eventRef;
+        for (String eventID : eventIDs) {
+            eventRef = eventsRef.document(eventID);
+            eventRef.get().addOnSuccessListener(snapshot -> {
+                if (snapshot.exists()) {
                     Event event = snapshot.toObject(Event.class);
                     data.add(event);
+                    adapter.notifyDataSetChanged();
                 }
-                adapter.notifyDataSetChanged();
-            }
-        });
+            });
+        }
     }
+
 
     /**
      * Updates the event in firestore, according to what an organizer changes.

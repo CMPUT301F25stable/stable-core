@@ -1,18 +1,14 @@
 package com.example.eventlottery.view;
 
-
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,11 +24,8 @@ import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
-import androidx.appcompat.app.AlertDialog;
-
 
 import java.util.ArrayList;
-import java.util.Date;
 
 public class OrganizerPanel extends AppCompatActivity {
     String userID;
@@ -50,6 +43,7 @@ public class OrganizerPanel extends AppCompatActivity {
     ArrayList<Event> data = new ArrayList<>();
 
 
+    @SuppressLint("HardwareIds")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,7 +91,6 @@ public class OrganizerPanel extends AppCompatActivity {
                     // Note: Called here because this function is asynchronous
                     // Will cause a crash if organizer is not loaded in by then
                     organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
-                    adapter.notifyDataSetChanged();
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
                 }
@@ -105,133 +98,6 @@ public class OrganizerPanel extends AppCompatActivity {
                 Log.e("OrganizerPanel", "Error loading organizer info", task.getException());
             }
         });
-    }
-
-    /**
-     * Displays waitlisted users.
-     * @param waitlistedUsers
-     */
-    private void showWaitlistedUsers(ArrayList<User> waitlistedUsers) {
-        // Inflate dialog view & get listView
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_waitlist, null);
-        ListView userWaitlist = dialogView.findViewById(R.id.userWaitlist);
-
-        // Get names of all users
-        ArrayList<String> userNames = new ArrayList<>();
-        for (User user : waitlistedUsers) {
-            userNames.add(user.getName());
-        }
-
-        // Get adapter & set it
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, userNames);
-        userWaitlist.setAdapter(adapter);
-
-        // Build and show the AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Waitlisted Users");
-        builder.setView(dialogView);
-        builder.setPositiveButton("Close", (dialog, which) -> dialog.dismiss());
-        builder.show();
-    }
-
-    /**
-     * Displays the menu for creating an event. The user can save the new settings or cancel.
-     * TODO: Menu is missing a ton of parameters. Also need to save to Firestore!
-     * NOTE: Menu will look the same as edit event.
-     */
-    private void createEvent() {
-        // Inflate dialog view
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
-
-        // Set up variables for getting input
-        EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
-
-        // Build and show AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("New Event Parameters");
-        builder.setView(dialogView);
-        builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
-        builder.setPositiveButton("Save", (dialog, which) -> {
-            String text = waitlistMax.getText().toString();
-            int maxSize = Integer.MAX_VALUE;  // Assume no waitlist limit unless there is valid text input
-            // Get valid integer if there's any input
-            if (!text.isEmpty()) {
-                try {
-                    maxSize = Integer.parseInt(text);
-                    // Input must contain an integer
-                } catch (NumberFormatException e) {
-                    Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-            // Check if input is negative
-            if (maxSize < 0) {
-                Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // Create event if all inputs are valid, add to this organizer's createdEvents, and input into Firestore.
-            // TODO: This can only set waiting list max right now. Implement more later
-            Date date = new Date();
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", date, date);
-            newEvent.setWaitlistMax(maxSize);
-            data.add(newEvent);
-            organizer.createEvent(newEvent.getId());
-            System.out.println(newEvent.getId());
-            organizerEventDatabase.insert(newEvent);
-            userDatabase.updateOrganizerCreatedEvents(organizer);
-        });
-        builder.show();
-
-    }
-
-    /**
-     * Displays the menu for editing an event. The user can save the new settings or cancel.
-     * TODO: Menu is missing a ton of parameters. Also need to save to Firestore!
-     */
-    private void editEvent() {
-        // Inflate dialog view & get selected event
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
-        selectedEvent = data.get(selectedEventIndex);
-
-        // Set up variables for getting input
-        EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
-
-        // Display currentMax if there is one
-        String currentMax = String.valueOf(selectedEvent.getWaitlistMax());
-        if (!currentMax.equals(Integer.toString(Integer.MAX_VALUE))) {
-            waitlistMax.setText(currentMax);
-        }
-
-        // Build and show AlertDialog
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Event Parameters");
-        builder.setView(dialogView);
-        builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
-        builder.setPositiveButton("Save", (dialog, which) -> {
-            String text = waitlistMax.getText().toString();
-            int maxSize = Integer.MAX_VALUE;
-            // Get valid integer if any input
-            if (!text.isEmpty()) {
-                try {
-                    maxSize = Integer.parseInt(text);
-                } catch (NumberFormatException e) {
-                    Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-            // Check if input is negative
-            if (maxSize < 0) {
-                Toast.makeText(this, "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // Change waitlistMax & update firestore
-            selectedEvent.setWaitlistMax(maxSize);
-            organizerEventDatabase.organizerUpdateEvent(selectedEvent);
-        });
-        builder.show();
     }
 
     /**
@@ -265,40 +131,64 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
+
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
             /**
-             * Displays the waitlist for the most recently clicked event.
+             * Sets the listener for the view waitlist button. Opens the dialog when clicked
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
+                // Event we want to view waitlist for
                 selectedEvent = data.get(selectedEventIndex);
+
+                // Get ArrayList of users & pass into dialog
                 ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
-                showWaitlistedUsers(users);
+                WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
+
+                // Display waitlist
+                waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
             }
         });
 
-        editEvent.setOnClickListener(new View.OnClickListener() {
-            /**
-             * Sets the listener for editing events.
-             * @param v The view that was clicked.
-             */
-            @Override
-            public void onClick(View v) {
-                // Show menu
-                editEvent();
-            }
+        editEvent.setOnClickListener(v -> {
+            // Event we want to edit
+            selectedEvent = data.get(selectedEventIndex);
+
+            // Create dialog and pass in the event
+            EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
+
+            // Set listener for updating firestore & notify that a change was made
+            dialog.setOnEventUpdatedListener(updatedEvent -> {
+                organizerEventDatabase.organizerUpdateEvent(updatedEvent);
+                adapter.notifyDataSetChanged();
+            });
+
+            // Display dialog
+            dialog.show(getSupportFragmentManager(), "EditEventDialog");
         });
 
         createEvent.setOnClickListener(new View.OnClickListener() {
             /**
-             * Sets listener for creating events.
+             * Sets listener for creating events. Displays the dialog, & updates the firestore.
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
-                // Show menu
-                createEvent();
+                // Create the dialog
+                CreateEventDialog createDialog = new CreateEventDialog();
+
+                // Set listener for creating an event: Updates data & the firestore database as well.
+                createDialog.setOnEventCreatedListener(event -> {
+                    data.add(event);
+                    organizer.createEvent(event.getId());
+                    organizerEventDatabase.insert(event);
+                    userDatabase.updateOrganizerCreatedEvents(organizer);
+                    adapter.notifyDataSetChanged();
+                });
+
+                // Display dialog
+                createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
             }
         });
     }
