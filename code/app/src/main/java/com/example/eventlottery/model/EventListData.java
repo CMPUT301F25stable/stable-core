@@ -8,9 +8,9 @@ public class EventListData {
     String eventTime;
     String eventLocation;
     String eventOrganizer;
-    int eventImage;
+    String eventImage;
 
-    public EventListData(String eventName, int eventImage, String eventDescription, String eventDate, String eventTime, String eventLocation, String eventOrganizer) {
+    public EventListData(String eventName, String eventImage, String eventDescription, String eventDate, String eventTime, String eventLocation, String eventOrganizer) {
         this.eventName = eventName;
         this.eventImage = eventImage;
         this.eventDescription = eventDescription;
@@ -28,11 +28,11 @@ public class EventListData {
         this.eventName = eventName;
     }
 
-    public int getEventImage() {
+    public String getEventImage() {
         return eventImage;
     }
 
-    public void setEventImage(int eventImage) {
+    public void setEventImage(String eventImage) {
         this.eventImage = eventImage;
     }
 

@@ -6,6 +6,8 @@ import android.view.animation.AnimationUtils;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
 import com.example.eventlottery.model.EventListData;
 import java.util.ArrayList;
@@ -56,7 +58,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
         holder.eventTime.setText(item.getEventTime());
         holder.eventLocation.setText(item.getEventLocation());
         holder.eventOrganizer.setText(item.getEventOrganizer());
-        holder.imageView.setImageResource(item.getEventImage());
+        Glide.with(holder.imageView)
+                .load(item.getEventImage())
+                .placeholder(R.drawable.placeholder)
+                .into(holder.imageView);
+        //holder.imageView.setImageResource(item.getEventImage());
 
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getBindingAdapterPosition();
