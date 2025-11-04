@@ -2,9 +2,11 @@ package com.example.eventlottery.events;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.example.eventlottery.users.Organizer;
+import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
@@ -37,28 +39,12 @@ public class DBConnector {
     }
 
     /**
-     * This file includes code from [well-fed] (https://github.com/CMPUT301F22T02/well-fed)
-     * licensed under the GNU General Public License v3.0.
-     * <p>
      * Gets the UUID of the device, to identify the user.
-     * Creates a new UUID for the user if they do not already have one.
      * @param context: the context of the application
      * @return the UUID of the user
      */
     protected String getUUID(Context context) {
-        SharedPreferences sharedPreferences;
-        sharedPreferences = context.getApplicationContext()
-                .getSharedPreferences("pref", Context.MODE_PRIVATE);
-
-        String uuid = sharedPreferences.getString("UUID", null);
-
-        // if uuid does not exist, create the uuid and save it locally
-        if (uuid == null) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            uuid = UUID.randomUUID().toString();
-            editor.putString("UUID", uuid);
-            editor.commit();
-        }
+        String uuid = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         return uuid;
     }
 
@@ -69,6 +55,27 @@ public class DBConnector {
      */
     public DocumentReference getUserDoc(String id) {
         return this.db.collection("users").document(id);
+    }
+
+    /**
+     * Saves a new user to the database, if the user doesn't already exist.
+     * TODO: Right now it makes every user an organizer! Probably should change later
+     * @param context The activity it's called in.
+     */
+    public void saveNewUser(Context context) {
+        CollectionReference usersRef = db.collection("users");
+        DocumentReference userRef = usersRef.document(this.id);
+        // Asynchronous so added onCompleteListener
+        userRef.get().addOnCompleteListener(task -> {
+            DocumentSnapshot document = task.getResult();
+            // If user doesn't already exist, create & set
+            if (!document.exists()) {
+                // TODO: Change this from organizer to user later.
+                // I did it this way for now so that they don't crash when they enter OrganizerPanel - John
+                Organizer organizer = new Organizer(context);
+                userRef.set(organizer);
+            }
+        });
     }
 
     /**

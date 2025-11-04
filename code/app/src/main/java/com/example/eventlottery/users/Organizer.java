@@ -1,5 +1,7 @@
 package com.example.eventlottery.users;
 
+import android.content.Context;
+
 import com.example.eventlottery.events.Event;
 
 import java.util.ArrayList;
@@ -9,6 +11,15 @@ public class Organizer extends User {
 
     // Firestore needs this for some reason
     public Organizer() {};
+
+    /**
+     * Method for creating new organizers
+     * @param context
+     */
+    public Organizer(Context context) {
+        super(context);
+        this.createdEvents = new ArrayList<>();
+    }
 
     public Organizer(String id, String name, String emailAddress) {
         super(id, name, emailAddress);
