@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
@@ -9,35 +10,39 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
-import com.example.eventlottery.model.EventListData;
+import com.example.eventlottery.events.Event;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
-    private  List<EventListData> eventListData;
-    private  OnItemClickListener listener;
+    public interface OnItemClickListener {
+        void onItemClick(Event item, int position);
+    }
 
+    private List<Event> items;
+    private final OnItemClickListener listener;
     private int lastAnimatedPosition = -1;
 
-    public void setFilteredList(List<EventListData> filteredList) {
-        this.eventListData = filteredList;
-        notifyDataSetChanged();
-        lastAnimatedPosition = -1;
-    }
-    public interface OnItemClickListener {
-        void onItemClick(EventListData item, int position);
-    }
-
-    public MyAdapter(List<EventListData> data, OnItemClickListener listener) {
-        this.eventListData = data;
+    public MyAdapter(List<Event> data, OnItemClickListener listener) {
+        this.items = (data == null) ? new ArrayList<>() : new ArrayList<>(data);
         this.listener = listener;
     }
 
-    public void setItems(List<EventListData> items) {
-        eventListData.clear();
-        if (items != null) eventListData.addAll(items);
+    public void setItems(List<Event> newItems) {
+        if (this.items == null) this.items = new ArrayList<>();
+        this.items.clear();
+        if (newItems != null) this.items.addAll(newItems);
         notifyDataSetChanged();
+        lastAnimatedPosition = -1;
+    }
+
+    public void setFilteredList(List<Event> filteredList) {
+        if (filteredList == null) filteredList = new ArrayList<>();
+        this.items = new ArrayList<>(filteredList);
+        notifyDataSetChanged();
+        lastAnimatedPosition = -1;
     }
 
     @NonNull
@@ -50,24 +55,25 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        EventListData item = eventListData.get(position);
-        holder.eventName.setText(item.getEventName());
-        holder.eventDescription.setText(item.getEventDescription());
-        holder.eventDate.setText(item.getEventDate());
-        holder.eventTime.setText(item.getEventTime());
-        holder.eventLocation.setText(item.getEventLocation());
-        holder.eventOrganizer.setText(item.getEventOrganizer());
+    public void onBindViewHolder(@NonNull MyViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        Event item = items.get(position);
+
+        holder.eventName.setText(item.getName());
+        holder.eventDescription.setText(item.getDescription());
+        holder.eventDate.setText(item.getFormattedStartDate());
+        holder.eventTime.setText(item.getFormattedStartTime());
+        holder.eventLocation.setText(item.getLocation());
+        holder.eventOrganizer.setText(item.getOrganizer());
+
         Glide.with(holder.imageView)
-                .load(item.getEventImage())
+                .load(item.getImage())
                 .placeholder(R.drawable.placeholder)
                 .into(holder.imageView);
-        //holder.imageView.setImageResource(item.getEventImage());
 
         holder.itemView.setOnClickListener(v -> {
             int pos = holder.getBindingAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
-                listener.onItemClick(eventListData.get(pos), pos);
+                listener.onItemClick(items.get(pos), pos);
             }
         });
 
@@ -78,13 +84,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
             );
             lastAnimatedPosition = position;
         }
-
     }
 
     @Override
     public int getItemCount() {
-        return eventListData.size();
+        return (items == null) ? 0 : items.size();
     }
-
-
 }

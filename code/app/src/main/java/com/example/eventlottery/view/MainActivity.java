@@ -16,19 +16,23 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.Event;
 import com.example.eventlottery.model.EventListData;
 import com.example.eventlottery.users.User;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
-
+import java.util.Locale;
 import java.util.UUID;
+import java.util.Date;
+
 
 public class MainActivity extends AppCompatActivity {
     private String DEVICE_ID;
     private SearchView searchView;
     private MyAdapter adapter;
-    ArrayList<EventListData> data = new ArrayList<>();
+    ArrayList<Event> data = new ArrayList<>();
 
     private String getDeviceId(Context context) {
         SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
@@ -61,24 +65,50 @@ public class MainActivity extends AppCompatActivity {
         User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
-
-        data.add(new EventListData("Demon Slayer: Infinity Castle – The Final Battle Begins", "https://webdocs.cs.ualberta.ca/~bolson3/cmput301/anime.webp",  "Click for more details...",
-                "November 15, 2025", "7:30PM", "Edmonton Cineplex Westmount", "Anime Alberta"));
-
-        data.add(new EventListData("Event 2", "https://webdocs.cs.ualberta.ca/~bolson3/cmput301/hockey.webp", "Description 2", "Date 2", "Time 2", "Location 2", "Organizer 2"));
-        data.add(new EventListData("Event 3", "https://webdocs.cs.ualberta.ca/~bolson3/cmput301/dance.jpg",  "Description 3", "Date 3", "Time 3", "Location 3", "Organizer 3"));
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        Date start1 = dateOf(2025, Calendar.NOVEMBER, 15, 19, 30);
+        Date end1 = dateOf(2025, Calendar.NOVEMBER, 15, 21, 30);
+        data.add(new Event(
+                "evt-demon-slayer-2025-11-15",
+                "Demon Slayer: Infinity Castle – The Final Battle Begins",
+                "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet.",
+                "Edmonton Cineplex Westmount",
+                "Anime Alberta",
+                R.drawable.anime, start1, end1));
+
+        Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
+        Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
+        data.add(new Event(
+                "evt-city-league-hockey-night-2025-12-02",
+                "City League Hockey Night",
+                "Weekly rec league double-header.",
+                "Terwillegar Rec Centre",
+                "YEG Sports",
+                R.drawable.hockey, start2, end2));
+
+        Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
+        Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
+        data.add(new Event(
+                "evt-winter-dance-showcase-2025-12-12",
+                "Winter Dance Showcase",
+                "Contemporary + hip-hop student performances.",
+                "U of A Timms Centre",
+                "Dance Society",
+                R.drawable.dance, start3, end3));
 
         adapter = new MyAdapter(data, (item, position) -> {
             Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
-            intent.putExtra("name", item.getEventName());
-            intent.putExtra("description", "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet. Witness the breathtaking visuals and emotional battles of Demon Slayer’s most intense arc on the big screen.");
-            intent.putExtra("date", item.getEventDate());
-            intent.putExtra("time", item.getEventTime());
-            intent.putExtra("location", item.getEventLocation());
-            intent.putExtra("organizer", item.getEventOrganizer());
-            intent.putExtra("imageRes", item.getEventImage());
+            intent.putExtra("id", item.getId());
+            intent.putExtra("name", item.getName());
+            intent.putExtra("description", item.getDescription());
+            intent.putExtra("dateStart", item.getFormattedStartDate());
+            intent.putExtra("timeStart", item.getFormattedStartTime());
+            intent.putExtra("dateEnd", item.getFormattedEndDate());
+            intent.putExtra("timeEnd", item.getFormattedEndTime());
+            intent.putExtra("location", item.getLocation());
+            intent.putExtra("organizer", item.getOrganizer());
+            intent.putExtra("imageRes", item.getImage());
             startActivity(intent);
         });
 
@@ -95,6 +125,14 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+    private Date dateOf(int year, int month, int day, int hour24, int minute) {
+        Calendar c = Calendar.getInstance(Locale.CANADA);
+        c.set(year, month, day, hour24, minute, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        return c.getTime();
+    }
+
     private void filterList(String text) {
 
         String q = text == null ? "" : text.trim().toLowerCase();
@@ -103,9 +141,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        List<EventListData> filteredList = new ArrayList<>();
-        for (EventListData item : data) {
-            if (item.getEventName().toLowerCase().contains(q)) {
+        List<Event> filteredList = new ArrayList<>();
+        for (Event item : data) {
+            if (item.getName().toLowerCase().contains(q)) {
                 filteredList.add(item);
             }
         }
