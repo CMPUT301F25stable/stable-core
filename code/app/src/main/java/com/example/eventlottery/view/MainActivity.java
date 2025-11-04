@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet.",
                 "Edmonton Cineplex Westmount",
                 "Anime Alberta",
-                R.drawable.anime, start1, end1));
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp", start1, end1));
 
         Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
         Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                 "Weekly rec league double-header.",
                 "Terwillegar Rec Centre",
                 "YEG Sports",
-                R.drawable.hockey, start2, end2));
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", start2, end2));
 
         Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
         Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 "Contemporary + hip-hop student performances.",
                 "U of A Timms Centre",
                 "Dance Society",
-                R.drawable.dance, start3, end3));
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
 
         adapter = new MyAdapter(data, (item, position) -> {
             Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("timeEnd", item.getFormattedEndTime());
             intent.putExtra("location", item.getLocation());
             intent.putExtra("organizer", item.getOrganizer());
-            intent.putExtra("imageRes", item.getImage());
+            intent.putExtra("image", item.getImage());
             startActivity(intent);
         });
 

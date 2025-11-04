@@ -60,7 +60,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
 
-        int imageRes = getIntent().getIntExtra("imageRes", R.drawable.placeholder);
+        String imageURL = getIntent().getStringExtra("image");
 
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID.", Toast.LENGTH_SHORT).show();
@@ -79,8 +79,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         details.setText(when + "\n📍 Location: " + location + "\n🎟️ Organizer: " + organizer);
 
-        Glide.with(this).load(imageRes).placeholder(R.drawable.placeholder).into(image);
-        Glide.with(this).load(imageRes).placeholder(R.drawable.placeholder).into(background);
+        Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(image);
+        Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(background);
 
         homeButton.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 
