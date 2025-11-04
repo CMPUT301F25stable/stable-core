@@ -22,6 +22,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.Objects;
 
 /**
+ * @author Jensen Lee
  * EditUserInfoActivity class is used to display the users personal
  * info when added/updated.
  */
