@@ -3,42 +3,67 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="#F8F9FA"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header Section -->
+        <!-- Header Section with Gradient -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#1976D2"
+            android:background="@drawable/header_gradient"
             android:padding="24dp"
             android:elevation="4dp">
 
+            <!-- Back Button -->
+            <ImageButton
+                android:id="@+id/backButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:contentDescription="Back"
+                app:tint="@android:color/white" />
+
+            <!-- Event Name -->
             <TextView
                 android:id="@+id/eventNameHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/backButton"
+                android:layout_toStartOf="@id/statusBadge"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:text="Event Invitation"
-                android:textColor="#FFFFFF"
-                android:textSize="24sp"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:gravity="center" />
+                android:maxLines="2"
+                android:ellipsize="end" />
 
+            <!-- Status Badge -->
             <TextView
-                android:id="@+id/statusTextView"
+                android:id="@+id/statusBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/eventNameHeader"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="8dp"
-                android:text="Status: Notified"
-                android:textColor="#E3F2FD"
-                android:textSize="14sp"
-                android:textStyle="italic" />
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="Notified"
+                android:textColor="@android:color/holo_blue_dark"
+                android:background="@android:color/holo_blue_light"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:textSize="12sp"
+                android:textStyle="bold" />
         </RelativeLayout>
 
         <!-- Event Details Card -->
@@ -47,7 +72,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@android:color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -61,40 +87,15 @@
                     android:text="📋 Event Details"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="#333333"
+                    android:textColor="#212121"
                     android:layout_marginBottom="16dp" />
-
-                <!-- Event Name -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginBottom="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Event"
-                        android:textSize="12sp"
-                        android:textColor="#757575"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/eventNameText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Marathon 2025"
-                        android:textSize="16sp"
-                        android:textColor="#212121"
-                        android:layout_marginTop="4dp" />
-                </LinearLayout>
 
                 <!-- Description -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginBottom="12dp">
+                    android:layout_marginBottom="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -102,65 +103,137 @@
                         android:text="Description"
                         android:textSize="12sp"
                         android:textColor="#757575"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:letterSpacing="0.05" />
 
                     <TextView
                         android:id="@+id/eventDescriptionText"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Join us for the yearly marathon"
                         android:textSize="16sp"
-                        android:textColor="#212121"
-                        android:layout_marginTop="4dp" />
+                        android:textColor="#424242"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- Location -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:orientation="horizontal"
                     android:layout_marginBottom="12dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📍 Location"
-                        android:textSize="12sp"
-                        android:textColor="#757575"
-                        android:textStyle="bold" />
+                        android:text="📍"
+                        android:textSize="16sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Location"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/eventLocationText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="City Park"
+                            android:textSize="16sp"
+                            android:textColor="#424242"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Date/Time -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
 
                     <TextView
-                        android:id="@+id/eventLocationText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="City Park"
+                        android:text="🕒"
                         android:textSize="16sp"
-                        android:textColor="#212121"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginEnd="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Date &amp; Time"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/eventDateTimeText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Saturday, Dec 2, 2025 at 6:00 PM"
+                            android:textSize="16sp"
+                            android:textColor="#424242"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Organizer -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="horizontal">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Organized by"
-                        android:textSize="12sp"
-                        android:textColor="#757575"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/eventOrganizerText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Event Organizer"
+                        android:text="👤"
                         android:textSize="16sp"
-                        android:textColor="#212121"
-                        android:layout_marginTop="4dp" />
+                        android:layout_marginEnd="8dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Organized by"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:textStyle="bold"
+                            android:letterSpacing="0.05" />
+
+                        <TextView
+                            android:id="@+id/eventOrganizerText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Event Organizer"
+                            android:textSize="16sp"
+                            android:textColor="#424242"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -173,8 +246,8 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="4dp"
-            app:cardBackgroundColor="#E3F2FD">
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFF3E0">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -185,18 +258,17 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎟️ Lottery Selection Guidelines"
+                    android:text="🎟️ Important Information"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#1565C0"
+                    android:textColor="#E65100"
                     android:layout_marginBottom="12dp" />
 
                 <TextView
-                    android:id="@+id/infoTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Entrants are selected randomly from the waiting list.\n\n• If a chosen entrant declines, another will be selected from the waitlist.\n\n• Accepted entrants must confirm before the event deadline."
-                    android:textColor="#0D47A1"
+                    android:text="• You have been selected from the waiting list\n\n• Please respond to this invitation promptly\n\n• If you decline, another entrant will be selected\n\n• Accepted invitations are final"
+                    android:textColor="#BF360C"
                     android:textSize="14sp"
                     android:lineSpacingExtra="4dp" />
             </LinearLayout>
@@ -210,7 +282,7 @@
             android:gravity="center"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="32dp">
 
             <Button
                 android:id="@+id/declineButton"
@@ -220,12 +292,10 @@
                 android:text="Decline"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:backgroundTint="#FFFFFF"
+                android:backgroundTint="@android:color/white"
                 android:textColor="#D32F2F"
                 android:layout_marginEnd="8dp"
-                app:strokeColor="#D32F2F"
-                app:strokeWidth="2dp"
-                app:cornerRadius="8dp" />
+                android:elevation="2dp" />
 
             <Button
                 android:id="@+id/acceptButton"
@@ -236,9 +306,9 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:backgroundTint="#4CAF50"
-                android:textColor="#FFFFFF"
+                android:textColor="@android:color/white"
                 android:layout_marginStart="8dp"
-                app:cornerRadius="8dp" />
+                android:elevation="2dp" />
         </LinearLayout>
 
     </LinearLayout>

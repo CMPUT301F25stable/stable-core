@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private SearchView searchView;
     private MyAdapter adapter;
     ArrayList<Event> data = new ArrayList<>();
+    private User currentUser;
+    public static MainActivity instance;
 
     private String getDeviceId(Context context) {
         SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
@@ -51,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        instance = this;
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -60,9 +64,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DEVICE_ID = getDeviceId(this);
-        // Load user data here using DEVICE_ID
 
-        User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
+        // Load or create user
+        currentUser = loadOrCreateUser();
+
+        //User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -96,6 +102,19 @@ public class MainActivity extends AppCompatActivity {
                 "U of A Timms Centre",
                 "Dance Society",
                 "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
+
+        // TESTING: Simulate user joining some events
+        // Comment this out if you do not want to populate the events
+        currentUser.markJoined("evt-demon-slayer-2025-11-15");
+        currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
+
+        currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
+        currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
+
+        currentUser.getWaitlistedEvents().add("evt-winter-dance-showcase-2025-12-12");
+        saveUser(currentUser);
+
+        // TESTING END
 
         adapter = new MyAdapter(data, (item, position) -> {
             Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
@@ -155,5 +174,34 @@ public class MainActivity extends AppCompatActivity {
             adapter.setFilteredList(filteredList);
         }
 
+    }
+
+    public ArrayList<Event> getAllEvents() {
+        return data;
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
+    }
+
+    public Event getEventById(String eventId) {
+        for (Event event : data) {
+            if (event.getId().equals(eventId)) {
+                return event;
+            }
+        }
+        return null;
+    }
+
+    // User persistence methods (you can replace these with Firebase later)
+    private User loadOrCreateUser() {
+        // TODO: Load from Firebase/Database
+        // For now, create a new user
+        return new User(DEVICE_ID, "John Doe", "john.doe@example.com", "780-123-4567");
+    }
+
+    public void saveUser(User user) {
+        // TODO: Save to Firebase/Database
+        this.currentUser = user;
     }
 }

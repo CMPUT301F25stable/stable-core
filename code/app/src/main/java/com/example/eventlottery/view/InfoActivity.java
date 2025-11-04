@@ -4,31 +4,37 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /** USER STORY - 01.02.03
  * @author: Jensen Lee*/
 public class InfoActivity extends AppCompatActivity {
 
     private TextView eventNameHeader;
-    private TextView eventNameText;
     private TextView eventDescriptionText;
     private TextView eventLocationText;
     private TextView eventOrganizerText;
-    private TextView statusTextView;
+    private TextView eventDateTimeText;
+    private TextView statusBadge;
     private Button acceptButton;
     private Button declineButton;
+    private ImageButton backButton;
     private User currentUser;
     private Event currentEvent;
+    private String currentStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,13 +43,14 @@ public class InfoActivity extends AppCompatActivity {
 
         // Bind UI elements
         eventNameHeader = findViewById(R.id.eventNameHeader);
-        eventNameText = findViewById(R.id.eventNameText);
         eventDescriptionText = findViewById(R.id.eventDescriptionText);
         eventLocationText = findViewById(R.id.eventLocationText);
         eventOrganizerText = findViewById(R.id.eventOrganizerText);
-        statusTextView = findViewById(R.id.statusTextView);
+        eventDateTimeText = findViewById(R.id.eventDateTimeText);
+        statusBadge = findViewById(R.id.statusBadge);
         acceptButton = findViewById(R.id.acceptButton);
         declineButton = findViewById(R.id.declineButton);
+        backButton = findViewById(R.id.backButton);
 
         // Get data from intent
         Intent intent = getIntent();
@@ -76,49 +83,153 @@ public class InfoActivity extends AppCompatActivity {
 
         // Populate UI
         eventNameHeader.setText(eventName);
-        eventNameText.setText(eventName);
         eventDescriptionText.setText(eventDescription);
         eventLocationText.setText(eventLocation);
         eventOrganizerText.setText(eventOrganizer);
+        eventDateTimeText.setText(formatEventDateTime(startTime));
 
         updateStatusDisplay();
 
-        // Accept button
-        acceptButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                currentUser.acceptInvitation(currentEvent.getId());
-                Toast.makeText(InfoActivity.this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
-                updateStatusDisplay();
+        backButton.setOnClickListener(v -> finish());
 
-                // Disable buttons after accepting
-                acceptButton.setEnabled(false);
-                declineButton.setEnabled(false);
+        // Accept Button
+        acceptButton.setOnClickListener(v -> showConfirmationDialog(true));
 
-                // TODO: Make it save the accept and save it to firebase and return
-            }
-        });
+        // Decline Button
+        declineButton.setOnClickListener(v -> showConfirmationDialog(false));
 
-        // Decline button
-        declineButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                currentUser.declineInvitation(currentEvent.getId());
-                Toast.makeText(InfoActivity.this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
-                updateStatusDisplay();
-
-                // Disable buttons after declining
-                acceptButton.setEnabled(false);
-                declineButton.setEnabled(false);
-
-                // TODO: Make it save the decline and save it to firebase and return
-            }
-        });
     }
 
-    // TODO: Structure change broke this
+    /**
+     * Shows confirmation dialog for accept/decline action
+     * @param isAccepting true if accepting, false if declining
+     */
+    private void showConfirmationDialog(boolean isAccepting) {
+        String title = isAccepting ? "Accept Invitation?" : "Decline Invitation?";
+        String message = isAccepting
+                ? "Are you sure you want to accept this event invitation?"
+                : "Are you sure you want to decline this event invitation?";
+        String positiveText = isAccepting ? "Accept" : "Decline";
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+
+        builder.setPositiveButton(positiveText, (dialog, which) -> {
+            if (isAccepting) {
+                handleAccept();
+            } else {
+                handleDecline();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Customize button colors
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(
+                isAccepting ? getColor(android.R.color.holo_green_dark) : getColor(android.R.color.holo_red_dark)
+        );
+    }
+
+    /**
+     * Handles accepting the invitation
+     */
+    private void handleAccept() {
+        currentUser.acceptInvitation(currentEvent.getId());
+        currentStatus = "Accepted";
+
+        // Update MainActivity's user data
+        if (MainActivity.instance != null) {
+            MainActivity.instance.getCurrentUser().acceptInvitation(currentEvent.getId());
+            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
+        }
+
+        Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
+        updateStatusDisplay();
+
+        // Disable buttons after accepting
+        acceptButton.setEnabled(false);
+        declineButton.setEnabled(false);
+        acceptButton.setAlpha(0.5f);
+        declineButton.setAlpha(0.5f);
+
+        // Return to UserPanel after a short delay
+        acceptButton.postDelayed(() -> {
+            finish(); // Go back to UserPanel
+        }, 1500);
+    }
+
+    /**
+     * Handles declining the invitation
+     */
+    private void handleDecline() {
+        currentUser.declineInvitation(currentEvent.getId());
+        currentStatus = "Declined";
+
+        // Update MainActivity's user data
+        if (MainActivity.instance != null) {
+            MainActivity.instance.getCurrentUser().declineInvitation(currentEvent.getId());
+            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
+        }
+
+        Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+        updateStatusDisplay();
+
+        // Disable buttons after declining
+        acceptButton.setEnabled(false);
+        declineButton.setEnabled(false);
+        acceptButton.setAlpha(0.5f);
+        declineButton.setAlpha(0.5f);
+
+        // Return to UserPanel after a short delay
+        declineButton.postDelayed(() -> {
+            finish(); // Go back to UserPanel
+        }, 1500);
+    }
+
+
+    /**
+     * Updates the status badge display
+     */
     private void updateStatusDisplay() {
         String status = currentUser.getStatusForEvent(currentEvent.getId());
-        statusTextView.setText("Status: " + status);
+        statusBadge.setText(status);
+
+        // Update badge styling based on status
+        int backgroundColor;
+        int textColor;
+
+        switch (status) {
+            case "Accepted":
+                backgroundColor = getColor(android.R.color.holo_green_light);
+                textColor = getColor(android.R.color.holo_green_dark);
+                break;
+            case "Declined":
+                backgroundColor = getColor(android.R.color.holo_red_light);
+                textColor = getColor(android.R.color.holo_red_dark);
+                break;
+            case "Notified":
+                backgroundColor = getColor(android.R.color.holo_blue_light);
+                textColor = getColor(android.R.color.holo_blue_dark);
+                break;
+            default:
+                backgroundColor = android.graphics.Color.parseColor("#F5F5F5");
+                textColor = android.graphics.Color.GRAY;
+        }
+
+        statusBadge.setBackgroundColor(backgroundColor);
+        statusBadge.setTextColor(textColor);
     }
+
+    /**
+     * Formats the event date/time for display
+     */
+    private String formatEventDateTime(Date date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
+        return formatter.format(date);
+    }
+
 }

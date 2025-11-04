@@ -3,62 +3,75 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:background="@android:color/white"
+    android:background="#F8F9FA"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- Top bar -->
-    <RelativeLayout
+    <!-- Top bar with gradient -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="16dp"
-        android:paddingBottom="8dp">
+        android:orientation="vertical"
+        android:background="@drawable/header_gradient"
+        android:elevation="4dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your Name"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:layout_centerHorizontal="true" />
+
+            <ImageView
+                android:id="@+id/edit_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/edit_icon"
+                android:tint="@android:color/white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                android:contentDescription="Edit Profile" />
+        </RelativeLayout>
+
+        <!-- Registered Events Title -->
         <TextView
-            android:id="@+id/user_name"
+            android:id="@+id/registered_events_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your Name"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_centerHorizontal="true" />
-
-        <ImageView
-            android:id="@+id/edit_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/edit_icon"
-            android:contentDescription="Edit" />
-    </RelativeLayout>
-
-    <!-- Registered Events -->
-    <TextView
-        android:id="@+id/registered_events_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Registered Events"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp" />
+            android:text="My Events"
+            android:textSize="16sp"
+            android:textColor="#E0E0E0"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
 
     <!-- Scrollable event list -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
 
         <LinearLayout
             android:id="@+id/event_list_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:divider="@android:color/transparent"
-            android:showDividers="middle">
-
+            android:padding="16dp">
+            <!-- Events will be dynamically added here -->
         </LinearLayout>
     </ScrollView>
 
@@ -68,6 +81,7 @@
         android:name="com.example.eventlottery.view.TaskbarFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:elevation="8dp"
         tools:layout="@layout/fragment_home_taskbar" />
 
 </LinearLayout>

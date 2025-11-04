@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
@@ -40,10 +41,21 @@ public class UserPanel extends AppCompatActivity {
 
         // Initialize the container for events
         eventListContainer = findViewById(R.id.event_list_container);
-        allEvents = new ArrayList<>();
 
-        // Create example user with events
-        createExampleUserWithEvents();
+        // Get data from MainActivity
+        if (MainActivity.instance != null) {
+            currentUser = MainActivity.instance.getCurrentUser();
+            allEvents = MainActivity.instance.getAllEvents();
+        }
+        else {
+            // Fallback: create sample data if MainActivity isn't available
+            currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
+            allEvents = new ArrayList<>();
+        }
+
+        // Update username in the UI
+        TextView userName = findViewById(R.id.user_name);
+        userName.setText(currentUser.getName());
 
         // Display the events
         displayEvents();
@@ -56,85 +68,34 @@ public class UserPanel extends AppCompatActivity {
 
     }
 
-    /**
-     * Creates example user with different event statuses
-     */
-    private void createExampleUserWithEvents() {
-        // Create a user
-        currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
-
-        // Create dates for events
-        Calendar calendar = Calendar.getInstance();
-
-        // Event 1: Summer Music Festival (Accepted/Confirmed)
-        calendar.set(2025, Calendar.JULY, 15, 18, 0);
-        Date movie1Start = calendar.getTime();
-        calendar.set(2025, Calendar.JULY, 15, 23, 0);
-        Date movie1End = calendar.getTime();
-        Event confirmedEvent = new Event(
-                "Anime",
-                "Watch the Demon Slayer: Infinity Castle",
-                "West Edmonton Mall Cineplex, Edmonton, AB",
-                "Movie Inc.",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp",
-                movie1Start,
-                movie1End
-        );
-        allEvents.add(confirmedEvent);
-
-        // Event 2: Tech Conference 2025 (Notified/Registered)
-        calendar.set(2025, Calendar.AUGUST, 20, 9, 0);
-        Date sports1Start = calendar.getTime();
-        calendar.set(2025, Calendar.AUGUST, 20, 17, 0);
-        Date sports1End = calendar.getTime();
-        Event registeredEvent = new Event(
-                "Oilers vs Kings",
-                "Watch the Edmonton Oilers face off against the LA Kings",
-                "Rogers Place, Edmonton, AB",
-                "Sports Alberta",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", // Replace with your actual drawable
-                sports1Start,
-                sports1End
-        );
-        allEvents.add(registeredEvent);
-
-        // Event 3: Food & Wine Expo (Waitlisted)
-        calendar.set(2025, Calendar.SEPTEMBER, 10, 14, 0);
-        Date food1Start = calendar.getTime();
-        calendar.set(2025, Calendar.SEPTEMBER, 10, 20, 0);
-        Date food1End = calendar.getTime();
-        Event waitlistedEvent = new Event(
-                "Food & Wine Expo",
-                "Culinary showcase featuring local chefs and wineries",
-                "Edmonton Expo Centre, Edmonton, AB",
-                "Culinary Events Ltd.",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", // Replace with your actual drawable
-                food1Start,
-                food1End
-        );
-        allEvents.add(waitlistedEvent);
-
-        // Add events with different statuses
-        currentUser.getRegisteredEvents().put(confirmedEvent.getId(), "Accepted");
-        currentUser.getRegisteredEvents().put(registeredEvent.getId(), "Notified");
-        currentUser.getWaitlistedEvents().add(waitlistedEvent.getId());
-
-        // Update user name in the UI
-        TextView userName = findViewById(R.id.user_name);
-        userName.setText(currentUser.getName());
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh events when returning to this activity
+        if (MainActivity.instance != null) {
+            currentUser = MainActivity.instance.getCurrentUser();
+            allEvents = MainActivity.instance.getAllEvents();
+        }
+        eventListContainer.removeAllViews();
+        displayEvents();
     }
 
     /**
      * Displays all events (waitlisted and registered) in the UI
     */
     private void displayEvents() {
+        // Check if user has any events
+        if ((currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty())) {
+            showEmptyState();
+            return;
+        }
+
         // Display registered events
         for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
             String eventId = entry.getKey();
             String status = entry.getValue();
-
-            // Find the corresponding event object
             Event event = findEventById(eventId);
+
             if (event != null) {
                 addEventCard(event, status);
             }
@@ -164,92 +125,183 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Creates and adds an event card to the UI
+     * Shows empty state when no events are registered
+     */
+    private void showEmptyState() {
+        LinearLayout emptyState = new LinearLayout(this);
+        emptyState.setOrientation(LinearLayout.VERTICAL);
+        emptyState.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        emptyState.setLayoutParams(params);
+        emptyState.setPadding(dpToPx(32), dpToPx(64), dpToPx(32), dpToPx(64));
+
+        TextView emptyText = new TextView(this);
+        emptyText.setText("No events yet");
+        emptyText.setTextSize(18);
+        emptyText.setTextColor(Color.parseColor("#757575"));
+        emptyText.setGravity(android.view.Gravity.CENTER);
+
+        TextView emptySubtext = new TextView(this);
+        emptySubtext.setText("Browse events and join to see them here");
+        emptySubtext.setTextSize(14);
+        emptySubtext.setTextColor(Color.parseColor("#9E9E9E"));
+        emptySubtext.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams subtextParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        subtextParams.setMargins(0, dpToPx(8), 0, 0);
+        emptySubtext.setLayoutParams(subtextParams);
+
+        emptyState.addView(emptyText);
+        emptyState.addView(emptySubtext);
+        eventListContainer.addView(emptyState);
+    }
+
+    /**
+     * Creates and adds an event card to the UI with modern design
      * @param event Given an Event object
      * @param status Given a string of the status of the registered event
      */
     private void addEventCard(Event event, String status) {
-        // Create the card container
-        LinearLayout card = new LinearLayout(this);
+        // Create CardView for modern look
+        CardView cardView = new CardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        cardParams.setMargins(0, 0, 0, dpToPx(8));
-        card.setLayoutParams(cardParams);
+        cardParams.setMargins(0, 0, 0, dpToPx(12));
+        cardView.setLayoutParams(cardParams);
+        cardView.setCardElevation(dpToPx(2));
+        cardView.setRadius(dpToPx(12));
+        cardView.setCardBackgroundColor(Color.WHITE);
+
+        // Inner container
+        LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackgroundColor(Color.parseColor("#DDDDDD"));
-        card.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        card.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
 
         // Make card clickable only if status is "Notified"
         if (status.equals("Notified")) {
-            card.setClickable(true);
-            card.setFocusable(true);
-            // Add ripple effect for feedback
-            card.setBackgroundResource(android.R.drawable.list_selector_background);
-            card.setBackgroundColor(Color.parseColor("#DDDDDD"));
+            cardView.setClickable(true);
+            cardView.setFocusable(true);
 
-            card.setOnClickListener(v -> {
-                openInfoActivity(event, status);
-            });
+            // Get the ripple effect from theme
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            cardView.setForeground(getDrawable(outValue.resourceId));
+
+            cardView.setOnClickListener(v -> openInfoActivity(event, status));
         }
+
+        // Status badge
+        LinearLayout statusBadge = new LinearLayout(this);
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        badgeParams.setMargins(0, 0, 0, dpToPx(8));
+        statusBadge.setLayoutParams(badgeParams);
+        statusBadge.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+        statusBadge.setOrientation(LinearLayout.HORIZONTAL);
+
+        // Status styling
+        int statusColor;
+        int statusBgColor;
+        switch (status) {
+            case "Accepted":
+                statusColor = Color.parseColor("#2E7D32");
+                statusBgColor = Color.parseColor("#E8F5E9");
+                break;
+            case "Notified":
+                statusColor = Color.parseColor("#1976D2");
+                statusBgColor = Color.parseColor("#E3F2FD");
+                break;
+            case "Waitlisted":
+                statusColor = Color.parseColor("#F57C00");
+                statusBgColor = Color.parseColor("#FFF3E0");
+                break;
+            case "Declined":
+                statusColor = Color.parseColor("#C62828");
+                statusBgColor = Color.parseColor("#FFEBEE");
+                break;
+            default:
+                statusColor = Color.GRAY;
+                statusBgColor = Color.parseColor("#F5F5F5");
+        }
+
+        statusBadge.setBackgroundColor(statusBgColor);
+        android.graphics.drawable.GradientDrawable badgeShape = new android.graphics.drawable.GradientDrawable();
+        badgeShape.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        badgeShape.setCornerRadius(dpToPx(16));
+        badgeShape.setColor(statusBgColor);
+        statusBadge.setBackground(badgeShape);
+
+        TextView statusView = new TextView(this);
+        statusView.setText(status);
+        statusView.setTextSize(12);
+        statusView.setTextColor(statusColor);
+        statusView.setTypeface(null, android.graphics.Typeface.BOLD);
+        statusBadge.addView(statusView);
+        card.addView(statusBadge);
 
         // Event name
         TextView nameView = new TextView(this);
         nameView.setText(event.getName());
-        nameView.setTextSize(16);
-        nameView.setTextColor(Color.BLACK);
+        nameView.setTextSize(18);
+        nameView.setTextColor(Color.parseColor("#212121"));
         nameView.setTypeface(null, android.graphics.Typeface.BOLD);
-        card.addView(nameView);
-
-        // Bottom row (date/time and status)
-        LinearLayout bottomRow = new LinearLayout(this);
-        bottomRow.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams bottomParams = new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        bottomParams.setMargins(0, dpToPx(2), 0, 0);
-        bottomRow.setLayoutParams(bottomParams);
+        nameParams.setMargins(0, 0, 0, dpToPx(8));
+        nameView.setLayoutParams(nameParams);
+        card.addView(nameView);
 
-        // Event date/time
+        // Location with icon
+        LinearLayout locationRow = new LinearLayout(this);
+        locationRow.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams locationParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        locationParams.setMargins(0, 0, 0, dpToPx(4));
+        locationRow.setLayoutParams(locationParams);
+
+        TextView locationIcon = new TextView(this);
+        locationIcon.setText("📍 ");
+        locationIcon.setTextSize(14);
+        locationRow.addView(locationIcon);
+
+        TextView locationView = new TextView(this);
+        locationView.setText(event.getLocation());
+        locationView.setTextSize(14);
+        locationView.setTextColor(Color.parseColor("#616161"));
+        locationRow.addView(locationView);
+        card.addView(locationRow);
+
+        // Date/time with icon
+        LinearLayout dateRow = new LinearLayout(this);
+        dateRow.setOrientation(LinearLayout.HORIZONTAL);
+
+        TextView dateIcon = new TextView(this);
+        dateIcon.setText("🕒 ");
+        dateIcon.setTextSize(14);
+        dateRow.addView(dateIcon);
+
         TextView dateTimeView = new TextView(this);
         dateTimeView.setText(formatEventDateTime(event.getStartTime()));
         dateTimeView.setTextSize(14);
-        LinearLayout.LayoutParams dateParams = new LinearLayout.LayoutParams(
-                0,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                1.0f
-        );
-        dateTimeView.setLayoutParams(dateParams);
-        bottomRow.addView(dateTimeView);
+        dateTimeView.setTextColor(Color.parseColor("#616161"));
+        dateRow.addView(dateTimeView);
+        card.addView(dateRow);
 
-        // Status
-        TextView statusView = new TextView(this);
-        statusView.setText(status);
-        statusView.setTypeface(null, android.graphics.Typeface.BOLD);
-
-        // Color code based on status
-        switch (status) {
-            case "Accepted":
-                statusView.setTextColor(Color.parseColor("#2E7D32")); // Green
-                break;
-            case "Notified":
-                statusView.setTextColor(Color.parseColor("#1976D2")); // Blue
-                break;
-            case "Waitlisted":
-                statusView.setTextColor(Color.parseColor("#F57C00")); // Orange
-                break;
-            case "Declined":
-                statusView.setTextColor(Color.parseColor("#C62828")); // Red
-                break;
-            default:
-                statusView.setTextColor(Color.GRAY);
-        }
-        bottomRow.addView(statusView);
-
-        card.addView(bottomRow);
-        eventListContainer.addView(card);
+        cardView.addView(card);
+        eventListContainer.addView(cardView);
     }
 
     /**
