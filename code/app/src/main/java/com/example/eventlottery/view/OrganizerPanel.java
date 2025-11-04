@@ -174,7 +174,7 @@ public class OrganizerPanel extends AppCompatActivity {
             // Create event if all inputs are valid, add to this organizer's createdEvents, and input into Firestore.
             // TODO: This can only set waiting list max right now. Implement more later
             Date date = new Date();
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", 0, date, date);
+            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", date, date);
             newEvent.setWaitlistMax(maxSize);
             data.add(newEvent);
             organizer.createEvent(newEvent.getId());

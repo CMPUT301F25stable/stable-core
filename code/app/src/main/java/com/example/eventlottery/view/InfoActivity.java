@@ -69,7 +69,7 @@ public class InfoActivity extends AppCompatActivity {
         Date endTime = new Date(endTimeMillis);
 
         currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
-                eventOrganizer, 0, startTime, endTime);
+                eventOrganizer, "", startTime, endTime);
 
         // Register the event with current status
         currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);
