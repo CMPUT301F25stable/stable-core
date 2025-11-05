@@ -73,9 +73,6 @@ public class EventDatabase {
     /**
      * Gets all of the events associated with a particular organizer.
      */
-    /**
-     * Gets all of the events associated with a particular organizer.
-     */
     public void organizerGetEvents(Organizer organizer, ArrayList<Event> data, EventAdapter adapter) {
         // Get eventIDs. Return prematurely if there are no events
         ArrayList<String> eventIDs = organizer.getCreatedEvents();
@@ -86,8 +83,10 @@ public class EventDatabase {
         // Iterate through every eventID & add it from firestore, to the list.
         DocumentReference eventRef;
         for (String eventID : eventIDs) {
+            // Get reference to the event
             eventRef = eventsRef.document(eventID);
             eventRef.get().addOnSuccessListener(snapshot -> {
+                // If successfully gotten, & it exists, add to 'data'
                 if (snapshot.exists()) {
                     Event event = snapshot.toObject(Event.class);
                     data.add(event);
