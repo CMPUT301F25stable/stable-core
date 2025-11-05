@@ -19,12 +19,12 @@ public class NotificationSystem {
 
     private Context context;
 
-    public void NotificationSystem(Context context) {
+    public NotificationSystem(Context context) {
         this.context = context;
         createNotificationChannel();
     }
 
-    public void notifyWinner(User winner, String eventName) {
+    public void notifyLotteryWinner(User winner, String eventName) {
         Log.d(TAG, "Sending notification to winner: " + winner.getName());
 
         // Create intent to open app when notification is clicked
@@ -56,6 +56,7 @@ public class NotificationSystem {
         NotificationManager notificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        // prints in logcat if the notification is sent successfully
         if (notificationManager != null) {
             int notificationId = generateNotificationId(winner.getId());
             notificationManager.notify(notificationId, builder.build());
@@ -63,10 +64,9 @@ public class NotificationSystem {
         }
     }
 
-    /**
-     * Create notification channel
-     */
+
     private void createNotificationChannel() {
+        // creates a high priority notification channel
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
@@ -78,7 +78,7 @@ public class NotificationSystem {
 
         NotificationManager notificationManager =
                 context.getSystemService(NotificationManager.class);
-
+        // prints in logcat if the creation of notification channel is successful
         if (notificationManager != null) {
             notificationManager.createNotificationChannel(channel);
             Log.d(TAG, "Notification channel created");
