@@ -137,7 +137,7 @@ public class CreateEventDialog extends DialogFragment {
             Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end);
             newEvent.setWaitlistMax(maxSize);
 
-            // Notify OrganizerPanel that something was created
+            // Run organizer panel's listener if something was created
             if (listener != null) {
                 listener.onEventCreated(newEvent);
             }
