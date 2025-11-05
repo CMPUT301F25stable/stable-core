@@ -80,7 +80,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 ? String.format("📅 %s %s → %s %s", dateStart, timeStart, dateEnd, timeEnd)
                 : String.format("📅 %s  🕒 %s", dateStart, timeStart);
 
-        details.setText(when + "\n📍 Location: " + location + "\n🎟️ Organizer: " + organizer);
+        details.setText(when + "\n\n📍 Location: " + location + "\n\n🎟️ Organizer: " + organizer);
 
         // Note: This does not show up for the test events on the MainActivity unless they are valid
         // events in firebase
@@ -98,12 +98,13 @@ public class EventJoinAndLeave extends AppCompatActivity {
         // Check if user has already joined any events before loading
         userDoc.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) { // If user exists, check if they are in any events
-                List<String> joined = (List<String>) documentSnapshot.get("joinedEventIds");
-                user.setJoinedEventIds(joined);
-                isJoined = user.isJoined(eventId); // Check if user is joined in current event
+                List<String> joinedWaitlist = (List<String>) documentSnapshot.get("waitlistedEvents");
+                user.setWaitlistedEventIds(joinedWaitlist);
+
+                isJoined = user.isWaitlisted(eventId); // Check if user is joined in current event
                 updateJoinButton(isJoined);
             } else {
-                user.setJoinedEventIds(null); // If user doesn't exist, set joinedEventIds to null
+                user.setWaitlistedEventIds(null); // If user doesn't exist, set joinedEventIds to null
                 isJoined = false;
                 updateJoinButton(false);
             }
@@ -123,9 +124,9 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
 
         if (newState) { // If joined
-            userDoc.update("joinedEventIds", FieldValue.arrayUnion(eventId)) // Add to Firestore
+            userDoc.update("waitlistedEvents", FieldValue.arrayUnion(eventId)) // Add to Firestore
                     .addOnSuccessListener(v -> {
-                        user.markJoined(eventId);
+                        user.AddJoinedWaitlist(eventId);
                         isJoined = true;
                     })
                     .addOnFailureListener(e -> {
@@ -133,9 +134,9 @@ public class EventJoinAndLeave extends AppCompatActivity {
                         Toast.makeText(this, "Failed to join. Try again.", Toast.LENGTH_SHORT).show();
                     });
         } else { // If left
-            userDoc.update("joinedEventIds", FieldValue.arrayRemove(eventId)) // Remove from Firestore
+            userDoc.update("waitlistedEvents", FieldValue.arrayRemove(eventId)) // Remove from Firestore
                     .addOnSuccessListener(v -> {
-                        user.markLeft(eventId);
+                        user.RemoveLeftWaitlist(eventId);
                         isJoined = false;
                     })
                     .addOnFailureListener(e -> {
@@ -147,10 +148,10 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
     private void updateJoinButton(boolean joined) {
         if (joined) {
-            joinButton.setText("Leave Event");
+            joinButton.setText("Leave Waitlist");
             joinButton.setBackgroundColor(ContextCompat.getColor(this, R.color.Red));
         } else {
-            joinButton.setText("Join Event");
+            joinButton.setText("Join Waitlist");
             joinButton.setBackgroundColor(ContextCompat.getColor(this, R.color.Green));
         }
 
