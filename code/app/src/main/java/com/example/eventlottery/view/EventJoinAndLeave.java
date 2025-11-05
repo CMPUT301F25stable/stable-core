@@ -13,16 +13,19 @@ import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
+import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.List;
+import java.util.Map;
 
 public class EventJoinAndLeave extends AppCompatActivity {
-
+    private static final String TAG = "EventJoinAndLeave";
     private Button joinButton;
     private String eventId;
 
@@ -78,6 +81,10 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 : String.format("📅 %s  🕒 %s", dateStart, timeStart);
 
         details.setText(when + "\n📍 Location: " + location + "\n🎟️ Organizer: " + organizer);
+
+        // Note: This does not show up for the test events on the MainActivity unless they are valid
+        // events in firebase
+        getWaitListSize(eventId, details);
 
         Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(image);
         Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(background);
@@ -162,4 +169,37 @@ public class EventJoinAndLeave extends AppCompatActivity {
             userListener = null;
         }
     }
+
+    private void getWaitListSize(String eventId, TextView textView) {
+        EventDatabase eventDatabase = new EventDatabase();
+
+        eventDatabase.get(eventId, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot doc = task.getResult();
+                if (doc.exists()) {
+                    Map<String, Object> waitlistMap = (Map<String, Object>) doc.get("waitlist");
+                    if (waitlistMap != null) {
+
+                        List<Object> waitlistUsers = (List<Object>) waitlistMap.get("waitlistedUsers");
+                        if (waitlistUsers != null) {
+                            int size = waitlistUsers.size();
+                            textView.append("\n🧍 Waitlist: " + size);
+                        } else {
+                            int size = 0;
+                            textView.append("\n🧍 Waitlist: " + size);
+                        }
+                    } else {
+                        Log.d(TAG, "waitlistMap DNE: " + eventId);
+                    }
+                } else {
+                    Log.d(TAG, "Doc DNE: " + eventId);
+                }
+            } else {
+                Log.d(TAG, "Failed to get Event: " + eventId);
+            }
+        });
+    }
+
+
+
 }
