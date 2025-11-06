@@ -85,30 +85,28 @@ public class TaskbarFragment extends Fragment {
         ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
             if (result.getContents() != null) {
                 String content = result.getContents().strip();
-                if (content.length() == 36) {
-                    eventDatabase.get(content, task -> {
-                        if (task.isSuccessful()) {
-                            DocumentSnapshot doc = task.getResult();
-                            if (doc.exists()) {
-                                Event eventToDisplay = doc.toObject(Event.class);
-                                if (eventToDisplay != null) {
-                                    Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
-                                    intent.putExtra("id", eventToDisplay.getId());
-                                    intent.putExtra("name", eventToDisplay.getName());
-                                    intent.putExtra("description", eventToDisplay.getDescription());
-                                    intent.putExtra("dateStart", eventToDisplay.getFormattedStartDate());
-                                    intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
-                                    intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
-                                    intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
-                                    intent.putExtra("location", eventToDisplay.getLocation());
-                                    intent.putExtra("organizer", eventToDisplay.getOrganizer());
-                                    intent.putExtra("image", eventToDisplay.getImage());
-                                    startActivity(intent);
-                                }
+                eventDatabase.get(content, task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot doc = task.getResult();
+                        if (doc.exists()) {
+                            Event eventToDisplay = doc.toObject(Event.class);
+                            if (eventToDisplay != null) {
+                                Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
+                                intent.putExtra("id", eventToDisplay.getId());
+                                intent.putExtra("name", eventToDisplay.getName());
+                                intent.putExtra("description", eventToDisplay.getDescription());
+                                intent.putExtra("dateStart", eventToDisplay.getFormattedStartDate());
+                                intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
+                                intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
+                                intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
+                                intent.putExtra("location", eventToDisplay.getLocation());
+                                intent.putExtra("organizer", eventToDisplay.getOrganizer());
+                                intent.putExtra("image", eventToDisplay.getImage());
+                                startActivity(intent);
                             }
                         }
-                    });
-                }
+                    }
+                });
                 Log.d("TaskbarFragment - QRLauncher", content);
             }
         });
