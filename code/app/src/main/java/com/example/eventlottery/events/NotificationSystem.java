@@ -33,6 +33,7 @@ public class NotificationSystem {
         intent.putExtra("winner_notification", true);
         intent.putExtra("event_name", eventName);
 
+        // Create pending intent to open activity when notification is clicked and update current activity
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context,
                 generateNotificationId(winner.getId()),
@@ -42,11 +43,11 @@ public class NotificationSystem {
 
         // Build notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("🎉 Congratulations!")
+                .setSmallIcon(R.drawable.ic_notification) // TODO make notification svg
+                .setContentTitle("Congratulations!")
                 .setContentText("You've been selected for " + eventName + "!")
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("Congratulations " + winner.getName() + "! You have been selected from the waiting list for " + eventName + ". Tap to view details."))
+                        .bigText("Congratulations " + winner.getName() + "! You have been selected for  " + eventName + ". Tap to view details."))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
