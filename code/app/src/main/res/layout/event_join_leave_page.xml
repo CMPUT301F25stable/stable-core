@@ -35,6 +35,20 @@
                 android:background="@drawable/gradient_background"
                 android:padding="16dp">
 
+                <Button
+                    android:id="@+id/Requirments"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Requirments"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    android:layout_marginHorizontal="@dimen/cardview_compat_inset_shadow"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp"
+                    >
+                </Button>
+
                 <ImageView
                     android:id="@+id/imageView"
                     android:layout_width="match_parent"
@@ -44,6 +58,7 @@
                     android:clipToOutline="true"
                     android:src="@drawable/placeholder"
                     android:outlineProvider="background" />
+
 
                 <TextView
                     android:id="@+id/eventTitle"
@@ -63,6 +78,8 @@
                     android:text="Event Subtitle"
                     android:textSize="14sp"
                     android:textColor="@color/black" />
+
+
 
                 <View
                     android:layout_width="match_parent"
@@ -102,7 +119,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Join Event"
+                        android:text="Join Waitlist"
                         android:textAllCaps="false"
                         android:textSize="16sp"
                         android:textColor="@android:color/white"

@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -34,6 +35,7 @@ public class OrganizerPanel extends AppCompatActivity {
     Button viewWaitlist;
     Button editEvent;
     Button createEvent;
+    Button viewFinalList;
     int selectedEventIndex = 0;  // default is first item
     Event selectedEvent;
     EventAdapter adapter;
@@ -61,6 +63,7 @@ public class OrganizerPanel extends AppCompatActivity {
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
+        viewFinalList = findViewById(R.id.view_finalized_list_button);
         setClickListeners();
 
         // Initialize other variables such as the databases & users
@@ -190,6 +193,16 @@ public class OrganizerPanel extends AppCompatActivity {
                 // Display dialog
                 createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
             }
+        });
+
+        viewFinalList.setOnClickListener(v -> {
+            selectedEvent = data.get(selectedEventIndex);
+            ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
+
+            FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
+
+            // Display finalized list
+            finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
         });
     }
 }

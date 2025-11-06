@@ -1,11 +1,12 @@
 package com.example.eventlottery.view;
 
 import android.content.Intent;
+import android.provider.Settings;
 import android.widget.Toast;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -16,9 +17,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.model.EventListData;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Event> data = new ArrayList<>();
     private User currentUser;
     public static MainActivity instance;
+    private DBConnector connector;
 
     private String getDeviceId(Context context) {
         SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
@@ -65,8 +69,21 @@ public class MainActivity extends AppCompatActivity {
 
         DEVICE_ID = getDeviceId(this);
 
-        // Load or create user
-        currentUser = loadOrCreateUser();
+        connector = new DBConnector(this);
+        // Load user
+        // Initialize other variables such as the databases & users
+        String userID = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+        connector.loadUserInfo(DEVICE_ID, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    currentUser = document.toObject(Organizer.class);
+                }
+            }
+        });
 
         //User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
 
@@ -105,15 +122,12 @@ public class MainActivity extends AppCompatActivity {
 
         // TESTING: Simulate user joining some events
         // Comment this out if you do not want to populate the events
-        currentUser.markJoined("evt-demon-slayer-2025-11-15");
-        currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
-
-        currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
-        currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
-
-        currentUser.getWaitlistedEvents().add("evt-winter-dance-showcase-2025-12-12");
-        saveUser(currentUser);
-
+        //currentUser.markJoined("evt-demon-slayer-2025-11-15");
+        //currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
+        //currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
+        //currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
+        //currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
+        //saveUser(currentUser);
         // TESTING END
 
         adapter = new MyAdapter(data, (item, position) -> {
@@ -128,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("location", item.getLocation());
             intent.putExtra("organizer", item.getOrganizer());
             intent.putExtra("image", item.getImage());
+            intent.putExtra("waitlistMax", item.getWaitlistMax());
             startActivity(intent);
         });
 
@@ -197,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
     private User loadOrCreateUser() {
         // TODO: Load from Firebase/Database
         // For now, create a new user
-        return new User(DEVICE_ID, "John Doe", "john.doe@example.com", "780-123-4567");
+        return new User(DEVICE_ID, "Your Name", "john.doe@example.com", "780-123-4567");
     }
 
     public void saveUser(User user) {
