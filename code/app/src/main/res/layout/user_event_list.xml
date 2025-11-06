@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:background="#F8F9FA"
+    android:background="@color/white"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -40,7 +40,6 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/edit_icon"
-                android:tint="@android:color/white"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="4dp"
                 android:contentDescription="Edit Profile" />
@@ -81,6 +80,7 @@
         android:name="com.example.eventlottery.view.TaskbarFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:elevation="8dp"
         tools:layout="@layout/fragment_home_taskbar" />
 

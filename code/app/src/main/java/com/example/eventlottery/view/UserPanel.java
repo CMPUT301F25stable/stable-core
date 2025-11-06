@@ -1,18 +1,24 @@
 package com.example.eventlottery.view;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,42 +48,74 @@ public class UserPanel extends AppCompatActivity {
         // Initialize the container for events
         eventListContainer = findViewById(R.id.event_list_container);
 
-        // Get data from MainActivity
-        if (MainActivity.instance != null) {
-            currentUser = MainActivity.instance.getCurrentUser();
-            allEvents = MainActivity.instance.getAllEvents();
-        }
-        else {
-            // Fallback: create sample data if MainActivity isn't available
-            currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
-            allEvents = new ArrayList<>();
-        }
+        // Show loading indicator
+        TextView loadingText = new TextView(this);
+        loadingText.setText("Loading your profile...");
+        loadingText.setTextSize(18);
+        loadingText.setPadding(16, 16, 16, 16);
+        eventListContainer.addView(loadingText);
 
-        // Update username in the UI
-        TextView userName = findViewById(R.id.user_name);
-        userName.setText(currentUser.getName());
+        // Get Device ID
+        String deviceId = getDeviceId(this);
 
-        // Display the events
-        displayEvents();
+        // Load user from database
+        DBConnector connector = new DBConnector(this);
+        connector.loadUserInfo(deviceId, task -> {
+            eventListContainer.removeAllViews(); // Remove Loading text
 
-        // Go to EditUserInfoActivity
-        findViewById(R.id.edit_icon).setOnClickListener(v -> {
-            Intent intent = new Intent(UserPanel.this, EditUserInfoActivity.class);
-            startActivity(intent);
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    // User exists - load their data
+                    currentUser = document.toObject(Organizer.class);
+                } else {
+                    // First time user - create new user with default name
+                    currentUser = new Organizer(this);
+                    // Save to database
+                    connector.saveNewUser(this);
+                }
+            } else {
+                // Error loading - create new user anyway
+                currentUser = new Organizer(this);
+                connector.saveNewUser(this);
+            }
+
+            // Get Events
+            if (MainActivity.instance != null) {
+                allEvents = MainActivity.instance.getAllEvents();
+            } else {
+                allEvents = new ArrayList<>();
+            }
+
+            // Update username in the UI
+            TextView userNameView = findViewById(R.id.user_name);
+            if (currentUser != null) {
+                userNameView.setText(currentUser.getName());
+            }
+
+            displayEvents();
+
+            // Go to EditUserInfoActivity
+            findViewById(R.id.edit_icon).setOnClickListener(v -> {
+                Intent editIntent = new Intent(UserPanel.this, EditUserInfoActivity.class);
+                startActivity(editIntent);
+            });
         });
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        // Only refresh if currentUser if already loaded
         // Refresh events when returning to this activity
-        if (MainActivity.instance != null) {
-            currentUser = MainActivity.instance.getCurrentUser();
-            allEvents = MainActivity.instance.getAllEvents();
+        if (currentUser != null && eventListContainer != null) {
+            if (MainActivity.instance != null) {
+                currentUser = MainActivity.instance.getCurrentUser();
+                allEvents = MainActivity.instance.getAllEvents();
+            }
+            eventListContainer.removeAllViews();
+            displayEvents();
         }
-        eventListContainer.removeAllViews();
-        displayEvents();
     }
 
     /**
@@ -345,5 +383,14 @@ public class UserPanel extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    /**
+     * Helper function to get deviceId
+     * @param context Context of the activity
+     * */
+    private String getDeviceId(Context context) {
+        SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
+        return storedData.getString("UUID", "");
     }
 }

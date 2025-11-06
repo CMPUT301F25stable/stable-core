@@ -34,7 +34,7 @@ public class User implements Serializable {
                 Settings.Secure.ANDROID_ID
         );
 
-        this.name = "";
+        this.name = "Your Name"; // Needed to add to display on your name on userPanel
         this.emailAddress = "";
         this.phoneNumber = "";
         this.waitlistedEvents = new ArrayList<>();
