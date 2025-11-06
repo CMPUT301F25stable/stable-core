@@ -33,6 +33,7 @@ public class User implements Serializable {
                 context.getContentResolver(),
                 Settings.Secure.ANDROID_ID
         );
+
         this.name = "";
         this.emailAddress = "";
         this.phoneNumber = "";
@@ -98,12 +99,52 @@ public class User implements Serializable {
         return waitlistedEvents;
     }
 
-    public void setWaitlistedEvents(ArrayList<String> waitlistedEvents) {
-        this.waitlistedEvents = waitlistedEvents;
-    }
-
     public HashMap<String, String> getRegisteredEvents() {
         return registeredEvents;
+    }
+
+    /**
+     * Checks if the user has joined an event.
+     * @param eventId
+     * @return
+     */
+    public boolean isWaitlisted(String eventId) {
+        return waitlistedEvents != null && waitlistedEvents.contains(eventId);
+    }
+
+    /**
+     * Sets the list of joined event IDs.
+     * @param ids
+     */
+    public void setWaitlistedEventIds(List<String> ids) {
+        // called after reading Firestore
+        if (ids == null) this.waitlistedEvents = new ArrayList<>();
+        else this.waitlistedEvents = new ArrayList<>(ids);
+    }
+
+    /**
+     * Gets the list of joined event IDs.
+     * @return
+     */
+    public List<String> getWaitlistedEventIds() {
+        return waitlistedEvents == null ? Collections.emptyList() : waitlistedEvents;
+    }
+
+    /**
+     * Adds an event to the joined list.
+     * @param eventId
+     */
+    public void AddJoinedWaitlist(String eventId) {
+        if (waitlistedEvents == null) waitlistedEvents = new ArrayList<>();
+        if (!waitlistedEvents.contains(eventId)) waitlistedEvents.add(eventId);
+    }
+
+    /**
+     * Removes an event from the joined list.
+     * @param eventId
+     */
+    public void RemoveLeftWaitlist(String eventId) {
+        if (waitlistedEvents != null) waitlistedEvents.remove(eventId);
     }
 
     /**
@@ -157,22 +198,6 @@ public class User implements Serializable {
      */
     public void setRegisteredEvents(HashMap<String, String> registeredEvents) {
         this.registeredEvents = registeredEvents;
-    }
-
-    /**
-     * Given an event ID, remove it from the waitlist.
-     * @param eventToRemove The event ID to remove.
-     */
-    public void removeWaitlistedEvent(String eventToRemove) {
-        waitlistedEvents.remove(eventToRemove);
-    }
-
-    /**
-     * Given an event index, remove it from the waitlist.
-     * @param eventIndex The event index to remove.
-     */
-    public void removeWaitlistedEvent(int eventIndex) {
-        waitlistedEvents.remove(eventIndex);
     }
 
     /**

@@ -59,7 +59,7 @@ public class DBConnector {
 
     /**
      * Saves a new user to the database, if the user doesn't already exist.
-     * TODO: Right now it makes every user an organizer! Probably should change later
+     * Note: Every user is an organizer!
      * @param context The activity it's called in.
      */
     public void saveNewUser(Context context) {
@@ -70,8 +70,6 @@ public class DBConnector {
             DocumentSnapshot document = task.getResult();
             // If user doesn't already exist, create & set
             if (!document.exists()) {
-                // TODO: Change this from organizer to user later.
-                // I did it this way for now so that they don't crash when they enter OrganizerPanel - John
                 Organizer organizer = new Organizer(context);
                 userRef.set(organizer);
             }

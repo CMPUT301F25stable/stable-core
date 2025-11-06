@@ -77,11 +77,12 @@ public class Event implements Serializable {
         this.image = image;
         this.startTime = startTime;
         this.endTime = endTime;
-
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
         formatDates();
     }
+
+    public void setId(String id) { this.id = id; }
 
     public String getId() {
         return id;
