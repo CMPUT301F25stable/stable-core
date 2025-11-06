@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,12 +19,17 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.Firebase;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -37,6 +43,7 @@ public class UserPanel extends AppCompatActivity {
     private User currentUser;
     private LinearLayout eventListContainer;
     private ArrayList<Event> allEvents;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +54,9 @@ public class UserPanel extends AppCompatActivity {
 
         // Initialize the container for events
         eventListContainer = findViewById(R.id.event_list_container);
+
+        // Initialize the firebase
+        db = FirebaseFirestore.getInstance();
 
         // Show loading indicator
         TextView loadingText = new TextView(this);
@@ -93,6 +103,9 @@ public class UserPanel extends AppCompatActivity {
                 userNameView.setText(currentUser.getName());
             }
 
+            // TESTING: Create test notified event - REMOVE AFTER TESTING
+            //createTestNotifiedEvent();
+
             displayEvents();
 
             // Go to EditUserInfoActivity
@@ -122,30 +135,67 @@ public class UserPanel extends AppCompatActivity {
      * Displays all events (waitlisted and registered) in the UI
     */
     private void displayEvents() {
-        // Check if user has any events
-        if ((currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty())) {
+        // Get user document from Firestore
+        DocumentReference userDoc = db.collection("users").document(currentUser.getId());
+
+        userDoc.get().addOnSuccessListener(documentSnapshot -> {
+             if (documentSnapshot.exists()) {
+                 // Get the arrays from Firestore
+                 List<String> waitlistedEvents = (List<String>) documentSnapshot.get("waitlistedEvents");
+                 Map<String, Object> registeredEventsMap = (Map<String, Object>) documentSnapshot.get("registeredEvents");
+
+                 // Update local user object using existing setters
+                 currentUser.setWaitlistedEventIds(waitlistedEvents);
+
+                 // Convert Map<String, Object> to HaspMap<String, String> for registeredEvents
+                 if (registeredEventsMap != null) {
+                     HashMap<String, String> registeredEvents = new HashMap<>();
+                     for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
+                         registeredEvents.put(entry.getKey(), entry.getValue().toString());
+                     }
+                     currentUser.setRegisteredEvents(registeredEvents);
+                 }
+                 else {
+                     currentUser.setRegisteredEvents(new HashMap<>());
+                 }
+
+                 // Check if user has any events
+                 if (currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty()) {
+                     showEmptyState();
+                     return;
+                 }
+
+                 // Display registered events
+                 for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
+                     String eventId = entry.getKey();
+                     String status = entry.getValue();
+                     Event event = findEventById(eventId);
+
+                     if (event != null) {
+                         addEventCard(event, status);
+                     }
+                 }
+
+                 // Display waitlisted events
+                 for (String eventId : currentUser.getWaitlistedEvents()) {
+                     Event event = findEventById(eventId);
+                     if (event != null) {
+                         addEventCard(event, "Waitlisted");
+                     }
+                 }
+             }
+             else {
+                 // User document doesn't exist yet - use existing setters to initialize
+                 currentUser.setWaitlistedEventIds(null);
+                 currentUser.setRegisteredEvents(new HashMap<>());
+                 showEmptyState();
+             }
+        }).addOnFailureListener(e -> {
+            // Handle error
+            Log.e("DisplayEvents", "Error fetching user data", e);
+            Toast.makeText(this, "Error loading events", Toast.LENGTH_SHORT).show();
             showEmptyState();
-            return;
-        }
-
-        // Display registered events
-        for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
-            String eventId = entry.getKey();
-            String status = entry.getValue();
-            Event event = findEventById(eventId);
-
-            if (event != null) {
-                addEventCard(event, status);
-            }
-        }
-
-        // Display waitlisted events
-        for (String eventId : currentUser.getWaitlistedEvents()) {
-            Event event = findEventById(eventId);
-            if (event != null) {
-                addEventCard(event, "Waitlisted");
-            }
-        }
+        });
     }
 
     /**
@@ -392,5 +442,31 @@ public class UserPanel extends AppCompatActivity {
     private String getDeviceId(Context context) {
         SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
         return storedData.getString("UUID", "");
+    }
+
+    /**
+     * TESTING FUNCTION
+     * */
+    private void createTestNotifiedEvent() {
+        if (currentUser == null || allEvents == null || allEvents.isEmpty()) {
+            Log.e("TestEvent", "Cannot create test event - user or events not loaded");
+            return;
+        }
+
+        // Get the first event ID for testing
+        String testEventId = allEvents.get(2).getId();
+
+        // Update Firestore
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + testEventId, "Notified");
+
+        db.collection("users").document(currentUser.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("TestEvent", "Test notified event created successfully!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("TestEvent", "Error creating test event: " + e.getMessage());
+                });
     }
 }
