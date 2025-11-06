@@ -393,26 +393,29 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Opens InfoActivity with event details
+     * Opens InfoActivity with event details from Firebase
      */
     private void openInfoActivity(Event event, String status) {
+        Log.d("UserPanel", "openInfoActivity called for event: " + event.getName());
+
+        if (event == null) {
+            Log.e("UserPanel", "Event is null!");
+            Toast.makeText(this, "Error: Event not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (currentUser == null) {
+            Log.e("UserPanel", "CurrentUser is null!");
+            Toast.makeText(this, "Error: User not loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Intent intent = new Intent(UserPanel.this, InfoActivity.class);
 
-        // Pass event data
+        // Only pass IDs and status - InfoActivity will fetch the rest from Firebase
         intent.putExtra("EVENT_ID", event.getId());
-        intent.putExtra("EVENT_NAME", event.getName());
-        intent.putExtra("EVENT_DESCRIPTION", event.getDescription());
-        intent.putExtra("EVENT_LOCATION", event.getLocation());
-        intent.putExtra("EVENT_ORGANIZER", event.getOrganizer());
-        intent.putExtra("EVENT_START_TIME", event.getStartTime().getTime());
-        intent.putExtra("EVENT_END_TIME", event.getEndTime().getTime());
-        intent.putExtra("EVENT_STATUS", status);
-
-        // Pass user data
         intent.putExtra("USER_ID", currentUser.getId());
-        intent.putExtra("USER_NAME", currentUser.getName());
-        intent.putExtra("USER_EMAIL", currentUser.getEmailAddress());
-        intent.putExtra("USER_PHONE", currentUser.getPhoneNumber());
+        intent.putExtra("EVENT_STATUS", status);
 
         startActivity(intent);
     }
