@@ -1,23 +1,34 @@
 package com.example.eventlottery;
 
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.view.EventJoinAndLeave;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.MultiFormatReader;
 import com.google.zxing.RGBLuminanceSource;
 import com.google.zxing.Result;
 import com.google.zxing.common.HybridBinarizer;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,6 +39,7 @@ import java.util.Date;
  * QR Scan UI Test (description to be completed)
  */
 @RunWith(AndroidJUnit4.class)
+@LargeTest
 public class QRScanUITest {
     private ArrayList<Event> createTestEvents() {
         ArrayList<Event> events = new ArrayList<>();
@@ -82,6 +94,31 @@ public class QRScanUITest {
         }
     }
 
+    private Intent createIntent(Context appContext, Event event) {
+        Intent intent = new Intent(appContext, EventJoinAndLeave.class);
+        intent.putExtra("id", event.getId());
+        intent.putExtra("name", event.getName());
+        intent.putExtra("description", event.getDescription());
+        intent.putExtra("dateStart", event.getFormattedStartDate());
+        intent.putExtra("timeStart", event.getFormattedStartTime());
+        intent.putExtra("dateEnd", event.getFormattedEndDate());
+        intent.putExtra("timeEnd", event.getFormattedEndTime());
+        intent.putExtra("location", event.getLocation());
+        intent.putExtra("organizer", event.getOrganizer());
+        intent.putExtra("image", event.getImage());
+        return intent;
+    }
+
+    @Before
+    public void initialize() {
+        Intents.init();
+    }
+
+    @After
+    public void cleanup() {
+        Intents.release();
+    }
+
     @Test
     public void firstQRTest() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -95,6 +132,24 @@ public class QRScanUITest {
         String fakeQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.invalidqrcode1);
         int fakeQRIndex = Event.findEventById(events, fakeQRContent);
         assertEquals(-1, fakeQRIndex);
+
+        Context appContext = instrumentation.getTargetContext();
+        Event realEvent = events.get(realQRIndex);
+        Intent realIntent = createIntent(appContext, realEvent);
+        ActivityScenario.launch(realIntent);
+
+        String startDate = realEvent.getFormattedStartDate();
+        String startTime = realEvent.getFormattedStartTime();
+        String endDate = realEvent.getFormattedEndDate();
+        String endTime = realEvent.getFormattedEndTime();
+        String when = (endDate != null && endTime != null)
+                ? String.format("📅 %s %s → %s %s", startDate, startTime, endDate, endTime)
+                : String.format("📅 %s  🕒 %s", startDate, startTime);
+        String eventDetails = when + "\n📍 Location: " + realEvent.getLocation() + "\n🎟️ Organizer: " + realEvent.getOrganizer();
+
+        onView(withId(R.id.eventTitle)).check(matches(withText(realEvent.getName())));
+        onView(withId(R.id.eventDescription)).check(matches(withText(realEvent.getDescription())));
+        onView(withId(R.id.eventDetails)).check(matches(withText(eventDetails)));
     }
 
     @Test
@@ -110,5 +165,23 @@ public class QRScanUITest {
         String fakeQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.invalidqrcode2);
         int fakeQRIndex = Event.findEventById(events, fakeQRContent);
         assertEquals(-1, fakeQRIndex);
+
+        Context appContext = instrumentation.getTargetContext();
+        Event realEvent = events.get(realQRIndex);
+        Intent realIntent = createIntent(appContext, realEvent);
+        ActivityScenario.launch(realIntent);
+
+        String startDate = realEvent.getFormattedStartDate();
+        String startTime = realEvent.getFormattedStartTime();
+        String endDate = realEvent.getFormattedEndDate();
+        String endTime = realEvent.getFormattedEndTime();
+        String when = (endDate != null && endTime != null)
+                ? String.format("📅 %s %s → %s %s", startDate, startTime, endDate, endTime)
+                : String.format("📅 %s  🕒 %s", startDate, startTime);
+        String eventDetails = when + "\n📍 Location: " + realEvent.getLocation() + "\n🎟️ Organizer: " + realEvent.getOrganizer();
+
+        onView(withId(R.id.eventTitle)).check(matches(withText(realEvent.getName())));
+        onView(withId(R.id.eventDescription)).check(matches(withText(realEvent.getDescription())));
+        onView(withId(R.id.eventDetails)).check(matches(withText(eventDetails)));
     }
 }
