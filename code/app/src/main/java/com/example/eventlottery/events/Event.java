@@ -28,6 +28,7 @@ public class Event implements Serializable {
     private String formattedEndTime;
     private QRCode qrCode;
     private Waitlist waitlist;
+    private Finalizedlist finalizedlist;
 
     @NonNull
     private String generateUUID() {
@@ -65,6 +66,7 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.finalizedlist = new Finalizedlist();
         formatDates();
     }
 
@@ -79,6 +81,7 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.finalizedlist = new Finalizedlist();
         formatDates();
     }
 
@@ -231,4 +234,21 @@ public class Event implements Serializable {
         }
         return -1;
     }
+
+    public Finalizedlist getFinalizedlist() {
+        return finalizedlist;
+    }
+
+    public void setFinalizedlist(Finalizedlist finalizedlist) {
+        this.finalizedlist = finalizedlist;
+    }
+
+    /**
+     * Removes a user from the finalized list.
+     * @param user The user to remove.
+     */
+    public void addToFinalizedList(User user) {
+        this.finalizedlist.addUser(user);
+    }
+
 }
