@@ -1,10 +1,22 @@
 package com.example.eventlottery;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.example.eventlottery.events.Event;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.MultiFormatReader;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Result;
+import com.google.zxing.common.HybridBinarizer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,9 +32,20 @@ public class QRScanUITest {
     private ArrayList<Event> createTestEvents() {
         ArrayList<Event> events = new ArrayList<>();
 
+        for (int i = 0; i < 10; i++) {
+            events.add(new Event(
+                    "Filler Event",
+                    "Filler Description",
+                    "Filler Location",
+                    "Filler Organizer",
+                    "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp",
+                    new Date(1735758000000L),
+                    new Date(1735776000000L)));
+        }
+
         Date startDate1 = new Date(System.currentTimeMillis());
         Date endDate1 = new Date(System.currentTimeMillis() + 7200000L);
-        events.add(new Event(
+        events.add(4, new Event(
                 "93d9b36e-76e8-48d9-b506-e2dcade84e97",
                 "Demon Slayer: Infinity Castle – The Final Battle Begins",
                 "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet.",
@@ -32,7 +55,7 @@ public class QRScanUITest {
 
         Date startDate2 = new Date(1767250800000L);
         Date endDate2 = new Date(1767337199000L);
-        events.add(new Event(
+        events.add(8, new Event(
                 "5a43666c-5276-44bf-814a-0a5f99063286",
                 "New Years Dance Party",
                 "Dancing all day for New Years!",
@@ -43,8 +66,49 @@ public class QRScanUITest {
         return events;
     }
 
+    private String decodeQRCode(Context context, int resourceId) {
+        Bitmap qrCode = BitmapFactory.decodeResource(context.getResources(), resourceId);
+        int[] pixels = new int[qrCode.getWidth() * qrCode.getHeight()];
+        qrCode.getPixels(pixels, 0, qrCode.getWidth(), 0, 0, qrCode.getWidth(), qrCode.getHeight());
+
+        RGBLuminanceSource luminanceSource = new RGBLuminanceSource(qrCode.getWidth(), qrCode.getHeight(), pixels);
+        BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(luminanceSource));
+
+        try {
+            Result result = new MultiFormatReader().decode(binaryBitmap);
+            return result.getText();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
-    public void qrScanningTest() {
+    public void firstQRTest() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context context = instrumentation.getContext();
         ArrayList<Event> events = createTestEvents();
+
+        String realQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.testqrcode1);
+        int realQRIndex = Event.findEventById(events, realQRContent);
+        assertTrue(realQRIndex > -1);
+
+        String fakeQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.invalidqrcode1);
+        int fakeQRIndex = Event.findEventById(events, fakeQRContent);
+        assertEquals(-1, fakeQRIndex);
+    }
+
+    @Test
+    public void secondQRTest() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context context = instrumentation.getContext();
+        ArrayList<Event> events = createTestEvents();
+
+        String realQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.testqrcode2);
+        int realQRIndex = Event.findEventById(events, realQRContent);
+        assertTrue(realQRIndex > -1);
+
+        String fakeQRContent = decodeQRCode(context, com.example.eventlottery.test.R.drawable.invalidqrcode2);
+        int fakeQRIndex = Event.findEventById(events, fakeQRContent);
+        assertEquals(-1, fakeQRIndex);
     }
 }

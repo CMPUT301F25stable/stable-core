@@ -46,6 +46,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     // --- Third-party libraries ---
+    implementation("com.google.zxing:core:3.4.1")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.github.bumptech.glide:glide:5.0.5")
     implementation(libs.core)
