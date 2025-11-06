@@ -1,10 +1,12 @@
 package com.example.eventlottery.view;
 
 import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -23,6 +25,7 @@ import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,6 +42,7 @@ import java.util.Map;
  * @author Jensen Lee
  * */
 public class UserPanel extends AppCompatActivity {
+    private static final String TAG = "UserPanel";
 
     private User currentUser;
     private LinearLayout eventListContainer;
@@ -102,6 +106,8 @@ public class UserPanel extends AppCompatActivity {
             if (currentUser != null) {
                 userNameView.setText(currentUser.getName());
             }
+        // Connection to DataBase
+        db = new DBConnector(UserPanel.this);
 
             // TESTING: Create test notified event - REMOVE AFTER TESTING
             //createTestNotifiedEvent();
@@ -117,6 +123,7 @@ public class UserPanel extends AppCompatActivity {
     }
 
     @Override
+    @SuppressLint("HardwareIds")
     protected void onResume() {
         super.onResume();
         // Only refresh if currentUser if already loaded
@@ -129,6 +136,16 @@ public class UserPanel extends AppCompatActivity {
             eventListContainer.removeAllViews();
             displayEvents();
         }
+        eventListContainer.removeAllViews();
+        displayEvents();
+
+        // Update username in the UI
+        TextView userName = findViewById(R.id.user_name);
+        String userID = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+        loadUserName(userID, userName);
     }
 
     /**
@@ -471,5 +488,32 @@ public class UserPanel extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Log.e("TestEvent", "Error creating test event: " + e.getMessage());
                 });
+     * Gets the name of the user and sets a textview to their name
+     * @param id the UUID of the user
+     * @param textView the textview to be set as the users name
+     */
+    private void loadUserName(String id, TextView textView) {
+        db.loadUserInfo(id, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                if (snapshot.exists()) {
+                    String name = snapshot.getString("name");
+                    if (name == null || name.isEmpty()) {
+                        // placeholder
+                        name = "User";
+                        textView.setText(name);
+                    } else {
+                        textView.setText(name);
+                    }
+                } else {
+                    Log.d(TAG, "Snapshot DNE: " + id);
+                    String name = "User";
+                    textView.setText(name);
+                }
+            } else {
+                Log.d(TAG, "Failed loading user: " + id);
+            }
+        });
+
     }
 }
