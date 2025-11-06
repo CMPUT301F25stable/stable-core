@@ -60,7 +60,7 @@ public class UserPanel extends AppCompatActivity {
         eventListContainer = findViewById(R.id.event_list_container);
 
         // Initialize the firebase
-        db = FirebaseFirestore.getInstance();
+        //db = FirebaseFirestore.getInstance();
 
         // Show loading indicator
         TextView loadingText = new TextView(this);
