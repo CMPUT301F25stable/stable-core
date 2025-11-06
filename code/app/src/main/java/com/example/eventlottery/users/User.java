@@ -21,6 +21,8 @@ public class User implements Serializable {
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
     private ArrayList<String> joinedEventIds = new ArrayList<>();
 
+    private String fcmToken;
+
     // Firestore needs this for some reason
     public User() {}
 
@@ -234,5 +236,14 @@ public class User implements Serializable {
     @Override
     public String toString() {
         return "ID: " + getId() + "\nName: " + getName() + "\nEmail Address: " + getEmailAddress() + "\nPhone Number: " + getPhoneNumber();
+    }
+
+    // FCM Token
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
     }
 }
