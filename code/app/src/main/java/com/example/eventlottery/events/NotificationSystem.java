@@ -65,6 +65,48 @@ public class NotificationSystem {
         }
     }
 
+    public void notifyLotteryLoser(User user, String eventName) {
+        Log.d(TAG, "Sending notification to loser: " + user.getName());
+
+        // Create intent to open app when notification is clicked
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("loser_notification", true);
+        intent.putExtra("event_name", eventName);
+
+        // PendingIntent setup
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                generateNotificationId(user.getId() + "_lose"), // Change in id to avoid same ID problems
+                intent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        // Build "not selected" notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Thank you for entering!")
+                .setContentText("You were not selected for " + eventName + " this time.")
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText("Hi " + user.getName() + ", unfortunately you were not selected for "
+                                + eventName + " this time. We appreciate your interest — keep an eye out for future opportunities!"))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setVibrate(new long[]{0, 250, 100, 250});
+
+        // Send the notification
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (notificationManager != null) {
+            int notificationId = generateNotificationId(user.getId() + "_lose");
+            notificationManager.notify(notificationId, builder.build());
+            Log.d(TAG, "Loser notification sent successfully to " + user.getName());
+        }
+    }
+
+
 
     private void createNotificationChannel() {
         // creates a high priority notification channel
