@@ -73,6 +73,14 @@
                 android:layout_height="wrap_content"
                 android:text="Create Event"
                 android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/view_finalized_list_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View Final List"
+                android:layout_marginStart="15dp"/>
+
         </LinearLayout>
 
         <LinearLayout
