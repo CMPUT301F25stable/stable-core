@@ -145,7 +145,7 @@ public class QRScanUITest {
         String when = (endDate != null && endTime != null)
                 ? String.format("📅 %s %s → %s %s", startDate, startTime, endDate, endTime)
                 : String.format("📅 %s  🕒 %s", startDate, startTime);
-        String eventDetails = when + "\n📍 Location: " + realEvent.getLocation() + "\n🎟️ Organizer: " + realEvent.getOrganizer();
+        String eventDetails = when + "\n\n📍 Location: " + realEvent.getLocation() + "\n\n🎟️ Organizer: " + realEvent.getOrganizer();
 
         onView(withId(R.id.eventTitle)).check(matches(withText(realEvent.getName())));
         onView(withId(R.id.eventDescription)).check(matches(withText(realEvent.getDescription())));
@@ -178,7 +178,7 @@ public class QRScanUITest {
         String when = (endDate != null && endTime != null)
                 ? String.format("📅 %s %s → %s %s", startDate, startTime, endDate, endTime)
                 : String.format("📅 %s  🕒 %s", startDate, startTime);
-        String eventDetails = when + "\n📍 Location: " + realEvent.getLocation() + "\n🎟️ Organizer: " + realEvent.getOrganizer();
+        String eventDetails = when + "\n\n📍 Location: " + realEvent.getLocation() + "\n\n🎟️ Organizer: " + realEvent.getOrganizer();
 
         onView(withId(R.id.eventTitle)).check(matches(withText(realEvent.getName())));
         onView(withId(R.id.eventDescription)).check(matches(withText(realEvent.getDescription())));
