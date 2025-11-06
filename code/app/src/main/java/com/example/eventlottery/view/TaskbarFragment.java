@@ -84,6 +84,9 @@ public class TaskbarFragment extends Fragment {
             startActivity(intent);
         });
 
+        /**
+         * This handles the QR scanner's results and launches the Join/Leave Waitlist activity if the scanned content of the QR code is valid.
+         */
         ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
             if (result.getContents() != null) {
                 String content = result.getContents().strip();
@@ -106,13 +109,20 @@ public class TaskbarFragment extends Fragment {
                                 intent.putExtra("image", eventToDisplay.getImage());
                                 startActivity(intent);
                             }
+                        } else {
+                            Toast.makeText(getContext(), "The QR Code you scanned is invalid.", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Toast.makeText(getContext(), "The QR Code you scanned is invalid.", Toast.LENGTH_SHORT).show();
                     }
                 });
                 Log.d("TaskbarFragment - QRLauncher", content);
             }
         });
 
+        /**
+         * Launches the QR scanner when the camera icon is pressed.
+         */
         View cameraIcon = view.findViewById(R.id.cameraIcon);
         cameraIcon.setOnClickListener(v -> {
             ScanOptions scanOptions = new ScanOptions();

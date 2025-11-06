@@ -29,8 +29,10 @@ import com.google.zxing.common.HybridBinarizer;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -40,7 +42,12 @@ import java.util.Date;
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QRScanUITest {
+    /**
+     * Creates an ArrayList of events.
+     * @return The ArrayList of events.
+     */
     private ArrayList<Event> createTestEvents() {
         ArrayList<Event> events = new ArrayList<>();
 
@@ -78,6 +85,12 @@ public class QRScanUITest {
         return events;
     }
 
+    /**
+     * This code simulates the original functionality of the QR scanner in the app.
+     * @param context The context of the instrumentation's package.
+     * @param resourceId The QR code resource to be decoded.
+     * @return The decoded contents of the QR code.
+     */
     private String decodeQRCode(Context context, int resourceId) {
         Bitmap qrCode = BitmapFactory.decodeResource(context.getResources(), resourceId);
         int[] pixels = new int[qrCode.getWidth() * qrCode.getHeight()];
@@ -94,6 +107,12 @@ public class QRScanUITest {
         }
     }
 
+    /**
+     * Creates an intent for launching EventJoinAndLeave with the provided event details.
+     * @param appContext The app's context.
+     * @param event The event which will be displayed in EventJoinAndLeave.
+     * @return The created intent containing the event details.
+     */
     private Intent createIntent(Context appContext, Event event) {
         Intent intent = new Intent(appContext, EventJoinAndLeave.class);
         intent.putExtra("id", event.getId());
@@ -119,6 +138,37 @@ public class QRScanUITest {
         Intents.release();
     }
 
+    /**
+     * Tests to make sure that an event from an ArrayList of events is displayed correctly in EventJoinAndLeave
+     */
+    @Test
+    public void displayTest() {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        ArrayList<Event> events = createTestEvents();
+        Event testEvent = events.get(0);
+
+        Context appContext = instrumentation.getTargetContext();
+        Intent realIntent = createIntent(appContext, testEvent);
+        ActivityScenario.launch(realIntent);
+
+        String startDate = testEvent.getFormattedStartDate();
+        String startTime = testEvent.getFormattedStartTime();
+        String endDate = testEvent.getFormattedEndDate();
+        String endTime = testEvent.getFormattedEndTime();
+        String when = (endDate != null && endTime != null)
+                ? String.format("📅 %s %s → %s %s", startDate, startTime, endDate, endTime)
+                : String.format("📅 %s  🕒 %s", startDate, startTime);
+        String eventDetails = when + "\n\n📍 Location: " + testEvent.getLocation() + "\n\n🎟️ Organizer: " + testEvent.getOrganizer();
+
+        onView(withId(R.id.eventTitle)).check(matches(withText(testEvent.getName())));
+        onView(withId(R.id.eventDescription)).check(matches(withText(testEvent.getDescription())));
+        onView(withId(R.id.eventDetails)).check(matches(withText(eventDetails)));
+    }
+
+    /**
+     * Tests decoding an event id from a QR code and ensuring that it displays correctly in EventJoinAndLeave
+     * US 01.06.01
+     */
     @Test
     public void firstQRTest() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -152,6 +202,10 @@ public class QRScanUITest {
         onView(withId(R.id.eventDetails)).check(matches(withText(eventDetails)));
     }
 
+    /**
+     * Tests decoding an event id from a QR code and ensuring that it displays correctly in EventJoinAndLeave
+     * US 01.06.01
+     */
     @Test
     public void secondQRTest() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
