@@ -3,14 +3,18 @@ package com.example.eventlottery.users;
 
 import android.content.Context;
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class User implements Serializable {
     private String id; // Device identifier
@@ -34,7 +38,7 @@ public class User implements Serializable {
                 Settings.Secure.ANDROID_ID
         );
 
-        this.name = "";
+        this.name = "Your Name"; // Needed to add to display on your name on userPanel
         this.emailAddress = "";
         this.phoneNumber = "";
         this.waitlistedEvents = new ArrayList<>();
@@ -209,22 +213,64 @@ public class User implements Serializable {
     }
 
     /** USER STORY 01.05.02 - Accept invitation
-     * @param event an Event object is passed which we verify if its an actual event
+     * Updates both local and the firebase
+     * @param eventId The event ID to accept
      * */
-    public void acceptInvitation(String event) {
-        if (registeredEvents.containsKey(event)) {
-            registeredEvents.put(event, "Accepted");
+    public void acceptInvitation(String eventId) {
+        if (registeredEvents == null || !registeredEvents.containsKey(eventId)) {
+            Log.e("User", "Event not found in registered events");
+            return;
         }
+
+        // Update local state
+        registeredEvents.put(eventId, "Accepted");
+
+        // Update Firebase
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + eventId, "Accepted");
+
+        db.collection("users").document(id)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("User", "Invitation accepted successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("User", "Error acception invitation", e);
+                    // Revert back
+                    registeredEvents.put(eventId, "Notified");
+                });
     }
 
 
     /** USER STORY 01.05.03 - Decline invitation
-     * @param event an Event object is passed which we verify if its an actual event
+     * Updates both local state and Firebase
+     * @param eventId an Event object is passed which we verify if its an actual event
      * */
-    public void declineInvitation(String event) {
-        if (registeredEvents.containsKey(event)) {
-            registeredEvents.put(event, "Declined");
+    public void declineInvitation(String eventId) {
+        if (registeredEvents == null || !registeredEvents.containsKey(eventId)) {
+            Log.e("User", "Event not found in registered events");
+            return;
         }
+
+        // Update local state
+        registeredEvents.put(eventId, "Declined");
+
+        // Update Firebase
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + eventId, "Declined");
+
+        db.collection("users").document(id)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("User", "Invitation declined successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("User", "Error declining invitation", e);
+                    // Revert local state on failure
+                    registeredEvents.put(eventId, "Notified");
+                });
     }
 
     // Helper function to get check status

@@ -2,6 +2,7 @@ package com.example.eventlottery.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -13,11 +14,16 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /** USER STORY - 01.02.03
  * @author: Jensen Lee*/
@@ -35,11 +41,16 @@ public class InfoActivity extends AppCompatActivity {
     private User currentUser;
     private Event currentEvent;
     private String currentStatus;
+    private FirebaseFirestore db;
+    private View loadingIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
+
+        // Initialize Firestore
+        db = FirebaseFirestore.getInstance();
 
         // Bind UI elements
         eventNameHeader = findViewById(R.id.eventNameHeader);
@@ -54,50 +65,147 @@ public class InfoActivity extends AppCompatActivity {
 
         // Get data from intent
         Intent intent = getIntent();
-
-        // Reconstruct User
-        String userId = intent.getStringExtra("USER_ID");
-        String userName = intent.getStringExtra("USER_NAME");
-        String userEmail = intent.getStringExtra("USER_EMAIL");
-        String userPhone = intent.getStringExtra("USER_PHONE");
-        currentUser = new User(userId, userName, userEmail, userPhone);
-
-        // Reconstruct Event
         String eventId = intent.getStringExtra("EVENT_ID");
-        String eventName = intent.getStringExtra("EVENT_NAME");
-        String eventDescription = intent.getStringExtra("EVENT_DESCRIPTION");
-        String eventLocation = intent.getStringExtra("EVENT_LOCATION");
-        String eventOrganizer = intent.getStringExtra("EVENT_ORGANIZER");
-        long startTimeMillis = intent.getLongExtra("EVENT_START_TIME", 0);
-        long endTimeMillis = intent.getLongExtra("EVENT_END_TIME", 0);
-        String eventStatus = intent.getStringExtra("EVENT_STATUS");
+        String userId = intent.getStringExtra("USER_ID");
+        currentStatus = intent.getStringExtra("EVENT_STATUS");
 
-        Date startTime = new Date(startTimeMillis);
-        Date endTime = new Date(endTimeMillis);
-
-        currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
-                eventOrganizer, "", startTime, endTime);
-
-        // Register the event with current status
-        currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);
-
-        // Populate UI
-        eventNameHeader.setText(eventName);
-        eventDescriptionText.setText(eventDescription);
-        eventLocationText.setText(eventLocation);
-        eventOrganizerText.setText(eventOrganizer);
-        eventDateTimeText.setText(formatEventDateTime(startTime));
-
-        updateStatusDisplay();
+        // Validate required data
+        if (eventId == null || userId == null) {
+            Toast.makeText(this, "Error: Missing required data", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         backButton.setOnClickListener(v -> finish());
+
+        // Load data from Firebase
+        loadUserAndEventData(userId, eventId);
+    }
+
+    /**
+     * Load user and event data from Firebase
+     */
+    private void loadUserAndEventData(String userId, String eventId) {
+        // Load user data
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(userDoc -> {
+                    if (userDoc.exists()) {
+                        // Load user as Organizer (since all users are organizers in your app)
+                        currentUser = userDoc.toObject(Organizer.class);
+
+                        if (currentUser == null) {
+                            Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        // Update user's registered events from Firebase
+                        Map<String, Object> registeredEventsMap = (Map<String, Object>) userDoc.get("registeredEvents");
+                        if (registeredEventsMap != null) {
+                            HashMap<String, String> registeredEvents = new HashMap<>();
+                            for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
+                                registeredEvents.put(entry.getKey(), entry.getValue().toString());
+                            }
+                            currentUser.setRegisteredEvents(registeredEvents);
+                        } else {
+                            currentUser.setRegisteredEvents(new HashMap<>());
+                        }
+
+                        // After user is loaded, load event data
+                        loadEventData(eventId);
+                    } else {
+                        Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("InfoActivity", "Error loading user", e);
+                    Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+
+    /**
+     * Load event data from Firebase
+     */
+    private void loadEventData(String eventId) {
+        db.collection("event").document(eventId).get()
+                .addOnSuccessListener(eventDoc -> {
+                    if (eventDoc.exists()) {
+                        currentEvent = eventDoc.toObject(Event.class);
+
+                        if (currentEvent == null) {
+                            Toast.makeText(this, "Error loading event data", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        // Update UI with loaded data
+                        // Update UI with loaded data
+                        populateUI();
+                        showLoading(false);
+                    } else {
+                        Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("InfoActivity", "Error loading event", e);
+                    Toast.makeText(this, "Error loading event data", Toast.LENGTH_SHORT).show();
+                    finish();
+                });
+    }
+
+    /**
+     * Populate UI with event and user data
+     */
+    private void populateUI() {
+        // Populate event details
+        eventNameHeader.setText(currentEvent.getName());
+        eventDescriptionText.setText(currentEvent.getDescription());
+        eventLocationText.setText(currentEvent.getLocation());
+        eventOrganizerText.setText(currentEvent.getOrganizer());
+        eventDateTimeText.setText(formatEventDateTime(currentEvent.getStartTime()));
+
+        updateStatusDisplay();
 
         // Accept Button
         acceptButton.setOnClickListener(v -> showConfirmationDialog(true));
 
         // Decline Button
         declineButton.setOnClickListener(v -> showConfirmationDialog(false));
+    }
 
+    /**
+     * Show/hide loading indicator
+     */
+    private void showLoading(boolean show) {
+        if (show) {
+            // Hide all content
+            eventNameHeader.setVisibility(View.GONE);
+            eventDescriptionText.setVisibility(View.GONE);
+            eventLocationText.setVisibility(View.GONE);
+            eventOrganizerText.setVisibility(View.GONE);
+            eventDateTimeText.setVisibility(View.GONE);
+            statusBadge.setVisibility(View.GONE);
+            acceptButton.setVisibility(View.GONE);
+            declineButton.setVisibility(View.GONE);
+
+            // You could add a ProgressBar to your layout and show it here
+            // loadingIndicator.setVisibility(View.VISIBLE);
+        } else {
+            // Show all content
+            eventNameHeader.setVisibility(View.VISIBLE);
+            eventDescriptionText.setVisibility(View.VISIBLE);
+            eventLocationText.setVisibility(View.VISIBLE);
+            eventOrganizerText.setVisibility(View.VISIBLE);
+            eventDateTimeText.setVisibility(View.VISIBLE);
+            statusBadge.setVisibility(View.VISIBLE);
+            acceptButton.setVisibility(View.VISIBLE);
+            declineButton.setVisibility(View.VISIBLE);
+
+            // loadingIndicator.setVisibility(View.GONE);
+        }
     }
 
     /**
@@ -141,12 +249,6 @@ public class InfoActivity extends AppCompatActivity {
         currentUser.acceptInvitation(currentEvent.getId());
         currentStatus = "Accepted";
 
-        // Update MainActivity's user data
-        if (MainActivity.instance != null) {
-            MainActivity.instance.getCurrentUser().acceptInvitation(currentEvent.getId());
-            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
-        }
-
         Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
         updateStatusDisplay();
 
@@ -156,10 +258,7 @@ public class InfoActivity extends AppCompatActivity {
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Return to UserPanel after a short delay
-        acceptButton.postDelayed(() -> {
-            finish(); // Go back to UserPanel
-        }, 1500);
+        finish();
     }
 
     /**
@@ -168,12 +267,6 @@ public class InfoActivity extends AppCompatActivity {
     private void handleDecline() {
         currentUser.declineInvitation(currentEvent.getId());
         currentStatus = "Declined";
-
-        // Update MainActivity's user data
-        if (MainActivity.instance != null) {
-            MainActivity.instance.getCurrentUser().declineInvitation(currentEvent.getId());
-            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
-        }
 
         Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
         updateStatusDisplay();
@@ -184,12 +277,8 @@ public class InfoActivity extends AppCompatActivity {
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Return to UserPanel after a short delay
-        declineButton.postDelayed(() -> {
-            finish(); // Go back to UserPanel
-        }, 1500);
+        finish();
     }
-
 
     /**
      * Updates the status badge display
@@ -231,5 +320,4 @@ public class InfoActivity extends AppCompatActivity {
         SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
         return formatter.format(date);
     }
-
 }
