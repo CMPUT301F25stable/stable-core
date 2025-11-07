@@ -16,6 +16,7 @@ import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -76,7 +77,7 @@ public class InfoActivity extends AppCompatActivity {
         Date endTime = new Date(endTimeMillis);
 
         currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
-                eventOrganizer, "", startTime, endTime);
+                eventOrganizer, "", startTime, endTime, new ArrayList<>());
 
         // Register the event with current status
         currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);

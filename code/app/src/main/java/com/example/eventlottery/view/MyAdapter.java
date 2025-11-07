@@ -17,6 +17,8 @@ import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
+
+
     public interface OnItemClickListener {
         void onItemClick(Event item, int position);
     }
@@ -90,4 +92,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
     public int getItemCount() {
         return (items == null) ? 0 : items.size();
     }
+
+    public void copyCurrentItemsInto(List<Event> base) {
+        if (base == null) return;     // guard
+        base.clear();
+        if (items != null) {
+            base.addAll(items);       // 'items' is the currently displayed list
+        }
+    }
+
+
 }

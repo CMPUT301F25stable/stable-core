@@ -28,7 +28,7 @@ public class Event implements Serializable {
     private String formattedEndTime;
     private QRCode qrCode;
     private Waitlist waitlist;
-    private List<String> filterTags;
+    private java.util.List<String> filterTags = new java.util.ArrayList<>();
 
     @NonNull
     private String generateUUID() {
@@ -53,7 +53,7 @@ public class Event implements Serializable {
     // Firestore needs an empty constructor
     public Event() {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
-        this.filterTags = new ArrayList<>();
+        this.filterTags = new java.util.ArrayList<>();
     }
 
     public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For new events (not yet in database)
@@ -85,9 +85,7 @@ public class Event implements Serializable {
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         formatDates();
     }
-    public List<String> getFilterTags() {
-        return filterTags;
-    }
+
 
     public void setId(String id) { this.id = id; }
 
@@ -150,6 +148,24 @@ public class Event implements Serializable {
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
+    public List<String> getFilterTags() {
+        return filterTags;
+    }
+    public void setFilterTags(List<String> filterTags) {
+        this.filterTags = filterTags;
+    }
+    public void addFilterTag(String tag) {
+        if (this.filterTags == null) {
+            this.filterTags = new ArrayList<>();
+        }
+        this.filterTags.add(tag);
+    }
+    public void removeFilterTag(String tag) {
+        if (this.filterTags != null) {
+            this.filterTags.remove(tag);
+        }
+    }
+
 
     public String getFormattedStartDate() {
         return formattedStartDate;
@@ -222,6 +238,9 @@ public class Event implements Serializable {
      * Gets current waitlist max.
      */
     public int getWaitlistMax() {return this.waitlist.getMaxSize();};
+
+
+
 
     /**
      * Searches for an Event in an ArrayList of events.
