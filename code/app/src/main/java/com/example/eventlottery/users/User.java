@@ -262,6 +262,8 @@ public class User implements Serializable {
         if (registeredEvents.containsKey(event)) {
             registeredEvents.put(event, "Declined");
         }
+    }
+
     /**
      * Adds an event to the waitlist.
      * @param registeredEvents

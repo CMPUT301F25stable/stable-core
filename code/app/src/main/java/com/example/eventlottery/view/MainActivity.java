@@ -328,11 +328,13 @@ public class MainActivity extends AppCompatActivity {
         List<Event> filtered = new ArrayList<>();
     }
 
+
     /**
      * Returns the event corresponding to the given event ID.
      * @param eventId The unique ID of the event
      * @return The Event object with the matching ID, or null if not found
      */
+    /* TODO: Function is broken. Wasn't being used so I just commented it out for a quick fix - John
     public Event getEventById(String eventId) {
         for (Event event : data) {
             boolean passesTags = true;
@@ -355,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
 
         adapter.setFilteredList(filtered);
     }
+     */
 
     /**
      * Returns true if the event happens on ANY of the selected days.
