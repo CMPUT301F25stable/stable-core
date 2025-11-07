@@ -13,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
+import com.example.eventlottery.events.EventGenerator;
+import com.google.firebase.FirebaseApp;
 
 /**
  * SplashScreen activity that is displayed when the app launches.
@@ -29,6 +31,7 @@ public class SplashScreen extends AppCompatActivity {
 
     /** Database connector instance for adding or managing users. */
     DBConnector dbConnector;
+    EventGenerator generator;
 
     /**
      * Called when the activity is first created.
@@ -49,7 +52,15 @@ public class SplashScreen extends AppCompatActivity {
             return insets;
         });
 
-        // Delay transition to MainActivity by 3 seconds
+        FirebaseApp.initializeApp(this);
+
+        // TESTING: Comment out if you do not want these events here:
+        // Add a small delay to make sure Firebase finishes initialization
+        // TESTING: create sample events
+        // generator = new EventGenerator();
+        // generator.createTestEvents();
+
+
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -62,5 +73,8 @@ public class SplashScreen extends AppCompatActivity {
         // Initialize database connector and add new user
         dbConnector = new DBConnector(this);
         dbConnector.saveNewUser(this);
+
+
+
     }
 }

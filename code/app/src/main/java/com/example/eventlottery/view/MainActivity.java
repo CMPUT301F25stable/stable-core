@@ -5,7 +5,7 @@ import android.widget.Toast;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -18,7 +18,6 @@ import com.example.eventlottery.events.NotificationSystem;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.model.EventListData;
 import com.example.eventlottery.users.User;
 
 import java.util.ArrayList;
@@ -280,11 +279,39 @@ public class MainActivity extends AppCompatActivity {
     private void simulateUserEventParticipation() {
         currentUser.markJoined("evt-demon-slayer-2025-11-15");
         currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
-
         currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
         currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
-
-        currentUser.getWaitlistedEvents().add("evt-winter-dance-showcase-2025-12-12");
+        currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
         saveUser(currentUser);
+
+        // TESTING END
+
+        adapter = new MyAdapter(data, (item, position) -> {
+            Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
+            intent.putExtra("id", item.getId());
+            intent.putExtra("name", item.getName());
+            intent.putExtra("description", item.getDescription());
+            intent.putExtra("dateStart", item.getFormattedStartDate());
+            intent.putExtra("timeStart", item.getFormattedStartTime());
+            intent.putExtra("dateEnd", item.getFormattedEndDate());
+            intent.putExtra("timeEnd", item.getFormattedEndTime());
+            intent.putExtra("location", item.getLocation());
+            intent.putExtra("organizer", item.getOrganizer());
+            intent.putExtra("image", item.getImage());
+            intent.putExtra("waitlistMax", item.getWaitlistMax());
+            startActivity(intent);
+        });
+
+        recyclerView.setAdapter(adapter);
+
+        searchView = findViewById(R.id.searchView);
+        searchView.clearFocus();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
+                filterList(newText);
+                return true;
+            }
+        });
     }
 }

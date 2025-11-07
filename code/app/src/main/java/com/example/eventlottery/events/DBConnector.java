@@ -39,6 +39,38 @@ public class DBConnector {
     }
 
     /**
+     * Gets the database connection.
+     * @return the database connection.
+     */
+    public FirebaseFirestore getDb() {
+        return db;
+    }
+
+    /**
+     * Sets the database connection.
+     * @param db the new database connection.
+     */
+    public void setDb(FirebaseFirestore db) {
+        this.db = db;
+    }
+
+    /**
+     * Gets the user id.
+     * @return the user id.
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Sets the user id.
+     * @param id the new user id.
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
      * Gets the UUID of the device, to identify the user.
      * @param context: the context of the application
      * @return the UUID of the user
@@ -58,8 +90,9 @@ public class DBConnector {
     }
 
     /**
+     * US 01.07.01
      * Saves a new user to the database, if the user doesn't already exist.
-     * TODO: Right now it makes every user an organizer! Probably should change later
+     * Note: Every user is an organizer!
      * @param context The activity it's called in.
      */
     public void saveNewUser(Context context) {
@@ -70,8 +103,6 @@ public class DBConnector {
             DocumentSnapshot document = task.getResult();
             // If user doesn't already exist, create & set
             if (!document.exists()) {
-                // TODO: Change this from organizer to user later.
-                // I did it this way for now so that they don't crash when they enter OrganizerPanel - John
                 Organizer organizer = new Organizer(context);
                 userRef.set(organizer);
             }
@@ -80,7 +111,6 @@ public class DBConnector {
 
     /**
      * Saved the personal info of the user
-     *
      * @param id:       the UUID of the user
      * @param name:     the name of the user
      * @param email:    the email of the user

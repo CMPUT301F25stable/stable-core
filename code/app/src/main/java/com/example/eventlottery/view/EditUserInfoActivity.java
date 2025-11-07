@@ -53,13 +53,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_edit_user_info);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.edit_user_info), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         // connection to db
         db = new DBConnector(EditUserInfoActivity.this);
@@ -69,7 +63,6 @@ public class EditUserInfoActivity extends AppCompatActivity {
         emailEditText = findViewById(R.id.email_edit_text);
         phoneNumEditText = findViewById(R.id.phoneNum_edit_text);
 
-        // TODO: UNFINISHED
         // load a users info
         db.loadUserInfo(id, EditUserInfoActivity.this::loadInfo);
 

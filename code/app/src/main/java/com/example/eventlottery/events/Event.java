@@ -49,6 +49,7 @@ public class Event implements Serializable {
     private QRCode qrCode;
     /** Waitlist containing users who have registered or are waiting to participate. */
     private Waitlist waitlist;
+    private Finalizedlist finalizedlist;
 
     /**
      * Generates a new universally unique identifier (UUID) for an event.
@@ -101,6 +102,7 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.finalizedlist = new Finalizedlist();
         formatDates();
     }
 
@@ -127,11 +129,14 @@ public class Event implements Serializable {
         this.image = image;
         this.startTime = startTime;
         this.endTime = endTime;
-
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.finalizedlist = new Finalizedlist();
         formatDates();
     }
+
+    public void setId(String id) { this.id = id; }
+
 
     /** @return the unique ID of the event */
     public String getId() {
@@ -283,4 +288,21 @@ public class Event implements Serializable {
         }
         return -1;
     }
+
+    public Finalizedlist getFinalizedlist() {
+        return finalizedlist;
+    }
+
+    public void setFinalizedlist(Finalizedlist finalizedlist) {
+        this.finalizedlist = finalizedlist;
+    }
+
+    /**
+     * Removes a user from the finalized list.
+     * @param user The user to remove.
+     */
+    public void addToFinalizedList(User user) {
+        this.finalizedlist.addUser(user);
+    }
+
 }

@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -40,6 +41,20 @@ import java.util.ArrayList;
  * <p>
  */
 public class OrganizerPanel extends AppCompatActivity {
+    String userID;
+    LinearLayout previous;
+    ListView eventList;
+    Button viewWaitlist;
+    Button editEvent;
+    Button createEvent;
+    Button viewFinalList;
+    int selectedEventIndex = 0;  // default is first item
+    Event selectedEvent;
+    EventAdapter adapter;
+    EventDatabase organizerEventDatabase;
+    DBConnector userDatabase;
+    Organizer organizer;
+    ArrayList<Event> data = new ArrayList<>();
 
     /** The unique Android device ID for the current organizer. */
     private String userID;
@@ -104,6 +119,7 @@ public class OrganizerPanel extends AppCompatActivity {
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
+        viewFinalList = findViewById(R.id.view_finalized_list_button);
         setClickListeners();
 
         // Initialize databases and organizer info
@@ -225,6 +241,16 @@ public class OrganizerPanel extends AppCompatActivity {
 
                 createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
             }
+        });
+
+        viewFinalList.setOnClickListener(v -> {
+            selectedEvent = data.get(selectedEventIndex);
+            ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
+
+            FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
+
+            // Display finalized list
+            finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
         });
     }
 }
