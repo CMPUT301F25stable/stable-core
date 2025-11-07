@@ -41,21 +41,6 @@ import java.util.ArrayList;
  * <p>
  */
 public class OrganizerPanel extends AppCompatActivity {
-    String userID;
-    LinearLayout previous;
-    ListView eventList;
-    Button viewWaitlist;
-    Button editEvent;
-    Button createEvent;
-    Button viewFinalList;
-    int selectedEventIndex = 0;  // default is first item
-    Event selectedEvent;
-    EventAdapter adapter;
-    EventDatabase organizerEventDatabase;
-    DBConnector userDatabase;
-    Organizer organizer;
-    ArrayList<Event> data = new ArrayList<>();
-
     /** The unique Android device ID for the current organizer. */
     private String userID;
 
@@ -73,6 +58,9 @@ public class OrganizerPanel extends AppCompatActivity {
 
     /** The button used to create a new event. */
     private Button createEvent;
+
+    /** The button used to view the final list. */
+    private Button viewFinalList;
 
     /** The index of the currently selected event in the list (default is 0). */
     private int selectedEventIndex = 0;

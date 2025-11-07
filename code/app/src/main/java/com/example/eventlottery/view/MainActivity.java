@@ -127,26 +127,6 @@ public class MainActivity extends AppCompatActivity {
         // Populate sample event data
         populateSampleEvents();
 
-        Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
-        Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
-        data.add(new Event(
-                "evt-city-league-hockey-night-2025-12-02",
-                "City League Hockey Night",
-                "Weekly rec league double-header.",
-                "Terwillegar Rec Centre",
-                "YEG Sports",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", start2, end2));
-
-        Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
-        Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
-        data.add(new Event(
-                "evt-winter-dance-showcase-2025-12-12",
-                "Winter Dance Showcase",
-                "Contemporary + hip-hop student performances.",
-                "U of A Timms Centre",
-                "Dance Society",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
-
         // TESTING: Simulate user joining some events
         // Comment this out if you do not want to populate the events
         //currentUser.markJoined("evt-demon-slayer-2025-11-15");
@@ -349,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        recyclerView.setAdapter(adapter);
+        // recyclerView.setAdapter(adapter);
 
         searchView = findViewById(R.id.searchView);
         searchView.clearFocus();

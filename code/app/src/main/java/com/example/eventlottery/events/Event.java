@@ -298,8 +298,8 @@ public class Event implements Serializable {
     }
 
     /**
-     * Removes a user from the finalized list.
-     * @param user The user to remove.
+     * Adds a user to the finalized list.
+     * @param user The user to add.
      */
     public void addToFinalizedList(User user) {
         this.finalizedlist.addUser(user);

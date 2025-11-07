@@ -25,11 +25,11 @@ import java.util.Locale;
 import java.util.Map;
 
 /** USER STORY - 01.02.03
- * @author: Jensen Lee
- *
+ * <p>
  * The {@code InfoActivity} class displays detailed information about an event invitation.
  * Users can view event details and choose to either accept or decline the invitation.
  * Updates are reflected in the main user data.
+ * @author Jensen Lee
  */
 public class InfoActivity extends AppCompatActivity {
 
