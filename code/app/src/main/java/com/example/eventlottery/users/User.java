@@ -215,67 +215,6 @@ public class User implements Serializable {
         registeredEvents.remove(eventToRemove);
     }
 
-    /** USER STORY 01.05.02 - Accept invitation
-     * Updates both local and the firebase
-     * @param eventId The event ID to accept
-     * */
-    public void acceptInvitation(String eventId) {
-        if (registeredEvents == null || !registeredEvents.containsKey(eventId)) {
-            Log.e("User", "Event not found in registered events");
-            return;
-        }
-
-        // Update local state
-        registeredEvents.put(eventId, "Accepted");
-
-        // Update Firebase
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("registeredEvents." + eventId, "Accepted");
-
-        db.collection("users").document(id)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("User", "Invitation accepted successfully");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("User", "Error acception invitation", e);
-                    // Revert back
-                    registeredEvents.put(eventId, "Notified");
-                });
-    }
-
-
-    /** USER STORY 01.05.03 - Decline invitation
-     * Updates both local state and Firebase
-     * @param eventId an Event object is passed which we verify if its an actual event
-     * */
-    public void declineInvitation(String eventId) {
-        if (registeredEvents == null || !registeredEvents.containsKey(eventId)) {
-            Log.e("User", "Event not found in registered events");
-            return;
-        }
-
-        // Update local state
-        registeredEvents.put(eventId, "Declined");
-
-        // Update Firebase
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("registeredEvents." + eventId, "Declined");
-
-        db.collection("users").document(id)
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("User", "Invitation declined successfully");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("User", "Error declining invitation", e);
-                    // Revert local state on failure
-                    registeredEvents.put(eventId, "Notified");
-                });
-    }
-
     // Helper function to get check status
     public String getStatusForEvent(String event) {
         return registeredEvents.getOrDefault(event, "Not Registered");
