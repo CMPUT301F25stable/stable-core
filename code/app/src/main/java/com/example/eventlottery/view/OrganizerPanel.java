@@ -9,6 +9,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -62,8 +63,8 @@ public class OrganizerPanel extends AppCompatActivity {
     /** The button used to view the final list. */
     private Button viewFinalList;
 
-    /** The index of the currently selected event in the list (default is 0). */
-    private int selectedEventIndex = 0;
+    /** The index of the currently selected event in the list (default is -1). */
+    private int selectedEventIndex = -1;
 
     /** The {@link Event} currently selected by the organizer. */
     private Event selectedEvent;
@@ -188,24 +189,32 @@ public class OrganizerPanel extends AppCompatActivity {
              */
             @Override
             public void onClick(View v) {
-                selectedEvent = data.get(selectedEventIndex);
-                ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
-                WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
-                waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
+                if (selectedEventIndex != -1) {
+                    selectedEvent = data.get(selectedEventIndex);
+                    ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
+                    WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
+                    waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
+                } else {
+                    Toast.makeText(OrganizerPanel.this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         editEvent.setOnClickListener(v -> {
-            selectedEvent = data.get(selectedEventIndex);
-            EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
+            if (selectedEventIndex != -1) {
+                selectedEvent = data.get(selectedEventIndex);
+                EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
 
-            // Updates event in Firestore and refreshes adapter when an edit is made
-            dialog.setOnEventUpdatedListener(updatedEvent -> {
-                organizerEventDatabase.organizerUpdateEvent(updatedEvent);
-                adapter.notifyDataSetChanged();
-            });
+                // Updates event in Firestore and refreshes adapter when an edit is made
+                dialog.setOnEventUpdatedListener(updatedEvent -> {
+                    organizerEventDatabase.organizerUpdateEvent(updatedEvent);
+                    adapter.notifyDataSetChanged();
+                });
 
-            dialog.show(getSupportFragmentManager(), "EditEventDialog");
+                dialog.show(getSupportFragmentManager(), "EditEventDialog");
+            } else {
+                Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+            }
         });
 
         createEvent.setOnClickListener(new View.OnClickListener() {
@@ -232,13 +241,17 @@ public class OrganizerPanel extends AppCompatActivity {
         });
 
         viewFinalList.setOnClickListener(v -> {
-            selectedEvent = data.get(selectedEventIndex);
-            ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
+            if (selectedEventIndex != -1) {
+                selectedEvent = data.get(selectedEventIndex);
+                ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
 
-            FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
+                FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
 
-            // Display finalized list
-            finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
+                // Display finalized list
+                finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
+            } else {
+                Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }
