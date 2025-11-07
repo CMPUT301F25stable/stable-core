@@ -25,7 +25,6 @@ import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -106,8 +105,6 @@ public class UserPanel extends AppCompatActivity {
             if (currentUser != null) {
                 userNameView.setText(currentUser.getName());
             }
-        // Connection to DataBase
-        //db = new DBConnector(UserPanel.this);
 
             // TESTING: Create test notified event - REMOVE AFTER TESTING
             //createTestNotifiedEvent();
@@ -122,91 +119,93 @@ public class UserPanel extends AppCompatActivity {
         });
     }
 
+
+    /**
+     * Make sure to save the user data if they relaunch the userPanel
+     * */
     @Override
     @SuppressLint("HardwareIds")
     protected void onResume() {
         super.onResume();
-        // Only refresh if currentUser if already loaded
-        // Refresh events when returning to this activity
+        // Only refresh if currentUser is already loaded
         if (currentUser != null && eventListContainer != null) {
             if (MainActivity.instance != null) {
-                currentUser = MainActivity.instance.getCurrentUser();
+                User updatedUser = MainActivity.instance.getCurrentUser();
+                // Only update if we got a valid user back
+                if (updatedUser != null) {
+                    currentUser = updatedUser;
+                }
                 allEvents = MainActivity.instance.getAllEvents();
             }
             eventListContainer.removeAllViews();
             displayEvents();
-        }
-        eventListContainer.removeAllViews();
-        displayEvents();
 
-        // Update username in the UI
-        // TextView userName = findViewById(R.id.user_name);
-        // String userID = Settings.Secure.getString(
-        //         getContentResolver(),
-        //         Settings.Secure.ANDROID_ID
-        // );
-        // loadUserName(userID, userName);
+            // Update username in the UI - with null check
+            TextView userNameView = findViewById(R.id.user_name);
+            if (currentUser != null && userNameView != null) {
+                userNameView.setText(currentUser.getName());
+            }
+        }
     }
 
     /**
      * Displays all events (waitlisted and registered) in the UI
-    */
+     */
+    /**
+     * Displays all events (waitlisted and registered) in the UI
+     */
     private void displayEvents() {
         // Get user document from Firestore
         DocumentReference userDoc = db.collection("users").document(currentUser.getId());
 
         userDoc.get().addOnSuccessListener(documentSnapshot -> {
-             if (documentSnapshot.exists()) {
-                 // Get the arrays from Firestore
-                 List<String> waitlistedEvents = (List<String>) documentSnapshot.get("waitlistedEvents");
-                 Map<String, Object> registeredEventsMap = (Map<String, Object>) documentSnapshot.get("registeredEvents");
+            if (documentSnapshot.exists()) {
+                List<String> waitlistedEvents = (List<String>) documentSnapshot.get("waitlistedEvents");
+                Map<String, Object> registeredEventsMap = (Map<String, Object>) documentSnapshot.get("registeredEvents");
 
-                 // Update local user object using existing setters
-                 currentUser.setWaitlistedEventIds(waitlistedEvents);
+                // Only update if data exists - don't overwrite with empty data
+                if (waitlistedEvents != null && !waitlistedEvents.isEmpty()) {
+                    currentUser.setWaitlistedEventIds(waitlistedEvents);
+                }
 
-                 // Convert Map<String, Object> to HaspMap<String, String> for registeredEvents
-                 if (registeredEventsMap != null) {
-                     HashMap<String, String> registeredEvents = new HashMap<>();
-                     for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
-                         registeredEvents.put(entry.getKey(), entry.getValue().toString());
-                     }
-                     currentUser.setRegisteredEvents(registeredEvents);
-                 }
-                 else {
-                     currentUser.setRegisteredEvents(new HashMap<>());
-                 }
+                // Convert Map<String, Object> to HashMap<String, String> for registeredEvents
+                if (registeredEventsMap != null && !registeredEventsMap.isEmpty()) {
+                    HashMap<String, String> registeredEvents = new HashMap<>();
+                    for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
+                        registeredEvents.put(entry.getKey(), entry.getValue().toString());
+                    }
+                    currentUser.setRegisteredEvents(registeredEvents);
+                }
 
-                 // Check if user has any events
-                 if (currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty()) {
-                     showEmptyState();
-                     return;
-                 }
+                // Check if user has any events
+                if (currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty()) {
+                    showEmptyState();
+                    return;
+                }
 
-                 // Display registered events
-                 for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
-                     String eventId = entry.getKey();
-                     String status = entry.getValue();
-                     Event event = findEventById(eventId);
+                // Display registered events
+                for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
+                    String eventId = entry.getKey();
+                    String status = entry.getValue();
+                    Event event = findEventById(eventId);
 
-                     if (event != null) {
-                         addEventCard(event, status);
-                     }
-                 }
+                    if (event != null) {
+                        addEventCard(event, status);
+                    }
+                }
 
-                 // Display waitlisted events
-                 for (String eventId : currentUser.getWaitlistedEvents()) {
-                     Event event = findEventById(eventId);
-                     if (event != null) {
-                         addEventCard(event, "Waitlisted");
-                     }
-                 }
-             }
-             else {
-                 // User document doesn't exist yet - use existing setters to initialize
-                 currentUser.setWaitlistedEventIds(null);
-                 currentUser.setRegisteredEvents(new HashMap<>());
-                 showEmptyState();
-             }
+                // Display waitlisted events
+                for (String eventId : currentUser.getWaitlistedEvents()) {
+                    Event event = findEventById(eventId);
+                    if (event != null) {
+                        addEventCard(event, "Waitlisted");
+                    }
+                }
+            }
+            else {
+                // User document doesn't exist yet - show empty state without modifying user object
+                showEmptyState();
+            }
         }).addOnFailureListener(e -> {
             // Handle error
             Log.e("DisplayEvents", "Error fetching user data", e);
@@ -221,6 +220,9 @@ public class UserPanel extends AppCompatActivity {
      * @return The Event object, or null if not found
      */
     private Event findEventById(String eventId) {
+        if (allEvents == null) {
+            return null;
+        }
         for (Event event : allEvents) {
             if (event.getId().equals(eventId)) {
                 return event;
@@ -413,27 +415,19 @@ public class UserPanel extends AppCompatActivity {
      * Opens InfoActivity with event details from Firebase
      */
     private void openInfoActivity(Event event, String status) {
-        Log.d("UserPanel", "openInfoActivity called for event: " + event.getName());
-
-        if (event == null) {
-            Log.e("UserPanel", "Event is null!");
-            Toast.makeText(this, "Error: Event not found", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (currentUser == null) {
-            Log.e("UserPanel", "CurrentUser is null!");
-            Toast.makeText(this, "Error: User not loaded", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         Intent intent = new Intent(UserPanel.this, InfoActivity.class);
-
-        // Only pass IDs and status - InfoActivity will fetch the rest from Firebase
         intent.putExtra("EVENT_ID", event.getId());
-        intent.putExtra("USER_ID", currentUser.getId());
+        intent.putExtra("EVENT_NAME", event.getName());
+        intent.putExtra("EVENT_DESCRIPTION", event.getDescription());
+        intent.putExtra("EVENT_LOCATION", event.getLocation());
+        intent.putExtra("EVENT_ORGANIZER", event.getOrganizer());
+        intent.putExtra("EVENT_START_TIME", event.getStartTime().getTime());
+        intent.putExtra("EVENT_END_TIME", event.getEndTime().getTime());
         intent.putExtra("EVENT_STATUS", status);
-
+        intent.putExtra("USER_ID", currentUser.getId());
+        intent.putExtra("USER_NAME", currentUser.getName());
+        intent.putExtra("USER_EMAIL", currentUser.getEmailAddress());
+        intent.putExtra("USER_PHONE", currentUser.getPhoneNumber());
         startActivity(intent);
     }
 
@@ -489,32 +483,4 @@ public class UserPanel extends AppCompatActivity {
                     Log.e("TestEvent", "Error creating test event: " + e.getMessage());
                 });
     }
-    //  * Gets the name of the user and sets a textview to their name
-    //  * @param id the UUID of the user
-    //  * @param textView the textview to be set as the users name
-    //  */
-    // private void loadUserName(String id, TextView textView) {
-    //     db.loadUserInfo(id, task -> {
-    //         if (task.isSuccessful()) {
-    //             DocumentSnapshot snapshot = task.getResult();
-    //             if (snapshot.exists()) {
-    //                 String name = snapshot.getString("name");
-    //                 if (name == null || name.isEmpty()) {
-    //                     // placeholder
-    //                     name = "User";
-    //                     textView.setText(name);
-    //                 } else {
-    //                     textView.setText(name);
-    //                 }
-    //             } else {
-    //                 Log.d(TAG, "Snapshot DNE: " + id);
-    //                 String name = "User";
-    //                 textView.setText(name);
-    //             }
-    //         } else {
-    //             Log.d(TAG, "Failed loading user: " + id);
-    //         }
-    //     });
-
-    // }
 }

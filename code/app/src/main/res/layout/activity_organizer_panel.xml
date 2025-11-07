@@ -1,155 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     tools:context=".view.OrganizerPanel">
 
+    <!-- Search Bar -->
     <SearchView
         android:id="@+id/searchBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_margin="16dp"
         android:iconifiedByDefault="false"
         android:queryHint="Search Events"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@android:color/white"
+        android:textColorHint="#888888"
+        android:textColor="#000000"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Event List -->
     <ListView
         android:id="@+id/eventList"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="24dp"
-        android:divider="#00000000"
-        android:dividerHeight="18dp"
-        android:fadingEdge="none"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout5"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:divider="#DDDDDD"
+        android:dividerHeight="1dp"
+        app:layout_constraintTop_toBottomOf="@id/searchBar"
+        app:layout_constraintBottom_toTopOf="@id/linearLayout5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchBar"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    </ListView>
-
+    <!-- Control Section -->
     <LinearLayout
         android:id="@+id/linearLayout5"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/previous"
-        app:layout_constraintEnd_toEndOf="@id/searchBar"
-        app:layout_constraintStart_toStartOf="@id/searchBar">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        app:layout_constraintBottom_toTopOf="@id/previous"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Switch
             android:id="@+id/viewRegistrantsSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:height="48dp"
-            android:paddingStart="24dp"
-            android:text="View All Registrants" />
+            android:text="View All Registrants"
+            android:textColor="#000000" />
 
         <Switch
             android:id="@+id/exportListSwitch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:height="48dp"
-            android:paddingStart="24dp"
-            android:text="Export List" />
+            android:text="Export List"
+            android:textColor="#000000" />
 
+        <!-- Top Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="horizontal">
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
             <Button
                 android:id="@+id/createEventButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Create Event"
-                android:textSize="16sp" />
+                android:textSize="15sp"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp" />
 
             <Button
                 android:id="@+id/view_finalized_list_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
                 android:text="View Final List"
-                android:layout_marginStart="15dp"/>
-
+                android:textSize="15sp"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="8dp" />
         </LinearLayout>
 
+        <!-- Bottom Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
             <Button
                 android:id="@+id/editEventButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:layout_weight="1"
                 android:text="Edit Event"
-                android:textSize="16sp" />
+                android:textSize="15sp"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF" />
 
             <Button
                 android:id="@+id/viewWaitlistButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:layout_weight="1"
-                android:ellipsize="none"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
-                android:singleLine="true"
                 android:text="View Waitlist"
-                android:textSize="16sp" />
+                android:textSize="15sp"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF" />
 
             <Button
                 android:id="@+id/deleteEventButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
+                android:layout_margin="4dp"
                 android:layout_weight="1"
-                android:ellipsize="none"
-                android:paddingLeft="12dp"
-                android:paddingRight="12dp"
-                android:singleLine="true"
                 android:text="Delete Event"
-                android:textSize="16sp" />
-
+                android:textSize="15sp"
+                android:backgroundTint="#000000"
+                android:textColor="#FFFFFF" />
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/previous"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
+        android:layout_margin="16dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
             android:id="@+id/previousArrow"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:tint="#000000"
             app:srcCompat="@drawable/back_arrow_icon" />
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="Previous"
-            android:textSize="16sp" />
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:layout_marginStart="6dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
