@@ -128,7 +128,6 @@ public class DBConnector {
         items.put("emailAddress", email);
         items.put("phoneNumber", phoneNum);
 
-        DocumentReference documentReference;
         getUserDoc(id).get().addOnCompleteListener(task -> {
             DocumentSnapshot document = task.getResult();
             if (document == null || !document.exists()) {

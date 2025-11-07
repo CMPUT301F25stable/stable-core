@@ -24,6 +24,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.eventlottery.events.DBConnector;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.view.EditUserInfoActivity;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -52,8 +53,23 @@ public class EditUserInfoActivityUITest {
                     .putExtra("mockID", MOCK_ID));
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException, ExecutionException {
         Intents.init();
+
+        // wait for db to load info
+        Thread.sleep(2000);
+
+        // Ensures that a doc is created for the MockUser since tests are run randomly
+        // assertTrue(documentSnapshot.exists()) would fail if no doc is already made
+        // for tests that are suppose to not update
+        db = new DBConnector(ApplicationProvider.getApplicationContext());
+        DocumentSnapshot documentSnapshot = Tasks.await(db.getUserDoc(MOCK_ID).get());
+        if (!documentSnapshot.exists()) {
+            Organizer organizer = new Organizer(ApplicationProvider.getApplicationContext());
+            organizer.setName("placeholder");
+            organizer.setEmailAddress("placeholder");
+            Tasks.await(db.getUserDoc(MOCK_ID).set(organizer));
+        }
     }
 
     @After

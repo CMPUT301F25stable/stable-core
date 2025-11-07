@@ -21,6 +21,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.events.Finalizedlist;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
@@ -243,11 +244,17 @@ public class OrganizerPanel extends AppCompatActivity {
         viewFinalList.setOnClickListener(v -> {
             if (selectedEventIndex != -1) {
                 selectedEvent = data.get(selectedEventIndex);
-                ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
+                Finalizedlist finalizedList = selectedEvent.getFinalizedlist();
+                ArrayList<User> users;
+
+                // finalizedList is initialized as null this checks for that
+                if (finalizedList != null && finalizedList.getFinalizedUsers() != null) {
+                    users = finalizedList.getFinalizedUsers();
+                } else {
+                    users = new ArrayList<>();
+                }
 
                 FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
-
-                // Display finalized list
                 finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
             } else {
                 Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
