@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
@@ -21,7 +22,10 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Firebase;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -41,7 +45,6 @@ import java.util.Map;
  * @author Jensen Lee
  * */
 public class UserPanel extends AppCompatActivity {
-    private static final String TAG = "UserPanel";
 
     private User currentUser;
     private LinearLayout eventListContainer;
@@ -108,10 +111,37 @@ public class UserPanel extends AppCompatActivity {
             }
 
             // Update username in the UI
+            // Reference: https://firebase.google.com/docs/firestore/query-data/get-data#java
             TextView userNameView = findViewById(R.id.user_name);
-            if (currentUser != null) {
-                userNameView.setText(currentUser.getName());
-            }
+            DocumentReference userDoc = db.collection("users").document(currentUser.getId());;
+
+            // Asynchronously fetch the user document from Firestore
+            userDoc.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    // Check if the document was successfully retrieved
+                    if (task.isSuccessful()) {
+                        // Get the document snapshot from the completed task
+                        DocumentSnapshot document = task.getResult();
+
+                        // Verify that the document actually exists in the database
+                        if (document.exists()) {
+                            // Extract the "name" field from the document
+                            String name = document.getString("name");
+                            // Update the TextView with the user's name
+                            userNameView.setText(name);
+                        }
+                        else {
+                            // Document reference exists but no data found
+                            Log.d("Firestore", "No such document");
+                        }
+                    }
+                    else {
+                        // Handle any errors that occurred during the fetch
+                        Log.d("Firestore", "get failed with ", task.getException());
+                    }
+                }
+            });
 
             // TESTING: Create test notified event - REMOVE AFTER TESTING
             //createTestNotifiedEvent();
@@ -147,10 +177,36 @@ public class UserPanel extends AppCompatActivity {
             eventListContainer.removeAllViews();
             displayEvents();
 
-            // Update username in the UI - with null check
+            // Update username in the UI by fetching from Firestore
             TextView userNameView = findViewById(R.id.user_name);
             if (currentUser != null && userNameView != null) {
-                userNameView.setText(currentUser.getName());
+                // Fetch the latest user data from Firestore
+                DocumentReference userDoc = db.collection("users").document(currentUser.getId());
+                userDoc.get().addOnCompleteListener(task -> {
+                    // Check if the document was successfully retrieved
+                    if (task.isSuccessful()) {
+                        // Get the document snapshot from the completed task
+                        DocumentSnapshot document = task.getResult();
+
+                        // Verify that the document actually exists in the database
+                        if (document.exists()) {
+                            // Extract the updated "name" field from the document
+                            String name = document.getString("name");
+
+                            // Also update the current user object MIGHT CHANGE
+                            currentUser.setName(name);
+
+                        }
+                        else {
+                            // Document reference exists but no data found
+                            Log.d("Firestore", "No such document");
+                        }
+                    }
+                    else {
+                        // Handle any errors that occurred during the fetch
+                        Log.d("Firestore", "get failed with ", task.getException());
+                    }
+                });
             }
         }
     }
