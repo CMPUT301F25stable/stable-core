@@ -103,9 +103,12 @@ public class User implements Serializable {
         return waitlistedEvents;
     }
 
+    // in User.java
     public HashMap<String, String> getRegisteredEvents() {
+        if (registeredEvents == null) registeredEvents = new HashMap<>();
         return registeredEvents;
     }
+
 
     /**
      * Checks if the user has joined an event.
