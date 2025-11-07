@@ -1,119 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/edit_user_info"
+    android:orientation="vertical"
+    android:background="#F8F9FA"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/edit_user_info"
     tools:context=".view.EditUserInfoActivity">
 
-    <ImageButton
-        android:id="@+id/back_btn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:src="@drawable/back_arrow_icon"
-        android:scaleType="fitCenter"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <ImageButton
-        android:id="@+id/confirm_btn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/check_icon"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/delete_account_btn"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="DELETE ACCOUNT"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="15dp"
-        android:backgroundTint="@color/Red"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical"
+        android:background="@drawable/header_gradient"
+        android:elevation="4dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/name_textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Name:"
-        android:textSize="20sp"
-        android:layout_marginTop="150dp"
-        android:paddingStart="25dp"
-        android:fontFamily="sans-serif-black"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="RtlSymmetry" />
+            <Button
+                android:id="@+id/delete_account_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DELETE ACCOUNT"
+                android:layout_alignParentEnd="true"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/black" />
+        </RelativeLayout>
 
-    <EditText
-        android:id="@+id/name_edit_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="140dp"
-        android:hint="name"
-        android:layout_marginEnd="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/name_textView"
-        app:layout_constraintTop_toTopOf="parent" />
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/email_edit_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="23dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="10dp"
-        android:hint="email"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/email_textView"
-        app:layout_constraintTop_toBottomOf="@+id/name_edit_text" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/phoneNum_edit_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="10dp"
-        android:hint="phone-number"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/phoneNum_textView"
-        app:layout_constraintTop_toBottomOf="@+id/email_edit_text" />
+        <ImageButton
+            android:id="@+id/back_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/back_arrow_icon"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_marginStart="20dp"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-    <TextView
-        android:id="@+id/email_textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Email:"
-        android:fontFamily="sans-serif-black"
-        android:textSize="20sp"
-        android:paddingStart="25dp"
-        android:layout_marginTop="40dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name_textView"
-        tools:ignore="RtlSymmetry" />
+        <ImageButton
+            android:id="@+id/confirm_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="20dp"
+            android:scaleType="fitCenter"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/check_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/phoneNum_textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Phone-Number:"
-        android:fontFamily="sans-serif-black"
-        android:textSize="20sp"
-        android:paddingStart="25dp"
-        android:layout_marginTop="40dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email_textView"
-        tools:ignore="RtlSymmetry" />
+        <TextView
+            android:id="@+id/name_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name:"
+            android:textSize="20sp"
+            android:layout_marginTop="120dp"
+            android:paddingStart="25dp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="RtlSymmetry" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <EditText
+            android:id="@+id/name_edit_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="110dp"
+            android:hint="name"
+            android:layout_marginEnd="10dp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:inputType="text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/name_textView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/email_edit_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="23dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="10dp"
+            android:hint="email"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:inputType="textEmailAddress"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/email_textView"
+            app:layout_constraintTop_toBottomOf="@+id/name_edit_text" />
+
+        <EditText
+            android:id="@+id/phoneNum_edit_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginEnd="10dp"
+            android:hint="phone-number"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:inputType="phone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/phoneNum_textView"
+            app:layout_constraintTop_toBottomOf="@+id/email_edit_text" />
+
+        <TextView
+            android:id="@+id/email_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Email:"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:paddingStart="25dp"
+            android:layout_marginTop="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/name_textView"
+            tools:ignore="RtlSymmetry" />
+
+        <TextView
+            android:id="@+id/phoneNum_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone-Number:"
+            android:textSize="20sp"
+            android:paddingStart="25dp"
+            android:layout_marginTop="40dp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/email_textView"
+            tools:ignore="RtlSymmetry" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>

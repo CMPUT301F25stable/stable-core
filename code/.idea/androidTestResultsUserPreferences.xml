@@ -3,12 +3,17 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
+<<<<<<< HEAD
         <entry key="-851265342">
+=======
+        <entry key="-1562532761">
+>>>>>>> b51d701f22e0a19a0fb2f302bc1c3cca80d52899
           <value>
             <AndroidTestResultsTableState>
               <option name="preferredColumnWidths">
                 <map>
                   <entry key="Duration" value="90" />
+<<<<<<< HEAD
                   <entry key="Google Pixel 6a" value="120" />
                   <entry key="Tests" value="360" />
                 </map>
@@ -49,6 +54,9 @@
                 <map>
                   <entry key="Duration" value="90" />
                   <entry key="Google Pixel 6a" value="120" />
+=======
+                  <entry key="Pixel_3" value="120" />
+>>>>>>> b51d701f22e0a19a0fb2f302bc1c3cca80d52899
                   <entry key="Tests" value="360" />
                 </map>
               </option>

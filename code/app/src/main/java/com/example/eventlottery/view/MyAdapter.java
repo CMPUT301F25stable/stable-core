@@ -71,7 +71,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
                 .into(holder.imageView);
 
         holder.itemView.setOnClickListener(v -> {
-            int pos = holder.getBindingAdapterPosition();
+            int pos = holder.getAdapterPosition();
             if (pos != RecyclerView.NO_POSITION) {
                 listener.onItemClick(items.get(pos), pos);
             }
