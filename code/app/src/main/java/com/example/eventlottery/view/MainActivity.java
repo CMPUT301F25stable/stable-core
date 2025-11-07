@@ -119,15 +119,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         DEVICE_ID = getDeviceId(this);
-        currentUser = loadOrCreateUser();
         db = FirebaseFirestore.getInstance();
         connector = new DBConnector(this);
-        // Load user
-        // Initialize other variables such as the databases & users
-        String userID= Settings.Secure.getString(
-                getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
         connector.loadUserInfo(DEVICE_ID, task -> {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
@@ -418,20 +411,6 @@ public class MainActivity extends AppCompatActivity {
             eventsListener.remove();
             eventsListener = null;
         }
-    }
-      
-    /**
-     * Loads an existing user or creates a new one if none exists.
-     * <p>
-     * Currently returns a new User object. Intended to be replaced by Firebase
-     * persistence in future updates.
-     * </p>
-     * @return A User object representing the current user
-     */
-    private User loadOrCreateUser() {
-        // TODO: Load from Firebase/Database
-        // For now, create a new user
-        return new User(DEVICE_ID, "Your Name", "john.doe@example.com", "780-123-4567");
     }
 
     /**
