@@ -119,6 +119,10 @@ public class UserPanel extends AppCompatActivity {
         });
     }
 
+
+    /**
+     * Make sure to save the user data if they relaunch the userPanel
+     * */
     @Override
     @SuppressLint("HardwareIds")
     protected void onResume() {
@@ -126,15 +130,19 @@ public class UserPanel extends AppCompatActivity {
         // Only refresh if currentUser is already loaded
         if (currentUser != null && eventListContainer != null) {
             if (MainActivity.instance != null) {
-                currentUser = MainActivity.instance.getCurrentUser();
+                User updatedUser = MainActivity.instance.getCurrentUser();
+                // Only update if we got a valid user back
+                if (updatedUser != null) {
+                    currentUser = updatedUser;
+                }
                 allEvents = MainActivity.instance.getAllEvents();
             }
             eventListContainer.removeAllViews();
             displayEvents();
 
-            // Update username in the UI
+            // Update username in the UI - with null check
             TextView userNameView = findViewById(R.id.user_name);
-            if (currentUser != null) {
+            if (currentUser != null && userNameView != null) {
                 userNameView.setText(currentUser.getName());
             }
         }

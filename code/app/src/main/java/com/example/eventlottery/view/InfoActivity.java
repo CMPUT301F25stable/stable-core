@@ -180,10 +180,11 @@ public class InfoActivity extends AppCompatActivity {
                     Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
 
                     // Tell the caller something changed and finish
-                    Intent out = new Intent();
+                    Intent out = new Intent(this, UserPanel.class);
                     out.putExtra("UPDATED_EVENT_ID", eventId);
                     out.putExtra("UPDATED_STATUS", "Accepted");
                     setResult(RESULT_OK, out);
+                    startActivity(out);
                     finish();
                 })
                 .addOnFailureListener(e -> {
@@ -224,10 +225,11 @@ public class InfoActivity extends AppCompatActivity {
 
                     Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
 
-                    Intent out = new Intent();
+                    Intent out = new Intent(this, UserPanel.class);
                     out.putExtra("UPDATED_EVENT_ID", eventId);
                     out.putExtra("UPDATED_STATUS", "Declined");
                     setResult(RESULT_OK, out);
+                    startActivity(out);
                     finish();
                 })
                 .addOnFailureListener(e -> {
