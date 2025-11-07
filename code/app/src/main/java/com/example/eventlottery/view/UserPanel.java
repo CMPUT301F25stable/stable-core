@@ -68,12 +68,19 @@ public class UserPanel extends AppCompatActivity {
         loadingText.setPadding(16, 16, 16, 16);
         eventListContainer.addView(loadingText);
 
+        Intent intent = getIntent();
+        String userIdFromIntent = intent.getStringExtra("USER_ID");
+
         // Get Device ID
         String deviceId = getDeviceId(this);
 
+        String userIdToLoad = (userIdFromIntent != null && !userIdFromIntent.isEmpty())
+                ? userIdFromIntent
+                : deviceId;
+
         // Load user from database
         DBConnector connector = new DBConnector(this);
-        connector.loadUserInfo(deviceId, task -> {
+        connector.loadUserInfo(userIdToLoad, task -> {
             eventListContainer.removeAllViews(); // Remove Loading text
 
             if (task.isSuccessful()) {
