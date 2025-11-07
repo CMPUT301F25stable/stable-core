@@ -39,6 +39,38 @@ public class DBConnector {
     }
 
     /**
+     * Gets the database connection.
+     * @return the database connection.
+     */
+    public FirebaseFirestore getDb() {
+        return db;
+    }
+
+    /**
+     * Sets the database connection.
+     * @param db the new database connection.
+     */
+    public void setDb(FirebaseFirestore db) {
+        this.db = db;
+    }
+
+    /**
+     * Gets the user id.
+     * @return the user id.
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Sets the user id.
+     * @param id the new user id.
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
      * Gets the UUID of the device, to identify the user.
      * @param context: the context of the application
      * @return the UUID of the user
@@ -58,6 +90,7 @@ public class DBConnector {
     }
 
     /**
+     * US 01.07.01
      * Saves a new user to the database, if the user doesn't already exist.
      * Note: Every user is an organizer!
      * @param context The activity it's called in.
@@ -77,28 +110,42 @@ public class DBConnector {
     }
 
     /**
-     * Saved the personal info of the user
-     *
+     * Saved the personal info of the user, if the user deleted their account, a new account
+     * will be made
      * @param id:       the UUID of the user
      * @param name:     the name of the user
      * @param email:    the email of the user
      * @param phoneNum: the phone number of the user
+     * @param context:  the context of the application
      * @param listener: listener called when saving user
      * @return
      */
     public void saveUserInfo(String id, String name, String email,
-                             String phoneNum, OnCompleteListener<Void> listener) {
+                             String phoneNum, Context context, OnCompleteListener<Void> listener) {
 
         Map<String, Object> items = new HashMap<>();
         items.put("name", name);
         items.put("emailAddress", email);
         items.put("phoneNumber", phoneNum);
-        getUserDoc(id)
-                .set(items, SetOptions.merge())
-                .addOnCompleteListener(listener)
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed save info" + id, e);
-                });
+
+        DocumentReference documentReference;
+        getUserDoc(id).get().addOnCompleteListener(task -> {
+            DocumentSnapshot document = task.getResult();
+            if (document == null || !document.exists()) {
+                Organizer organizer = new Organizer(context);
+                organizer.setName(name);
+                organizer.setEmailAddress(email);
+                organizer.setPhoneNumber(phoneNum);
+                getUserDoc(id).set(organizer);
+            } else {
+                getUserDoc(id)
+                        .set(items, SetOptions.merge())
+                        .addOnCompleteListener(listener)
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Failed save info" + id, e);
+                        });
+            }
+        });
     }
 
     public void updateOrganizerCreatedEvents(Organizer organizer) {

@@ -22,14 +22,23 @@ import java.util.Locale;
  * References: https://medium.com/mindorks/custom-array-adapters-made-easy-b6c4930560dd
  */
 
+/**
+ * A custom {@link ArrayAdapter} for displaying a list of {@link Event} objects in a ListView or Spinner.
+ * This adapter is designed to work with the {@link Event} class and its associated layout file
+ * {@code event_list_item.xml}.
+ * @see Event
+ * @see android.widget.ArrayAdapter
+ */
 public class EventAdapter extends ArrayAdapter<Event> {
     private List<Event> eventList = new ArrayList<>();
     private Context context;
 
+
     /**
-     * EventAdapter constructor
-     * @param context
-     * @param events
+     * Constructs a new {@link EventAdapter}
+     *
+     * @param context The current context, typically the Activity or Fragment where this adapter is used.
+     * @param events  The list of {@link Event} objects to display.
      */
     public EventAdapter(Context context, ArrayList<Event> events) {
         super(context, 0, events);
@@ -41,14 +50,9 @@ public class EventAdapter extends ArrayAdapter<Event> {
      * Sets event_list_item.xml's text fields
      * @param position The position of the item within the adapter's data set of the item whose view
      *        we want.
-     * @param convertView The old view to reuse, if possible. Note: You should check that this view
-     *        is non-null and of an appropriate type before using. If it is not possible to convert
-     *        this view to display the correct data, this method can create a new view.
-     *        Heterogeneous lists can specify their number of view types, so that this View is
-     *        always of the right type (see {@link #getViewTypeCount()} and
-     *        {@link #getItemViewType(int)}).
+     * @param convertView The old view to reuse, if possible.
      * @param parent The parent that this view will eventually be attached to
-     * @return
+     * @return The fully populated {@link View} corresponding to the given position.
      */
     @NonNull
     @Override

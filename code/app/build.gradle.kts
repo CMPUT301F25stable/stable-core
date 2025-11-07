@@ -34,6 +34,15 @@ android {
 }
 
 dependencies {
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.activity)
+    implementation(libs.constraintlayout)
+    implementation(libs.fragment)
+    testImplementation(libs.junit)
+    testImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
     // --- Core AndroidX + Material ---
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
@@ -46,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
 
     // --- Third-party libraries ---
+    implementation("com.google.zxing:core:3.4.1")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.github.bumptech.glide:glide:5.0.5")
     implementation(libs.core)

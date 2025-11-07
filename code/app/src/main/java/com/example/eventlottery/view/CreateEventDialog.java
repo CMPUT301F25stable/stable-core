@@ -21,10 +21,28 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * A dialog fragment that allows organizers to create new {@link Event} objects.
+ * <p>
+ * The dialog currently supports setting only the waitlist maximum size but can
+ * be extended in the future to support more event parameters such as name,
+ * description, and date. Once an event is created, the dialog notifies a
+ * listener via the {@link OnEventCreatedListener} interface.
+ * </p>
+ */
 public class CreateEventDialog extends DialogFragment {
     private OnEventCreatedListener listener;
-
+    /**
+     * Listener interface for receiving event creation callbacks.
+     * Implementations of this interface are notified when a new {@link Event}
+     * is created through this dialog.
+     */
     public interface OnEventCreatedListener {
+        /**
+         * Called when a new event is created by the user.
+         *
+         * @param event The newly created {@link Event} object.
+         */
         void onEventCreated(Event event);
     }
 
