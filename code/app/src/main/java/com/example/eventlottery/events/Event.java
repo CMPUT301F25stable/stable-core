@@ -13,28 +13,61 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+/**
+ * Represents an event in the Event Lottery system.
+ * <p>
+ * Each {@code Event} contains identifying information, timing details, an associated QR code,
+ * and a {@link Waitlist} for managing users who sign up for participation.
+ * </p>
+ */
 public class Event implements Serializable {
+    /** Unique identifier for the event (UUID as a string). */
     private String id; // UUID as a string
+    /** Name of the event. */
     private String name;
+    /** Description of the event. */
     private String description;
+    /** Location of the event. */
     private String location; // Could also be a HashMap so we can easily grab individual location info (street, city, etc..)
+    /** Organizer of the event. */
     private String organizer;
+    /** URL or file path of the event's image. */
     private String image;
+    /** Start time of the event. */
     private Date startTime;
+    /** End time of the event. */
     private Date endTime;
+    /** Formatted start date string (e.g., "March 5, 2025"). */
     private String formattedStartDate;
+    /** Formatted start time string (e.g., "2:30 PM"). */
     private String formattedStartTime;
+    /** Formatted end date string. */
     private String formattedEndDate;
+    /** Formatted end time string. */
     private String formattedEndTime;
+    /** QR code associated with this event. */
     private QRCode qrCode;
+    /** Waitlist containing users who have registered or are waiting to participate. */
     private Waitlist waitlist;
 
+    /**
+     * Generates a new universally unique identifier (UUID) for an event.
+     *
+     * @return a randomly generated UUID as a string
+     */
     @NonNull
     private String generateUUID() {
         UUID uuid = UUID.randomUUID();
         return uuid.toString();
     }
 
+    /**
+     * Formats the start and end dates/times of the event into readable strings.
+     * <p>
+     * Uses the {@code Locale.CANADA} date format: "MMMM d, yyyy - h:mm a".
+     * Populates formatted date and time fields for display purposes.
+     * </p>
+     */
     private void formatDates() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy'-'h:mm a", Locale.CANADA);
         String formattedStart = dateFormat.format(this.startTime);
@@ -49,7 +82,10 @@ public class Event implements Serializable {
         this.formattedEndTime = endParts[1];
     }
 
-    // Firestore needs an empty constructor
+    /**
+     * Empty constructor required by Firestore for object deserialization.
+     * Initializes a non-null {@link Waitlist} to prevent crashes.
+     */
     public Event() {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
     }
@@ -68,6 +104,20 @@ public class Event implements Serializable {
         formatDates();
     }
 
+    /**
+     * Constructs a new {@code Event} with given details.
+     * <p>
+     * This constructor generates a new UUID for the event.
+     * </p>
+     *
+     * @param name        the name of the event
+     * @param description a description of the event
+     * @param location    the location of the event
+     * @param organizer   the name or ID of the event organizer
+     * @param image       the image URL or path
+     * @param startTime   the start time of the event
+     * @param endTime     the end time of the event
+     */
     public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For pre-existing events
         this.id = id;
         this.name = name;
@@ -83,109 +133,110 @@ public class Event implements Serializable {
         formatDates();
     }
 
+    /** @return the unique ID of the event */
     public String getId() {
         return id;
     }
-
+    /** @return the name of the event */
     public String getName() {
         return name;
     }
-
+    /** @param name the new name of the event */
     public void setName(String name) {
         this.name = name;
     }
-
+    /** @return the event description */
     public String getDescription() {
         return description;
     }
-
+    /** @param description the new event description */
     public void setDescription(String description) {
         this.description = description;
     }
-
+    /** @return the event location */
     public String getLocation() {
         return location;
     }
-
+    /** @param location the new event location */
     public void setLocation(String location) {
         this.location = location;
     }
-
+    /** @return the event organizer */
     public String getOrganizer() {
         return organizer;
     }
-
+    /** @param organizer the new event organizer */
     public void setOrganizer(String organizer) {
         this.organizer = organizer;
     }
-
+    /** @return the image URL or path of the event */
     public String getImage() {
         return image;
     }
-
+    /** @param image the new image URL or path */
     public void setImage(String image) {
         this.image = image;
     }
-
+    /** @return the event start time */
     public Date getStartTime() {
         return startTime;
     }
-
+    /** @param startTime the new event start time */
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
-
+    /** @return the event end time */
     public Date getEndTime() {
         return endTime;
     }
-
+    /** @param endTime the new event end time */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
-
+    /** @return the formatted start date string */
     public String getFormattedStartDate() {
         return formattedStartDate;
     }
-
+    /** @param formattedStartDate the formatted start date string */
     public void setFormattedStartDate(String formattedStartDate) {
         this.formattedStartDate = formattedStartDate;
     }
-
+    /** @return the formatted start time string */
     public String getFormattedStartTime() {
         return formattedStartTime;
     }
-
+    /** @param formattedStartTime the formatted start time string */
     public void setFormattedStartTime(String formattedStartTime) {
         this.formattedStartTime = formattedStartTime;
     }
-
+    /** @return the formatted end date string */
     public String getFormattedEndDate() {
         return formattedEndDate;
     }
-
+    /** @param formattedEndDate the formatted end date string */
     public void setFormattedEndDate(String formattedEndDate) {
         this.formattedEndDate = formattedEndDate;
     }
-
+    /** @return the formatted end time string */
     public String getFormattedEndTime() {
         return formattedEndTime;
     }
-
+    /** @param formattedEndTime the formatted end time string */
     public void setFormattedEndTime(String formattedEndTime) {
         this.formattedEndTime = formattedEndTime;
     }
-
+    /** @return the {@link QRCode} associated with this event */
     public QRCode getQrCode() {
         return qrCode;
     }
-
+    /** @param qrCode the {@link QRCode} to associate with this event */
     public void setQrCode(QRCode qrCode) {
         this.qrCode = qrCode;
     }
 
-
+    /** @return the {@link Waitlist} associated with this event */
     public Waitlist getWaitlist() { return waitlist; }
-
+    /** @param waitlist the new {@link Waitlist} to associate with this event */
     public void setWaitlist(Waitlist waitlist) { this.waitlist = waitlist; }
 
     /**
@@ -211,7 +262,9 @@ public class Event implements Serializable {
     public void setWaitlistMax(int newMax) {this.waitlist.setMaxSize(newMax);}
 
     /**
-     * Gets current waitlist max.
+     * Returns the current maximum size of the event’s waitlist.
+     *
+     * @return the waitlist’s maximum capacity
      */
     public int getWaitlistMax() {return this.waitlist.getMaxSize();};
 

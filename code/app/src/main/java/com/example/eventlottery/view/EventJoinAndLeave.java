@@ -21,6 +21,11 @@ import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.List;
 
+/**
+ * The {@code EventJoinAndLeave} class allows a user to view event details
+ * and either join or leave an event. It updates both the UI and Firestore
+ * to reflect the user's participation status.
+ */
 public class EventJoinAndLeave extends AppCompatActivity {
 
     private Button joinButton;
@@ -33,6 +38,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private User user;
     private boolean isJoined = false;
 
+    /**
+     * Initializes the activity, sets up the UI, retrieves event details from intent extras,
+     * and checks whether the user has already joined the event.
+     *
+     * @param savedInstanceState the saved instance state of the activity
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,14 +117,13 @@ public class EventJoinAndLeave extends AppCompatActivity {
     }
 
     /**
-     * Toggle the user's join status.
-     * If the user is already joined, leave the event.
-     * If the user is not joined, join the event.
+     * Toggles the user's join status for the event.
+     * If joined, the user leaves the event; if not, they join.
+     * Updates Firestore accordingly and refreshes the button state.
      */
     private void toggleJoin() {
         boolean newState = !isJoined;
         updateJoinButton(newState); // Update the button to reflect the new state
-
 
         if (newState) { // If joined
             userDoc.update("joinedEventIds", FieldValue.arrayUnion(eventId)) // Add to Firestore
@@ -138,6 +148,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates the "Join"/"Leave" button text and color
+     * based on whether the user has joined the event.
+     *
+     * @param joined true if the user is currently joined; false otherwise
+     */
     private void updateJoinButton(boolean joined) {
         if (joined) {
             joinButton.setText("Leave Event");
@@ -151,8 +167,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
     }
 
     /**
-     * Removes the listener when the activity is destroyed.
-     * Prevents memory leaks
+     * Removes the Firestore listener when the activity is destroyed.
+     * Prevents potential memory leaks.
      */
     @Override
     protected void onDestroy() {

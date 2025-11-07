@@ -14,12 +14,29 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 
+/**
+ * SplashScreen activity that is displayed when the app launches.
+ * Provides a short delay before navigating to the MainActivity.
+ * Handles edge-to-edge display and initializes the database connection for new users.
+ */
 public class SplashScreen extends AppCompatActivity {
 
+    /** Handler to manage delayed transition to MainActivity. */
     Handler handler = new Handler();
+
+    /** Device-specific user ID used for tracking or database purposes. */
     String userID;
+
+    /** Database connector instance for adding or managing users. */
     DBConnector dbConnector;
 
+    /**
+     * Called when the activity is first created.
+     * Sets up edge-to-edge layout, schedules a delayed transition to MainActivity,
+     * and initializes the database for a new user.
+     *
+     * @param savedInstanceState Bundle containing activity's previously saved state, if any.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +49,7 @@ public class SplashScreen extends AppCompatActivity {
             return insets;
         });
 
+        // Delay transition to MainActivity by 3 seconds
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -41,7 +59,7 @@ public class SplashScreen extends AppCompatActivity {
             }
         }, 3000);
 
-        // Link to DB to add new user
+        // Initialize database connector and add new user
         dbConnector = new DBConnector(this);
         dbConnector.saveNewUser(this);
     }

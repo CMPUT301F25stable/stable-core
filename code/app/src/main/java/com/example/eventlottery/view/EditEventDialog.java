@@ -16,6 +16,9 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.model.EventDatabase;
 
+/**
+ * A dialog fragment that allows organizers to edit existing {@link Event} details.
+ */
 public class EditEventDialog extends DialogFragment {
     private Event event;
     private EventDatabase eventDatabase;
@@ -25,7 +28,7 @@ public class EditEventDialog extends DialogFragment {
      * Essentially a constructor for EditEventDialog. Pass in the event here, & its retrieved
      * later once the dialog is actually created
      * @param event The event we want to edit.
-     * @return
+     * @return A new instance of {@link EditEventDialog} with the event attached.
      */
     public static EditEventDialog newInstance(Event event) {
         EditEventDialog dialog = new EditEventDialog();
@@ -51,6 +54,19 @@ public class EditEventDialog extends DialogFragment {
     }
 
 
+    /**
+     * Creates and returns the dialog for editing an event.
+     * <p>
+     * The dialog retrieves the event passed via {@link #newInstance(Event)},
+     * displays its current waitlist maximum, and allows the user to modify it.
+     * Input is validated to ensure it is a non-negative integer. Once validated,
+     * the event object is updated locally, and the listener is notified.
+     * </p>
+     *
+     * @param savedInstanceState The saved instance state of the fragment, or {@code null}
+     *                           if this is a newly created dialog.
+     * @return The constructed {@link Dialog} for editing the event.
+     */
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
