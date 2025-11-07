@@ -32,7 +32,14 @@ public class FilterActivity extends AppCompatActivity {
     private CalendarView calendarView;
     private FlexboxLayout filterContainer;
 
-
+    /**
+     * Called when the activity is first created.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
+     *
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,6 +129,12 @@ public class FilterActivity extends AppCompatActivity {
         updateSelectedDatesText();
     }
 
+    /**
+     * Styles a tag button based on whether it is selected or not.
+     * @param button
+     * @param selected
+     */
+
     private void styleTagButton(MaterialButton button, boolean selected) {
         button.setSelected(selected);
         int bg = ContextCompat.getColor(this, selected ? R.color.black : R.color.white);
@@ -130,6 +143,10 @@ public class FilterActivity extends AppCompatActivity {
         button.setBackgroundTintList(android.content.res.ColorStateList.valueOf(bg));button.setTextColor(fg);
         button.setStrokeColor(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(this, R.color.black)));
     }
+
+    /**
+     * Clears all filters and resets the UI.
+     */
 
     private void clearAllFilters() {
         selectedTags.clear();
@@ -151,6 +168,9 @@ public class FilterActivity extends AppCompatActivity {
         calendarView.setDate(todayMs, false, true);
     }
 
+    /**
+     * Saves the selected tags and dates and finishes the activity.
+     */
     private void saveAndFinish() {
         Intent result = new Intent();
         result.putStringArrayListExtra("selectedTags", new ArrayList<>(selectedTags));
@@ -159,6 +179,9 @@ public class FilterActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Updates the text displaying the selected dates.
+     */
     private void updateSelectedDatesText() {
         if (selectedDates.isEmpty()) {
             selectedDatesText.setText("No dates selected");
@@ -174,6 +197,14 @@ public class FilterActivity extends AppCompatActivity {
 
         selectedDatesText.setText(text.trim());
     }
+
+    /**
+     * Converts a given year, month, and day into a timestamp representing
+     * midnight (00:00:00.000) of that day. This "normalization" removes the
+     * time component so dates can be compared accurately — for example,
+     * ensuring that the same calendar day always maps to the same millisecond
+     * value, regardless of the time it was selected.
+     */
 
     private long normalizeToMidnightMillis(int year, int monthZeroBased, int day) {
         Calendar c = Calendar.getInstance();
