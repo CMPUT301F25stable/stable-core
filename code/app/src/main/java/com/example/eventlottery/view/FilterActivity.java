@@ -42,6 +42,8 @@ public class FilterActivity extends AppCompatActivity {
         selectedDatesText = findViewById(R.id.selectedDatesText);
         filterContainer = findViewById(R.id.filterContainer);
         Button btnClearAll = findViewById(R.id.btnClearAll);
+        Button btnGoHome = findViewById(R.id.btnGoHome);
+
 
         ArrayList<String> tags = getIntent().getStringArrayListExtra("allTags");
         if (tags == null) tags = new ArrayList<>();
@@ -52,6 +54,7 @@ public class FilterActivity extends AppCompatActivity {
         ArrayList<Long> preSelectedDates = (ArrayList<Long>) getIntent().getSerializableExtra("preSelectedDates");
         if (preSelectedDates != null) selectedDates.addAll(preSelectedDates);
 
+
         calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             long dayMs = normalizeToMidnightMillis(year, month, dayOfMonth);
             if (selectedDates.contains(dayMs)) selectedDates.remove(dayMs);
@@ -60,6 +63,7 @@ public class FilterActivity extends AppCompatActivity {
         });
 
         btnClearAll.setOnClickListener(v -> clearAllFilters());
+        btnGoHome.setOnClickListener(v -> finish());
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
