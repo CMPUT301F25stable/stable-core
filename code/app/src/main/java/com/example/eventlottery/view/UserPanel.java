@@ -192,6 +192,7 @@ public class UserPanel extends AppCompatActivity {
                         if (document.exists()) {
                             // Extract the updated "name" field from the document
                             String name = document.getString("name");
+                            userNameView.setText(name);
 
                             // Also update the current user object MIGHT CHANGE
                             currentUser.setName(name);
