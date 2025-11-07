@@ -2,7 +2,6 @@ package com.example.eventlottery.view;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -10,14 +9,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /** USER STORY - 01.02.03
  * @author: Jensen Lee
@@ -65,7 +70,8 @@ public class InfoActivity extends AppCompatActivity {
     /** String representing the current registration status of the user for this event. */
     private String currentStatus;
 
-
+    private FirebaseFirestore db;
+  
     /**
      * Called when the activity is created.
      * Initializes UI elements, retrieves intent data, constructs User and Event objects,
@@ -77,6 +83,9 @@ public class InfoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
+
+        // Initialize Firestore
+        db = FirebaseFirestore.getInstance();
 
         // Bind UI elements
         eventNameHeader = findViewById(R.id.eventNameHeader);
@@ -91,50 +100,54 @@ public class InfoActivity extends AppCompatActivity {
 
         // Get data from intent
         Intent intent = getIntent();
-
-        // Reconstruct User
         String userId = intent.getStringExtra("USER_ID");
-        String userName = intent.getStringExtra("USER_NAME");
-        String userEmail = intent.getStringExtra("USER_EMAIL");
-        String userPhone = intent.getStringExtra("USER_PHONE");
-        currentUser = new User(userId, userName, userEmail, userPhone);
 
-        // Reconstruct Event
-        String eventId = intent.getStringExtra("EVENT_ID");
-        String eventName = intent.getStringExtra("EVENT_NAME");
-        String eventDescription = intent.getStringExtra("EVENT_DESCRIPTION");
-        String eventLocation = intent.getStringExtra("EVENT_LOCATION");
-        String eventOrganizer = intent.getStringExtra("EVENT_ORGANIZER");
-        long startTimeMillis = intent.getLongExtra("EVENT_START_TIME", 0);
-        long endTimeMillis = intent.getLongExtra("EVENT_END_TIME", 0);
-        String eventStatus = intent.getStringExtra("EVENT_STATUS");
+        if (userId == null || userId.isEmpty()) {
+            Toast.makeText(this, "Invalid user ID", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
-        Date startTime = new Date(startTimeMillis);
-        Date endTime = new Date(endTimeMillis);
+        // Retrieve user from Firestore
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        currentUser = documentSnapshot.toObject(Organizer.class);
 
-        currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
-                eventOrganizer, "", startTime, endTime);
+                        if (currentUser == null) {
+                            Toast.makeText(this, "Failed to parse user data", Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
 
-        // Register the event with current status
-        currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);
+                        // Defensive: make sure registeredEvents and waitlistedEvents are non-null
+                        if (currentUser.getRegisteredEvents() == null) {
+                            currentUser.setRegisteredEvents(new HashMap<>());
+                        }
+                        if (currentUser.getWaitlistedEvents() == null) {
+                            currentUser.setWaitlistedEventIds(new ArrayList<>());
+                        }
 
-        // Populate UI
-        eventNameHeader.setText(eventName);
-        eventDescriptionText.setText(eventDescription);
-        eventLocationText.setText(eventLocation);
-        eventOrganizerText.setText(eventOrganizer);
-        eventDateTimeText.setText(formatEventDateTime(startTime));
+                        loadEventData(intent);
+                    } else {
+                        Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to retrieve user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    finish();
+                });
 
-        updateStatusDisplay();
-
+        // Back button
         backButton.setOnClickListener(v -> finish());
 
-        // Accept Button
+        // Accept button
         acceptButton.setOnClickListener(v -> showConfirmationDialog(true));
 
-        // Decline Button
+        // Decline button
         declineButton.setOnClickListener(v -> showConfirmationDialog(false));
-
     }
 
     /**
@@ -178,28 +191,51 @@ public class InfoActivity extends AppCompatActivity {
      * Updates user status, displays confirmation, and disables further interaction.
      */
     private void handleAccept() {
-        currentUser.acceptInvitation(currentEvent.getId());
-        currentStatus = "Accepted";
-
-        // Update MainActivity's user data
-        if (MainActivity.instance != null) {
-            MainActivity.instance.getCurrentUser().acceptInvitation(currentEvent.getId());
-            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
+        if (currentEvent == null || currentUser == null) {
+            Toast.makeText(this, "Event data not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
-        updateStatusDisplay();
+        final String eventId = currentEvent.getId();
 
-        // Disable buttons after accepting
+        // Disable buttons immediately
         acceptButton.setEnabled(false);
         declineButton.setEnabled(false);
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Return to UserPanel after a short delay
-        acceptButton.postDelayed(() -> {
-            finish(); // Go back to UserPanel
-        }, 1500);
+        // Single-field Firestore update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + eventId, "Accepted");
+
+        db.collection("users").document(currentUser.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    // Update local model safely
+                    currentUser.getRegisteredEvents().put(eventId, "Accepted");
+                    currentStatus = "Accepted";
+                    updateStatusDisplay();
+
+                    Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
+
+                    // Tell the caller something changed and finish
+                    Intent out = new Intent(this, UserPanel.class);
+                    out.putExtra("USER_ID", currentUser.getId());
+                    out.putExtra("UPDATED_EVENT_ID", eventId);
+                    out.putExtra("UPDATED_STATUS", "Accepted");
+                    setResult(RESULT_OK, out);
+                    startActivity(out);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Re-enable buttons on failure
+                    acceptButton.setEnabled(true);
+                    declineButton.setEnabled(true);
+                    acceptButton.setAlpha(1.0f);
+                    declineButton.setAlpha(1.0f);
+
+                    Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
@@ -207,28 +243,49 @@ public class InfoActivity extends AppCompatActivity {
      * Updates user status, displays confirmation, and disables further interaction.
      */
     private void handleDecline() {
-        currentUser.declineInvitation(currentEvent.getId());
-        currentStatus = "Declined";
-
-        // Update MainActivity's user data
-        if (MainActivity.instance != null) {
-            MainActivity.instance.getCurrentUser().declineInvitation(currentEvent.getId());
-            MainActivity.instance.saveUser(MainActivity.instance.getCurrentUser());
+        if (currentEvent == null || currentUser == null) {
+            Toast.makeText(this, "Event data not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
-        updateStatusDisplay();
+        final String eventId = currentEvent.getId();
 
-        // Disable buttons after declining
+        // Disable buttons immediately
         acceptButton.setEnabled(false);
         declineButton.setEnabled(false);
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Return to UserPanel after a short delay
-        declineButton.postDelayed(() -> {
-            finish(); // Go back to UserPanel
-        }, 1500);
+        // Single-field Firestore update
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + eventId, "Declined");
+
+        db.collection("users").document(currentUser.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    currentUser.getRegisteredEvents().put(eventId, "Declined");
+                    currentStatus = "Declined";
+                    updateStatusDisplay();
+
+                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+
+                    Intent out = new Intent(this, UserPanel.class);
+                    out.putExtra("USER_ID", currentUser.getId());
+                    out.putExtra("UPDATED_EVENT_ID", eventId);
+                    out.putExtra("UPDATED_STATUS", "Declined");
+                    setResult(RESULT_OK, out);
+                    startActivity(out);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Re-enable buttons on failure
+                    acceptButton.setEnabled(true);
+                    declineButton.setEnabled(true);
+                    acceptButton.setAlpha(1.0f);
+                    declineButton.setAlpha(1.0f);
+
+                    Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
@@ -236,25 +293,38 @@ public class InfoActivity extends AppCompatActivity {
      * Changes the text and background colors of the status badge based on the current state.
      */
     private void updateStatusDisplay() {
+        if (statusBadge == null) return;
+
+        if (currentUser == null || currentEvent == null || currentEvent.getId() == null) {
+            statusBadge.setText("Unknown");
+            statusBadge.setBackgroundColor(android.graphics.Color.parseColor("#F5F5F5"));
+            statusBadge.setTextColor(android.graphics.Color.GRAY);
+            return;
+        }
+
+        // Use the User class's built-in method
         String status = currentUser.getStatusForEvent(currentEvent.getId());
+        if (status == null || status.isEmpty() || status.equals("Not Registered")) {
+            status = "Unknown";
+        }
+
         statusBadge.setText(status);
 
-        // Update badge styling based on status
         int backgroundColor;
         int textColor;
 
         switch (status) {
             case "Accepted":
-                backgroundColor = getColor(android.R.color.holo_green_light);
-                textColor = getColor(android.R.color.holo_green_dark);
+                backgroundColor = ContextCompat.getColor(this, android.R.color.holo_green_light);
+                textColor = ContextCompat.getColor(this, android.R.color.holo_green_dark);
                 break;
             case "Declined":
-                backgroundColor = getColor(android.R.color.holo_red_light);
-                textColor = getColor(android.R.color.holo_red_dark);
+                backgroundColor = ContextCompat.getColor(this, android.R.color.holo_red_light);
+                textColor = ContextCompat.getColor(this, android.R.color.holo_red_dark);
                 break;
             case "Notified":
-                backgroundColor = getColor(android.R.color.holo_blue_light);
-                textColor = getColor(android.R.color.holo_blue_dark);
+                backgroundColor = ContextCompat.getColor(this, android.R.color.holo_blue_light);
+                textColor = ContextCompat.getColor(this, android.R.color.holo_blue_dark);
                 break;
             default:
                 backgroundColor = android.graphics.Color.parseColor("#F5F5F5");
@@ -274,5 +344,42 @@ public class InfoActivity extends AppCompatActivity {
     private String formatEventDateTime(Date date) {
         SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
         return formatter.format(date);
+    }
+
+    /**
+     * Loads event data from intent and populates the UI
+     * @param intent Intent containing event data
+     */
+    private void loadEventData(Intent intent) {
+        String eventId = intent.getStringExtra("EVENT_ID");
+        String eventName = intent.getStringExtra("EVENT_NAME");
+        String eventDescription = intent.getStringExtra("EVENT_DESCRIPTION");
+        String eventLocation = intent.getStringExtra("EVENT_LOCATION");
+        String eventOrganizer = intent.getStringExtra("EVENT_ORGANIZER");
+        long startTimeMillis = intent.getLongExtra("EVENT_START_TIME", 0);
+        long endTimeMillis = intent.getLongExtra("EVENT_END_TIME", 0);
+        currentStatus = intent.getStringExtra("EVENT_STATUS");
+
+        Date startTime = new Date(startTimeMillis);
+        Date endTime = new Date(endTimeMillis);
+
+        currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
+                eventOrganizer, "", startTime, endTime);
+
+        // Don't manually add to registeredEvents - it should already be there from Firestore
+        // Only ensure the status is set if it's missing
+        if (!currentUser.getRegisteredEvents().containsKey(eventId) && currentStatus != null) {
+            currentUser.getRegisteredEvents().put(eventId, currentStatus);
+        }
+
+        // Populate UI
+        eventNameHeader.setText(eventName);
+        eventDescriptionText.setText(eventDescription);
+        eventLocationText.setText(eventLocation);
+        eventOrganizerText.setText(eventOrganizer);
+        eventDateTimeText.setText(formatEventDateTime(startTime));
+
+        // Update status display
+        updateStatusDisplay();
     }
 }

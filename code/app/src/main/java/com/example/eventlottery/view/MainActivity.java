@@ -1,6 +1,7 @@
 package com.example.eventlottery.view;
 
 import android.content.Intent;
+import android.provider.Settings;
 import android.widget.Toast;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -17,8 +18,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlottery.events.NotificationSystem;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -51,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Static reference to the MainActivity instance for global access. */
     public static MainActivity instance;
+    private DBConnector connector;
 
     /**
      * Retrieves the device UUID from SharedPreferences, or generates a new one if it does not exist.
@@ -94,8 +99,21 @@ public class MainActivity extends AppCompatActivity {
 
         DEVICE_ID = getDeviceId(this);
 
-        // Load or create the current user
-        currentUser = loadOrCreateUser();
+        connector = new DBConnector(this);
+        // Load user
+        // Initialize other variables such as the databases & users
+        String userID = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+        connector.loadUserInfo(DEVICE_ID, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    currentUser = document.toObject(Organizer.class);
+                }
+            }
+        });
 
         // Test notification system
         User testUser = new User("u123", "Alice", "alice@gmail.com");
@@ -109,8 +127,35 @@ public class MainActivity extends AppCompatActivity {
         // Populate sample event data
         populateSampleEvents();
 
-        // Mark some events as joined for testing
-        simulateUserEventParticipation();
+        Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
+        Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
+        data.add(new Event(
+                "evt-city-league-hockey-night-2025-12-02",
+                "City League Hockey Night",
+                "Weekly rec league double-header.",
+                "Terwillegar Rec Centre",
+                "YEG Sports",
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", start2, end2));
+
+        Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
+        Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
+        data.add(new Event(
+                "evt-winter-dance-showcase-2025-12-12",
+                "Winter Dance Showcase",
+                "Contemporary + hip-hop student performances.",
+                "U of A Timms Centre",
+                "Dance Society",
+                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
+
+        // TESTING: Simulate user joining some events
+        // Comment this out if you do not want to populate the events
+        //currentUser.markJoined("evt-demon-slayer-2025-11-15");
+        //currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
+        //currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
+        //currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
+        //currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
+        //saveUser(currentUser);
+        // TESTING END
 
         // Initialize the adapter
         adapter = new MyAdapter(data, (item, position) -> {
@@ -223,7 +268,9 @@ public class MainActivity extends AppCompatActivity {
      * @return A User object representing the current user
      */
     private User loadOrCreateUser() {
-        return new User(DEVICE_ID, "John Doe", "john.doe@example.com", "780-123-4567");
+        // TODO: Load from Firebase/Database
+        // For now, create a new user
+        return new User(DEVICE_ID, "Your Name", "john.doe@example.com", "780-123-4567");
     }
 
     /**

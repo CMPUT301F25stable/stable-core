@@ -57,7 +57,14 @@ public class EditUserInfoActivity extends AppCompatActivity {
 
         // connection to db
         db = new DBConnector(EditUserInfoActivity.this);
-        id = db.getUserId();
+
+        // For testing
+        String mockID = getIntent().getStringExtra("mockID");
+        if (mockID == null) {
+            id = db.getUserId();
+        } else {
+            id = mockID;
+        }
 
         nameEditText = findViewById(R.id.name_edit_text);
         emailEditText = findViewById(R.id.email_edit_text);
@@ -93,7 +100,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Saves the user info
+     * Saves the user updated info
      */
     public void saveInfo() {
         String name = nameEditText.getText().toString().trim();
@@ -107,7 +114,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
         }
 
         // save info
-        db.saveUserInfo(id, name, email, phoneNum, task -> {
+        db.saveUserInfo(id, name, email, phoneNum, EditUserInfoActivity.this,task -> {
             if (task.isSuccessful()) {
                 Toast.makeText(EditUserInfoActivity.this, "Saved Info", Toast.LENGTH_SHORT).show();
             } else {

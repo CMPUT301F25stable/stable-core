@@ -1,23 +1,37 @@
 package com.example.eventlottery.view;
 
+import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
+import com.google.firebase.Firebase;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,10 +41,12 @@ import java.util.Map;
  * @author Jensen Lee
  * */
 public class UserPanel extends AppCompatActivity {
+    private static final String TAG = "UserPanel";
 
     private User currentUser;
     private LinearLayout eventListContainer;
     private ArrayList<Event> allEvents;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,72 +58,167 @@ public class UserPanel extends AppCompatActivity {
         // Initialize the container for events
         eventListContainer = findViewById(R.id.event_list_container);
 
-        // Get data from MainActivity
-        if (MainActivity.instance != null) {
-            currentUser = MainActivity.instance.getCurrentUser();
-            allEvents = MainActivity.instance.getAllEvents();
-        }
-        else {
-            // Fallback: create sample data if MainActivity isn't available
-            currentUser = new User("device123", "John Doe", "john.doe@example.com", "780-123-4567");
-            allEvents = new ArrayList<>();
-        }
+        // Initialize the firebase
+        db = FirebaseFirestore.getInstance();
 
-        // Update username in the UI
-        TextView userName = findViewById(R.id.user_name);
-        userName.setText(currentUser.getName());
+        // Show loading indicator
+        TextView loadingText = new TextView(this);
+        loadingText.setText("Loading your profile...");
+        loadingText.setTextSize(18);
+        loadingText.setPadding(16, 16, 16, 16);
+        eventListContainer.addView(loadingText);
 
-        // Display the events
-        displayEvents();
+        Intent intent = getIntent();
+        String userIdFromIntent = intent.getStringExtra("USER_ID");
 
-        // Go to EditUserInfoActivity
-        findViewById(R.id.edit_icon).setOnClickListener(v -> {
-            Intent intent = new Intent(UserPanel.this, EditUserInfoActivity.class);
-            startActivity(intent);
+        // Get Device ID
+        String deviceId = getDeviceId(this);
+
+        String userIdToLoad = (userIdFromIntent != null && !userIdFromIntent.isEmpty())
+                ? userIdFromIntent
+                : deviceId;
+
+        // Load user from database
+        DBConnector connector = new DBConnector(this);
+        connector.loadUserInfo(userIdToLoad, task -> {
+            eventListContainer.removeAllViews(); // Remove Loading text
+
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    // User exists - load their data
+                    currentUser = document.toObject(Organizer.class);
+                } else {
+                    // First time user - create new user with default name
+                    currentUser = new Organizer(this);
+                    // Save to database
+                    connector.saveNewUser(this);
+                }
+            } else {
+                // Error loading - create new user anyway
+                currentUser = new Organizer(this);
+                connector.saveNewUser(this);
+            }
+
+            // Get Events
+            if (MainActivity.instance != null) {
+                allEvents = MainActivity.instance.getAllEvents();
+            } else {
+                allEvents = new ArrayList<>();
+            }
+
+            // Update username in the UI
+            TextView userNameView = findViewById(R.id.user_name);
+            if (currentUser != null) {
+                userNameView.setText(currentUser.getName());
+            }
+
+            // TESTING: Create test notified event - REMOVE AFTER TESTING
+            //createTestNotifiedEvent();
+
+            displayEvents();
+
+            // Go to EditUserInfoActivity
+            findViewById(R.id.edit_icon).setOnClickListener(v -> {
+                Intent editIntent = new Intent(UserPanel.this, EditUserInfoActivity.class);
+                startActivity(editIntent);
+            });
         });
-
     }
 
+
+    /**
+     * Make sure to save the user data if they relaunch the userPanel
+     * */
     @Override
+    @SuppressLint("HardwareIds")
     protected void onResume() {
         super.onResume();
-        // Refresh events when returning to this activity
-        if (MainActivity.instance != null) {
-            currentUser = MainActivity.instance.getCurrentUser();
-            allEvents = MainActivity.instance.getAllEvents();
+        // Only refresh if currentUser is already loaded
+        if (currentUser != null && eventListContainer != null) {
+            if (MainActivity.instance != null) {
+                User updatedUser = MainActivity.instance.getCurrentUser();
+                // Only update if we got a valid user back
+                if (updatedUser != null) {
+                    currentUser = updatedUser;
+                }
+                allEvents = MainActivity.instance.getAllEvents();
+            }
+            eventListContainer.removeAllViews();
+            displayEvents();
+
+            // Update username in the UI - with null check
+            TextView userNameView = findViewById(R.id.user_name);
+            if (currentUser != null && userNameView != null) {
+                userNameView.setText(currentUser.getName());
+            }
         }
-        eventListContainer.removeAllViews();
-        displayEvents();
     }
 
     /**
      * Displays all events (waitlisted and registered) in the UI
-    */
+     */
+    /**
+     * Displays all events (waitlisted and registered) in the UI
+     */
     private void displayEvents() {
-        // Check if user has any events
-        if ((currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty())) {
+        // Get user document from Firestore
+        DocumentReference userDoc = db.collection("users").document(currentUser.getId());
+
+        userDoc.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                List<String> waitlistedEvents = (List<String>) documentSnapshot.get("waitlistedEvents");
+                Map<String, Object> registeredEventsMap = (Map<String, Object>) documentSnapshot.get("registeredEvents");
+
+                // Only update if data exists - don't overwrite with empty data
+                if (waitlistedEvents != null && !waitlistedEvents.isEmpty()) {
+                    currentUser.setWaitlistedEventIds(waitlistedEvents);
+                }
+
+                // Convert Map<String, Object> to HashMap<String, String> for registeredEvents
+                if (registeredEventsMap != null && !registeredEventsMap.isEmpty()) {
+                    HashMap<String, String> registeredEvents = new HashMap<>();
+                    for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
+                        registeredEvents.put(entry.getKey(), entry.getValue().toString());
+                    }
+                    currentUser.setRegisteredEvents(registeredEvents);
+                }
+
+                // Check if user has any events
+                if (currentUser.getRegisteredEvents().isEmpty() && currentUser.getWaitlistedEvents().isEmpty()) {
+                    showEmptyState();
+                    return;
+                }
+
+                // Display registered events
+                for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
+                    String eventId = entry.getKey();
+                    String status = entry.getValue();
+                    Event event = findEventById(eventId);
+
+                    if (event != null) {
+                        addEventCard(event, status);
+                    }
+                }
+
+                // Display waitlisted events
+                for (String eventId : currentUser.getWaitlistedEvents()) {
+                    Event event = findEventById(eventId);
+                    if (event != null) {
+                        addEventCard(event, "Waitlisted");
+                    }
+                }
+            }
+            else {
+                // User document doesn't exist yet - show empty state without modifying user object
+                showEmptyState();
+            }
+        }).addOnFailureListener(e -> {
+            // Handle error
+            Log.e("DisplayEvents", "Error fetching user data", e);
+            Toast.makeText(this, "Error loading events", Toast.LENGTH_SHORT).show();
             showEmptyState();
-            return;
-        }
-
-        // Display registered events
-        for (Map.Entry<String, String> entry : currentUser.getRegisteredEvents().entrySet()) {
-            String eventId = entry.getKey();
-            String status = entry.getValue();
-            Event event = findEventById(eventId);
-
-            if (event != null) {
-                addEventCard(event, status);
-            }
-        }
-
-        // Display waitlisted events
-        for (String eventId : currentUser.getWaitlistedEvents()) {
-            Event event = findEventById(eventId);
-            if (event != null) {
-                addEventCard(event, "Waitlisted");
-            }
-        }
+        });
     }
 
     /**
@@ -116,6 +227,9 @@ public class UserPanel extends AppCompatActivity {
      * @return The Event object, or null if not found
      */
     private Event findEventById(String eventId) {
+        if (allEvents == null) {
+            return null;
+        }
         for (Event event : allEvents) {
             if (event.getId().equals(eventId)) {
                 return event;
@@ -305,12 +419,10 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Opens InfoActivity with event details
+     * Opens InfoActivity with event details from Firebase
      */
     private void openInfoActivity(Event event, String status) {
         Intent intent = new Intent(UserPanel.this, InfoActivity.class);
-
-        // Pass event data
         intent.putExtra("EVENT_ID", event.getId());
         intent.putExtra("EVENT_NAME", event.getName());
         intent.putExtra("EVENT_DESCRIPTION", event.getDescription());
@@ -319,13 +431,10 @@ public class UserPanel extends AppCompatActivity {
         intent.putExtra("EVENT_START_TIME", event.getStartTime().getTime());
         intent.putExtra("EVENT_END_TIME", event.getEndTime().getTime());
         intent.putExtra("EVENT_STATUS", status);
-
-        // Pass user data
         intent.putExtra("USER_ID", currentUser.getId());
         intent.putExtra("USER_NAME", currentUser.getName());
         intent.putExtra("USER_EMAIL", currentUser.getEmailAddress());
         intent.putExtra("USER_PHONE", currentUser.getPhoneNumber());
-
         startActivity(intent);
     }
 
@@ -345,5 +454,40 @@ public class UserPanel extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    /**
+     * Helper function to get deviceId
+     * @param context Context of the activity
+     * */
+    private String getDeviceId(Context context) {
+        SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
+        return storedData.getString("UUID", "");
+    }
+
+    /**
+     * TESTING FUNCTION
+     * */
+    private void createTestNotifiedEvent() {
+        if (currentUser == null || allEvents == null || allEvents.isEmpty()) {
+            Log.e("TestEvent", "Cannot create test event - user or events not loaded");
+            return;
+        }
+
+        // Get the first event ID for testing
+        String testEventId = allEvents.get(2).getId();
+
+        // Update Firestore
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("registeredEvents." + testEventId, "Notified");
+
+        db.collection("users").document(currentUser.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("TestEvent", "Test notified event created successfully!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("TestEvent", "Error creating test event: " + e.getMessage());
+                });
     }
 }

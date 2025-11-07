@@ -3,14 +3,18 @@ package com.example.eventlottery.users;
 
 import android.content.Context;
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a user within the Event Lottery application.
@@ -55,7 +59,7 @@ public class User implements Serializable {
                 Settings.Secure.ANDROID_ID
         );
 
-        this.name = "";
+        this.name = "Your Name"; // Needed to add to display on your name on userPanel
         this.emailAddress = "";
         this.phoneNumber = "";
         this.waitlistedEvents = new ArrayList<>();
@@ -142,9 +146,13 @@ public class User implements Serializable {
     public ArrayList<String> getWaitlistedEvents() {
         return waitlistedEvents;
     }
+
+    // in User.java
     public HashMap<String, String> getRegisteredEvents() {
+        if (registeredEvents == null) registeredEvents = new HashMap<>();
         return registeredEvents;
     }
+
 
     /**
      * Checks if the user has joined an event.
@@ -251,31 +259,7 @@ public class User implements Serializable {
         registeredEvents.remove(eventToRemove);
     }
 
-    /** USER STORY 01.05.02 - Accept invitation
-     * @param event an Event object is passed which we verify if its an actual event
-     * */
-    public void acceptInvitation(String event) {
-        if (registeredEvents.containsKey(event)) {
-            registeredEvents.put(event, "Accepted");
-        }
-    }
-
-
-    /** USER STORY 01.05.03 - Decline invitation
-     * @param event an Event object is passed which we verify if its an actual event
-     * */
-    public void declineInvitation(String event) {
-        if (registeredEvents.containsKey(event)) {
-            registeredEvents.put(event, "Declined");
-        }
-    }
-
-    /**
-     * Retrieves the user’s registration status for a given event.
-     *
-     * @param event The event ID.
-     * @return The status string (e.g., "Accepted", "Declined", "Not Registered").
-     */
+    // Helper function to get check status
     public String getStatusForEvent(String event) {
         return registeredEvents.getOrDefault(event, "Not Registered");
     }
