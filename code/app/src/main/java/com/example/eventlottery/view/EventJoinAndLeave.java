@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -119,7 +120,9 @@ public class EventJoinAndLeave extends AppCompatActivity {
             }
         });
 
-        joinButton.setOnClickListener(v -> toggleJoin());
+        joinButton.setOnClickListener(v -> {
+            toggleJoin(eventId, user);
+        });
     }
 
     /**
@@ -127,7 +130,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
      * If joined, the user leaves the event; if not, they join.
      * Updates Firestore accordingly and refreshes the button state.
      */
-    private void toggleJoin() {
+    private void toggleJoin(String eventId, User user) {
         boolean newState = !isJoined;
         updateJoinButton(newState); // Update the button to reflect the new state
 
@@ -135,6 +138,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
             userDoc.update("waitlistedEvents", FieldValue.arrayUnion(eventId)) // Add to Firestore
                     .addOnSuccessListener(v -> {
                         user.AddJoinedWaitlist(eventId);
+                        updateJoinEventWaitlist(eventId, user);
                         isJoined = true;
                     })
                     .addOnFailureListener(e -> {
@@ -145,6 +149,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
             userDoc.update("waitlistedEvents", FieldValue.arrayRemove(eventId)) // Remove from Firestore
                     .addOnSuccessListener(v -> {
                         user.RemoveLeftWaitlist(eventId);
+                        updateLeaveEventWaitlist(eventId, user);
                         isJoined = false;
                     })
                     .addOnFailureListener(e -> {
@@ -152,6 +157,39 @@ public class EventJoinAndLeave extends AppCompatActivity {
                         Toast.makeText(this, "Failed to leave. Try again.", Toast.LENGTH_SHORT).show();
                     });
         }
+    }
+
+    private void updateJoinEventWaitlist(String eventId, User user) {
+        db = FirebaseFirestore.getInstance();
+        DocumentReference documentReference = db.collection("event").document(eventId);
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("name", user.getName());
+        userInfo.put("email", user.getEmailAddress());
+        documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayUnion(userInfo))
+                .addOnSuccessListener(unused -> {
+                    Log.d(TAG, "user joined waitlist in event " + eventId);
+                        }
+                ).addOnFailureListener(e -> {
+                    Log.e(TAG, "user failed to joined waitlist in event " + eventId, e);
+                });
+    }
+
+    private void updateLeaveEventWaitlist(String eventId, User user) {
+        db = FirebaseFirestore.getInstance();
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("name", user.getName());
+        userInfo.put("email", user.getEmailAddress());
+        DocumentReference documentReference = db.collection("event").document(eventId);
+        documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfo))
+                .addOnSuccessListener(unused -> {
+                            Log.d(TAG, "user left waitlist in event " + eventId);
+                        }
+                ).addOnFailureListener(e -> {
+                    Log.e(TAG, "user failed to leave waitlist in event " + eventId, e);
+                });
+
     }
 
     /**
