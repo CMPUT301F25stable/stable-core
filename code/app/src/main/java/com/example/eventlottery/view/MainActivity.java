@@ -326,8 +326,27 @@ public class MainActivity extends AppCompatActivity {
         }
 
         List<Event> filtered = new ArrayList<>();
-    }
 
+        for (Event event : data) {
+            boolean passesTags = true;
+            boolean passesDates = true;
+
+            if (hasTagFilter) {
+                List<String> eventTags = event.getFilterTags();
+                passesTags = (eventTags != null) && !java.util.Collections.disjoint(eventTags, tags);
+            }
+
+            if (hasDateFilter) {
+                passesDates = occursOnAnySelectedDate(event, datesMidnight);
+            }
+
+            if (passesTags && passesDates) {
+                filtered.add(event);
+            }
+        }
+
+        adapter.setFilteredList(filtered);
+    }
 
     /**
      * Returns the event corresponding to the given event ID.
