@@ -21,16 +21,29 @@ import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.Objects;
 
+
 /**
- * EditUserInfoActivity class is used to display the users personal
- * info when added/updated.
+ * Activity that allows users to view, edit, and delete their personal profile information.
+ * <p>
+ * Layout file: {@code activity_edit_user_info.xml}
+ * </p>
+ *
+ * @author Jensen Lee
+ * @see DBConnector
+ * @see com.google.firebase.firestore.DocumentSnapshot
  */
 public class EditUserInfoActivity extends AppCompatActivity {
+    /** Tag for logging debug information. */
     private static final String TAG = "EditUserInfoActivity";
+    /** Button for returning to the previous screen and for confirming and saving user changes.. */
     ImageButton backBtn, confirmBtn;
+    /** Button for deleting the user account. */
     Button deleteBtn;
+    /** Input field for the user's name, email address and phone number. */
     EditText nameEditText, emailEditText, phoneNumEditText;
+    /** Firestore database connector for performing user operations. */
     DBConnector db;
+    /** The current user's ID, retrieved from the database. */
     String id;
 
     /**

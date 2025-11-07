@@ -16,21 +16,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Represents a user within the Event Lottery application.
+ * <p>
+ * Each {@code User} has identifying information. The class also tracks the user's participation
+ * in events — including events they have joined, are waitlisted for, or are registered in.
+ * </p>
+ * <p>
+ * This class implements {@link Serializable}
+ * </p>
+ */
 public class User implements Serializable {
+    /** Unique device-based user identifier. */
     private String id; // Device identifier
+    /** User's name. */
     private String name;
+    /** User's email address. */
     private String emailAddress;
+    /** User's phone number. */
     private String phoneNumber;
+    /** List of events the user has joined. */
     private ArrayList<String> waitlistedEvents;
+    /** Map of events the user is registered in. */
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
+    /** List of joined event IDs. */
     private ArrayList<String> joinedEventIds = new ArrayList<>();
-
+    /** Firebase Cloud Messaging token for push notifications. */
     private String fcmToken;
-
-    // Firestore needs this for some reason
+    /** Default empty constructor required by Firestore. */
     public User() {}
 
-    // Empty constructor for new users (needs Context though)
+    /**
+     * Creates a new {@code User} based on device-specific information.
+     * Primarily used when a user first opens the app on a new device.
+     *
+     * @param context The application context used to retrieve the device ID.
+     */
     public User(Context context) {
         // Gets unique device ID
         this.id = Settings.Secure.getString(
@@ -45,6 +66,13 @@ public class User implements Serializable {
         this.registeredEvents = new HashMap<>();
     }
 
+    /**
+     * Constructs a user with the specified ID, name, and email.
+     *
+     * @param id The user's unique identifier.
+     * @param name The user's display name.
+     * @param emailAddress The user's email address.
+     */
     public User(String id, String name, String emailAddress) {
         this.id = id;
         this.name = name;
@@ -54,6 +82,15 @@ public class User implements Serializable {
         this.registeredEvents = new HashMap<>();
     }
 
+
+    /**
+     * Constructs a user with the specified ID, name, email, and phone number.
+     *
+     * @param id The user's unique identifier.
+     * @param name The user's display name.
+     * @param emailAddress The user's email address.
+     * @param phoneNumber The user's phone number.
+     */
     public User(String id, String name, String emailAddress, String phoneNumber) {
         this.id = id;
         this.name = name;
@@ -63,42 +100,49 @@ public class User implements Serializable {
         this.registeredEvents = new HashMap<>();
     }
 
+    /**
+     * Returns the user type as a string.
+     * Subclasses (e.g., Organizer, Admin) may override this.
+     *
+     * @return The user type label.
+     */
     public String getUserType() {
         return "User";
     }
 
+    /** @return The user’s unique identifier. */
     public String getId() {
         return id;
     }
-
+    /** @param id Sets the user’s unique identifier. */
     public void setId(String id) {
         this.id = id;
     }
-
+    /** @return The user’s display name. */
     public String getName() {
         return name;
     }
-
+    /** @param name Sets the user’s display name. */
     public void setName(String name) {
         this.name = name;
     }
-
+    /** @return The user’s email address. */
     public String getEmailAddress() {
         return emailAddress;
     }
-
+    /** @param emailAddress Sets the user’s email address. */
     public void setEmailAddress(String emailAddress) {
         this.emailAddress = emailAddress;
     }
-
+    /** @return The user’s phone number. */
     public String getPhoneNumber() {
         return phoneNumber;
     }
-
+    /** @param phoneNumber Sets the user’s phone number. */
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-
+    /** @return A list of event IDs the user is waitlisted for. */
     public ArrayList<String> getWaitlistedEvents() {
         return waitlistedEvents;
     }
@@ -220,17 +264,19 @@ public class User implements Serializable {
         return registeredEvents.getOrDefault(event, "Not Registered");
     }
 
+    /** @return A string representation of the user and their key details. */
     @NonNull
     @Override
     public String toString() {
         return "ID: " + getId() + "\nName: " + getName() + "\nEmail Address: " + getEmailAddress() + "\nPhone Number: " + getPhoneNumber();
     }
 
-    // FCM Token
+    /** @param fcmToken Sets the user’s Firebase Cloud Messaging token. */
     public void setFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
 
+    /** @return The user’s Firebase Cloud Messaging token. */
     public String getFcmToken() {
         return fcmToken;
     }
