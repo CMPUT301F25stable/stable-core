@@ -45,7 +45,15 @@ public class EditUserInfoActivity extends AppCompatActivity {
 
         // connection to db
         db = new DBConnector(EditUserInfoActivity.this);
-        id = db.getUserId();
+
+        // For testing
+        String mockID = getIntent().getStringExtra("mockID");
+        if (mockID == null) {
+            id = db.getUserId();
+        } else {
+            id = mockID;
+        }
+
 
         nameEditText = findViewById(R.id.name_edit_text);
         emailEditText = findViewById(R.id.email_edit_text);
