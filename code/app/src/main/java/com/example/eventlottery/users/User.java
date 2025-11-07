@@ -150,6 +150,8 @@ public class User implements Serializable {
      * @param eventId
      * @return
      */
+
+
     public boolean isJoined(String eventId) {
         return joinedEventIds != null && joinedEventIds.contains(eventId);
     }
@@ -189,22 +191,6 @@ public class User implements Serializable {
         if (joinedEventIds != null) joinedEventIds.remove(eventId);
     }
 
-
-    /**
-     * Adds an event to the waitlist.
-     * @param registeredEvents
-     */
-    public void setRegisteredEvents(HashMap<String, String> registeredEvents) {
-        this.registeredEvents = registeredEvents;
-    }
-
-    /**
-     * Given an event ID, remove it from registered events.
-     * @param eventToRemove The event ID to remove.
-     */
-    public void removeRegisteredEvent(String eventToRemove) {
-        registeredEvents.remove(eventToRemove);
-    }
 
     /** USER STORY 01.05.02 - Accept invitation
      * @param event an Event object is passed which we verify if its an actual event

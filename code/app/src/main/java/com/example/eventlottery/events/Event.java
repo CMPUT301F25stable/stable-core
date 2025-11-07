@@ -28,6 +28,7 @@ public class Event implements Serializable {
     private String formattedEndTime;
     private QRCode qrCode;
     private Waitlist waitlist;
+    private List<String> filterTags;
 
     @NonNull
     private String generateUUID() {
@@ -52,9 +53,10 @@ public class Event implements Serializable {
     // Firestore needs an empty constructor
     public Event() {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
+        this.filterTags = new ArrayList<>();
     }
 
-    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For new events (not yet in database)
+    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For new events (not yet in database)
         this.id = generateUUID();
         this.name = name;
         this.description = description;
@@ -65,10 +67,11 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         formatDates();
     }
 
-    public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For pre-existing events
+    public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For pre-existing events
         this.id = id;
         this.name = name;
         this.description = description;
@@ -79,7 +82,11 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         formatDates();
+    }
+    public List<String> getFilterTags() {
+        return filterTags;
     }
 
     public void setId(String id) { this.id = id; }

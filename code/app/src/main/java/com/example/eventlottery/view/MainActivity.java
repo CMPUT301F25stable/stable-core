@@ -1,6 +1,7 @@
 package com.example.eventlottery.view;
 
 import android.content.Intent;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -18,6 +19,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -27,6 +31,8 @@ import java.util.UUID;
 import java.util.Date;
 
 
+
+
 public class MainActivity extends AppCompatActivity {
     private String DEVICE_ID;
     private SearchView searchView;
@@ -34,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Event> data = new ArrayList<>();
     private User currentUser;
     public static MainActivity instance;
+    private FirebaseFirestore db;
+    private ListenerRegistration eventsListener;
+
 
     private String getDeviceId(Context context) {
         SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
@@ -61,6 +70,11 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        ImageButton filterBtn = findViewById(R.id.Filterbtn);
+
+        filterBtn.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, FilterActivity.class))
+        );
 
         DEVICE_ID = getDeviceId(this);
 
@@ -69,49 +83,11 @@ public class MainActivity extends AppCompatActivity {
 
         //User exampleUser = new User(DEVICE_ID, "Example User", "user@example.com");
 
+        db = FirebaseFirestore.getInstance();
+
+
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        Date start1 = dateOf(2025, Calendar.NOVEMBER, 15, 19, 30);
-        Date end1 = dateOf(2025, Calendar.NOVEMBER, 15, 21, 30);
-        data.add(new Event(
-                "evt-demon-slayer-2025-11-15",
-                "Demon Slayer: Infinity Castle – The Final Battle Begins",
-                "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet.",
-                "Edmonton Cineplex Westmount",
-                "Anime Alberta",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp", start1, end1));
-
-        Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
-        Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
-        data.add(new Event(
-                "evt-city-league-hockey-night-2025-12-02",
-                "City League Hockey Night",
-                "Weekly rec league double-header.",
-                "Terwillegar Rec Centre",
-                "YEG Sports",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", start2, end2));
-
-        Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
-        Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
-        data.add(new Event(
-                "evt-winter-dance-showcase-2025-12-12",
-                "Winter Dance Showcase",
-                "Contemporary + hip-hop student performances.",
-                "U of A Timms Centre",
-                "Dance Society",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
-
-        // TESTING: Simulate user joining some events
-        // Comment this out if you do not want to populate the events
-        currentUser.markJoined("evt-demon-slayer-2025-11-15");
-        currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
-        currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
-        currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
-        currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
-        saveUser(currentUser);
-
-        // TESTING END
 
         adapter = new MyAdapter(data, (item, position) -> {
             Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
@@ -130,9 +106,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         recyclerView.setAdapter(adapter);
+        loadEventsFromFirestore();
 
         searchView = findViewById(R.id.searchView);
         searchView.clearFocus();
+
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override public boolean onQueryTextSubmit(String query) { return false; }
             @Override public boolean onQueryTextChange(String newText) {
@@ -140,9 +118,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+
+
     }
-
-
     private Date dateOf(int year, int month, int day, int hour24, int minute) {
         Calendar c = Calendar.getInstance(Locale.CANADA);
         c.set(year, month, day, hour24, minute, 0);
@@ -182,14 +161,6 @@ public class MainActivity extends AppCompatActivity {
         return currentUser;
     }
 
-    public Event getEventById(String eventId) {
-        for (Event event : data) {
-            if (event.getId().equals(eventId)) {
-                return event;
-            }
-        }
-        return null;
-    }
 
     // User persistence methods (you can replace these with Firebase later)
     private User loadOrCreateUser() {
@@ -202,4 +173,38 @@ public class MainActivity extends AppCompatActivity {
         // TODO: Save to Firebase/Database
         this.currentUser = user;
     }
+
+
+    private void loadEventsFromFirestore() {
+
+        db.collection("event")
+                .orderBy("startTime")
+                .get()
+                .addOnSuccessListener(qs -> {
+                    data.clear();
+                    for (DocumentSnapshot doc : qs) {
+                        Event ev = doc.toObject(Event.class);
+                        if (ev != null) {
+                            if (ev.getId() == null || ev.getId().isEmpty()) ev.setId(doc.getId());
+                            data.add(ev);
+                        }
+                    }
+                    adapter.setFilteredList(new ArrayList<>(data));
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (eventsListener != null) {
+            eventsListener.remove();
+            eventsListener = null;
+        }
+    }
+
+
 }
