@@ -301,4 +301,9 @@ public class User implements Serializable {
     public String getFcmToken() {
         return fcmToken;
     }
+
+
+    public boolean canReceiveNotifications() {
+        return fcmToken != null && !fcmToken.isEmpty();
+    }
 }
