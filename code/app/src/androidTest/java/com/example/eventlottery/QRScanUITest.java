@@ -59,7 +59,8 @@ public class QRScanUITest {
                     "Filler Organizer",
                     "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp",
                     new Date(1735758000000L),
-                    new Date(1735776000000L)));
+                    new Date(1735776000000L),
+                    null));
         }
 
         Date startDate1 = new Date(System.currentTimeMillis());
