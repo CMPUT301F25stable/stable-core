@@ -23,6 +23,8 @@ import java.util.Objects;
 
 
 /**
+ * EditUserInfoActivity class is used to display the users personal
+ * info when added/updated.
  * Activity that allows users to view, edit, and delete their personal profile information.
  * <p>
  * Layout file: {@code activity_edit_user_info.xml}

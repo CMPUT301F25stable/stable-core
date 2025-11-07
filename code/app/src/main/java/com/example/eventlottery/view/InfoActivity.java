@@ -98,7 +98,7 @@ public class InfoActivity extends AppCompatActivity {
         declineButton = findViewById(R.id.declineButton);
         backButton = findViewById(R.id.backButton);
 
-        // Get data from intent
+        // Get user ID from intent
         Intent intent = getIntent();
         String userId = intent.getStringExtra("USER_ID");
 
@@ -108,7 +108,7 @@ public class InfoActivity extends AppCompatActivity {
             return;
         }
 
-        // Retrieve user from Firestore
+        // Retrieve user from Firestore FIRST
         db.collection("users").document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -129,6 +129,7 @@ public class InfoActivity extends AppCompatActivity {
                             currentUser.setWaitlistedEventIds(new ArrayList<>());
                         }
 
+                        // NOW load event data after user is loaded
                         loadEventData(intent);
                     } else {
                         Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();

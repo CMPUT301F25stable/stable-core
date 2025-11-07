@@ -53,7 +53,6 @@ public class EventJoinAndLeave extends AppCompatActivity {
         setContentView(R.layout.event_join_leave_page);
 
         ImageView image = findViewById(R.id.imageView);
-        ImageView background = findViewById(R.id.backgroundImage);
         TextView title = findViewById(R.id.eventTitle);
         TextView subtitle = findViewById(R.id.eventSubtitle);
         TextView desc = findViewById(R.id.eventDescription);
@@ -98,7 +97,6 @@ public class EventJoinAndLeave extends AppCompatActivity {
         getWaitListSize(eventId, details);
 
         Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(image);
-        Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(background);
 
         homeButton.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 

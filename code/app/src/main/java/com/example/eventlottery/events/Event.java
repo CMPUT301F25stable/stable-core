@@ -50,6 +50,7 @@ public class Event implements Serializable {
     /** Waitlist containing users who have registered or are waiting to participate. */
     private Waitlist waitlist;
     /** Finalized list of users who have been selected as winners. */
+    private java.util.List<String> filterTags = new java.util.ArrayList<>();
     private Finalizedlist finalizedlist;
     /** List of users who have been selected as winners. */
     private final List<User> chosenEntrants = new ArrayList<>();
@@ -94,9 +95,10 @@ public class Event implements Serializable {
      */
     public Event() {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
+        this.filterTags = new java.util.ArrayList<>();
     }
 
-    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime) { // For new events (not yet in database)
+    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For new events (not yet in database)
         this.id = generateUUID();
         this.name = name;
         this.description = description;
@@ -107,6 +109,11 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
+        formatDates();
+    }
+
+    public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For pre-existing events
         this.finalizedlist = new Finalizedlist();
         formatDates();
     }
@@ -136,9 +143,11 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
+        this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         this.finalizedlist = new Finalizedlist();
         formatDates();
     }
+
 
     public void setId(String id) { this.id = id; }
 
@@ -203,6 +212,25 @@ public class Event implements Serializable {
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
+    public List<String> getFilterTags() {
+        return filterTags;
+    }
+    public void setFilterTags(List<String> filterTags) {
+        this.filterTags = filterTags;
+    }
+    public void addFilterTag(String tag) {
+        if (this.filterTags == null) {
+            this.filterTags = new ArrayList<>();
+        }
+        this.filterTags.add(tag);
+    }
+    public void removeFilterTag(String tag) {
+        if (this.filterTags != null) {
+            this.filterTags.remove(tag);
+        }
+    }
+
+
     /** @return the formatted start date string */
     public String getFormattedStartDate() {
         return formattedStartDate;
@@ -277,6 +305,9 @@ public class Event implements Serializable {
      * @return the waitlist’s maximum capacity
      */
     public int getWaitlistMax() {return this.waitlist.getMaxSize();};
+
+
+
 
     /**
      * Searches for an Event in an ArrayList of events.
