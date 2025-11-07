@@ -63,7 +63,7 @@ public class FilterActivity extends AppCompatActivity {
         });
 
         btnClearAll.setOnClickListener(v -> clearAllFilters());
-        btnGoHome.setOnClickListener(v -> finish());
+        btnGoHome.setOnClickListener(v -> saveAndFinish());
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
