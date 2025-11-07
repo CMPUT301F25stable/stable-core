@@ -24,28 +24,61 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * USER STORY - 01.02.03
- * Displays event invitation details and allows user to accept/decline
- * @author: Jensen Lee
+/** USER STORY - 01.02.03
+ * <p>
+ * The {@code InfoActivity} class displays detailed information about an event invitation.
+ * Users can view event details and choose to either accept or decline the invitation.
+ * Updates are reflected in the main user data.
+ * @author Jensen Lee
  */
 public class InfoActivity extends AppCompatActivity {
 
+    /** Header TextView displaying the name of the event. */
     private TextView eventNameHeader;
+
+    /** TextView showing the detailed description of the event. */
     private TextView eventDescriptionText;
+
+    /** TextView indicating the location where the event will take place. */
     private TextView eventLocationText;
+
+    /** TextView displaying the organizer or host of the event. */
     private TextView eventOrganizerText;
+
+    /** TextView showing the formatted start and/or end date and time of the event. */
     private TextView eventDateTimeText;
+
+    /** Badge TextView displaying the user's current registration status for the event
+     *  (e.g., "Accepted", "Declined", "Notified"). */
     private TextView statusBadge;
+
+    /** Button that allows the user to accept the event invitation. */
     private Button acceptButton;
+
+    /** Button that allows the user to decline the event invitation. */
     private Button declineButton;
+
+    /** ImageButton that navigates back to the previous screen or activity. */
     private ImageButton backButton;
+
+    /** The currently logged-in user interacting with the event details. */
     private User currentUser;
+
+    /** The event object whose details are being displayed in this activity. */
     private Event currentEvent;
+
+    /** String representing the current registration status of the user for this event. */
     private String currentStatus;
 
     private FirebaseFirestore db;
-
+  
+    /**
+     * Called when the activity is created.
+     * Initializes UI elements, retrieves intent data, constructs User and Event objects,
+     * and sets up event button listeners.
+     *
+     * @param savedInstanceState The saved instance state bundle.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,8 +151,10 @@ public class InfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows confirmation dialog for accept/decline action
-     * @param isAccepting true if accepting, false if declining
+     * Shows a confirmation dialog for accepting or declining an event invitation.
+     *
+     * @param isAccepting {@code true} if the user is accepting the invitation,
+     *                    {@code false} if declining.
      */
     private void showConfirmationDialog(boolean isAccepting) {
         String title = isAccepting ? "Accept Invitation?" : "Decline Invitation?";
@@ -151,6 +186,10 @@ public class InfoActivity extends AppCompatActivity {
         );
     }
 
+    /**
+     * Handles the logic for when a user accepts an event invitation.
+     * Updates user status, displays confirmation, and disables further interaction.
+     */
     private void handleAccept() {
         if (currentEvent == null || currentUser == null) {
             Toast.makeText(this, "Event data not loaded yet", Toast.LENGTH_SHORT).show();
@@ -199,6 +238,10 @@ public class InfoActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Handles the logic for when a user declines an event invitation.
+     * Updates user status, displays confirmation, and disables further interaction.
+     */
     private void handleDecline() {
         if (currentEvent == null || currentUser == null) {
             Toast.makeText(this, "Event data not loaded yet", Toast.LENGTH_SHORT).show();
@@ -245,6 +288,10 @@ public class InfoActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates the display of the user's current event status.
+     * Changes the text and background colors of the status badge based on the current state.
+     */
     private void updateStatusDisplay() {
         if (statusBadge == null) return;
 
@@ -289,7 +336,10 @@ public class InfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Formats the event date/time for display
+     * Formats a {@link Date} object into a readable string for display in the UI.
+     *
+     * @param date The date to be formatted.
+     * @return A formatted string representing the event date and time.
      */
     private String formatEventDateTime(Date date) {
         SimpleDateFormat formatter = new SimpleDateFormat("EEEE, MMM dd, yyyy 'at' h:mm a", Locale.getDefault());
