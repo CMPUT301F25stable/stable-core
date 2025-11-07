@@ -181,6 +181,7 @@ public class InfoActivity extends AppCompatActivity {
 
                     // Tell the caller something changed and finish
                     Intent out = new Intent(this, UserPanel.class);
+                    out.putExtra("USER_ID", currentUser.getId());
                     out.putExtra("UPDATED_EVENT_ID", eventId);
                     out.putExtra("UPDATED_STATUS", "Accepted");
                     setResult(RESULT_OK, out);
@@ -226,6 +227,7 @@ public class InfoActivity extends AppCompatActivity {
                     Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
 
                     Intent out = new Intent(this, UserPanel.class);
+                    out.putExtra("USER_ID", currentUser.getId());
                     out.putExtra("UPDATED_EVENT_ID", eventId);
                     out.putExtra("UPDATED_STATUS", "Declined");
                     setResult(RESULT_OK, out);
