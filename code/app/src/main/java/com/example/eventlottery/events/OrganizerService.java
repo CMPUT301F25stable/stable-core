@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Service class for organizer-specific operations
- * US 02.05.01: Handles sending invitations to chosen entrants
+ * Handles sending invitations to chosen entrants
  */
 public class OrganizerService {
 
@@ -18,8 +18,7 @@ public class OrganizerService {
     }
 
     /**
-     * US 02.05.01: Send invitation notifications to chosen entrants
-     *
+     * Send invitation notifications to multiple entrants
      * @param entrants List of users to invite
      * @param eventName Name of the event
      * @param eventId ID of the event
@@ -48,7 +47,7 @@ public class OrganizerService {
     }
 
     /**
-     * US 02.05.01: Send invitation to a single entrant
+     * Send invitation to an entrant
      *
      * @param entrant The user to invite
      * @param eventName Name of the event
@@ -58,15 +57,11 @@ public class OrganizerService {
      */
     public boolean sendInvitationToEntrant(User entrant, String eventName,
                                            String eventId, String customMessage) {
-        if (entrant == null) {
+        // Makes sure there is an entrant that can receive notifications
+        if (entrant == null || !entrant.canReceiveNotifications()) {
             return false;
         }
-
-        // Check if user can receive notifications
-        if (!entrant.canReceiveNotifications()) {
-            return false;
-        }
-
+        // Send notification to entrant
         notificationSystem.notifyInvitedEntrant(entrant, eventName, eventId, customMessage);
         return true;
     }

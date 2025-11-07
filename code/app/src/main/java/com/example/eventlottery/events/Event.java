@@ -49,7 +49,12 @@ public class Event implements Serializable {
     private QRCode qrCode;
     /** Waitlist containing users who have registered or are waiting to participate. */
     private Waitlist waitlist;
+    /** Finalized list of users who have been selected as winners. */
     private Finalizedlist finalizedlist;
+    /** List of users who have been selected as winners. */
+    private final List<User> chosenEntrants = new ArrayList<>();
+    /** Lottery system used for selecting winners. */
+    private transient LotterySystem lotteryEngine;
 
     /**
      * Generates a new universally unique identifier (UUID) for an event.
@@ -305,4 +310,25 @@ public class Event implements Serializable {
         this.finalizedlist.addUser(user);
     }
 
+    /**
+     * Runs the lottery for this event and stores the selected winners internally.
+     * Any previous winners are cleared before the new draw. Only draws chosen entrants
+     * @param capacity the number of winners to select (must be &ge; 0 and
+     *                 not larger than the current wait-list size)
+     * @return an unmodifiable view of the newly selected winners; the same
+     *         list can also be retrieved later via {@link #getChosenEntrants()}
+     */
+    public List<User> drawLotteryWinners(int capacity) {
+        chosenEntrants.clear();
+
+        if (lotteryEngine == null) {
+            lotteryEngine = new LotterySystem(waitlist.getWaitlistedUsers());
+        }
+
+        chosenEntrants.addAll(lotteryEngine.selectWinners(capacity));
+        return chosenEntrants;
+    }
+    public List<User> getChosenEntrants() {
+        return new ArrayList<>(chosenEntrants);
+    }
 }
