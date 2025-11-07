@@ -29,6 +29,7 @@ import java.util.Map;
  * The {@code EventJoinAndLeave} class allows a user to view event details
  * and either join or leave an event. It updates both the UI and Firestore
  * to reflect the user's participation status.
+ * Reference: https://firebase.google.com/docs/firestore/manage-data/add-data#update_fields_in_nested_objects
  */
 public class EventJoinAndLeave extends AppCompatActivity {
     private static final String TAG = "EventJoinAndLeave";
@@ -159,6 +160,11 @@ public class EventJoinAndLeave extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates waitlistedUsers in DB when a user joins an event
+     * @param eventId the eventID
+     * @param user the userID
+     */
     private void updateJoinEventWaitlist(String eventId, User user) {
         db = FirebaseFirestore.getInstance();
         DocumentReference documentReference = db.collection("event").document(eventId);
@@ -175,6 +181,11 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Updates waitlistedUsers in DB when a user leaves an event
+     * @param eventId the eventID
+     * @param user the userID
+     */
     private void updateLeaveEventWaitlist(String eventId, User user) {
         db = FirebaseFirestore.getInstance();
         Map<String, Object> userInfo = new HashMap<>();
@@ -223,6 +234,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates textview showing the description of the event to include the number of
+     * people the in waitlist
+     * @param eventId the eventID
+     * @param textView the textview to update
+     */
     private void getWaitListSize(String eventId, TextView textView) {
         EventDatabase eventDatabase = new EventDatabase();
 
