@@ -203,6 +203,8 @@ public class User implements Serializable {
      * @param eventId
      * @return
      */
+
+
     public boolean isJoined(String eventId) {
         return joinedEventIds != null && joinedEventIds.contains(eventId);
     }
@@ -243,6 +245,23 @@ public class User implements Serializable {
     }
 
 
+    /** USER STORY 01.05.02 - Accept invitation
+     * @param event an Event object is passed which we verify if its an actual event
+     * */
+    public void acceptInvitation(String event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Accepted");
+        }
+    }
+
+
+    /** USER STORY 01.05.03 - Decline invitation
+     * @param event an Event object is passed which we verify if its an actual event
+     * */
+    public void declineInvitation(String event) {
+        if (registeredEvents.containsKey(event)) {
+            registeredEvents.put(event, "Declined");
+        }
     /**
      * Adds an event to the waitlist.
      * @param registeredEvents

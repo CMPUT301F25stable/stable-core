@@ -16,6 +16,7 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -152,7 +153,7 @@ public class CreateEventDialog extends DialogFragment {
              * 3. Create event, given the inputs *
              *************************************/
             // TODO: This can only set waiting list max, start and end date right now. Implement more later
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end);
+            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end, new ArrayList<>());
             newEvent.setWaitlistMax(maxSize);
 
             // Run organizer panel's listener if something was created

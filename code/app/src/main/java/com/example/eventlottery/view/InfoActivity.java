@@ -102,6 +102,33 @@ public class InfoActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String userId = intent.getStringExtra("USER_ID");
 
+        // Reconstruct Event
+        String eventId = intent.getStringExtra("EVENT_ID");
+        String eventName = intent.getStringExtra("EVENT_NAME");
+        String eventDescription = intent.getStringExtra("EVENT_DESCRIPTION");
+        String eventLocation = intent.getStringExtra("EVENT_LOCATION");
+        String eventOrganizer = intent.getStringExtra("EVENT_ORGANIZER");
+        long startTimeMillis = intent.getLongExtra("EVENT_START_TIME", 0);
+        long endTimeMillis = intent.getLongExtra("EVENT_END_TIME", 0);
+        String eventStatus = intent.getStringExtra("EVENT_STATUS");
+
+        Date startTime = new Date(startTimeMillis);
+        Date endTime = new Date(endTimeMillis);
+
+        currentEvent = new Event(eventId, eventName, eventDescription, eventLocation,
+                eventOrganizer, "", startTime, endTime, new ArrayList<>());
+
+        // Register the event with current status
+        currentUser.getRegisteredEvents().put(currentEvent.getId(), eventStatus);
+
+        // Populate UI
+        eventNameHeader.setText(eventName);
+        eventDescriptionText.setText(eventDescription);
+        eventLocationText.setText(eventLocation);
+        eventOrganizerText.setText(eventOrganizer);
+        eventDateTimeText.setText(formatEventDateTime(startTime));
+
+        updateStatusDisplay();
         if (userId == null || userId.isEmpty()) {
             Toast.makeText(this, "Invalid user ID", Toast.LENGTH_SHORT).show();
             finish();

@@ -41,6 +41,9 @@
         <activity android:name=".view.EventJoinAndLeave"
             android:exported="false" />
         <activity
+            android:name=".view.FilterActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.SplashScreen"
             android:exported="true">
             <intent-filter>
