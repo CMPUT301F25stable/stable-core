@@ -110,10 +110,10 @@ public class TaskbarFragment extends Fragment {
                                 startActivity(intent);
                             }
                         } else {
-                            Toast.makeText(getContext(), "The QR Code you scanned is invalid.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "The QR Code that you scanned is invalid.", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Toast.makeText(getContext(), "The QR Code you scanned is invalid.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "The QR Code that you scanned is invalid.", Toast.LENGTH_SHORT).show();
                     }
                 });
                 Log.d("TaskbarFragment - QRLauncher", content);
