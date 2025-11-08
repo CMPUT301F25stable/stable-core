@@ -40,7 +40,7 @@ public class User implements Serializable {
     private ArrayList<String> joinedEventIds = new ArrayList<>();
     /** Firebase Cloud Messaging token for push notifications. */
     private String fcmToken;
-    /** Indicates if the user is banned from created events. (US 03.07.01) */
+    /** Indicates if the user is banned from creating events. (US 03.07.01) */
     private boolean creationBan = false;
 
     /** Default empty constructor required by Firestore. */
