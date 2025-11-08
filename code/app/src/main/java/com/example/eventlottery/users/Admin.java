@@ -3,7 +3,7 @@ package com.example.eventlottery.users;
 /**
  * Represents an administrator user within the Event Lottery application.
  */
-public class Admin extends Organizer {
+public class Admin extends User {
     /**
      * Constructs a new {@code Admin} with the given ID, name, and email address.
      *

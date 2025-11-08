@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider;
 import android.content.Context;
 
 import com.example.eventlottery.events.DBConnector;
-import com.example.eventlottery.users.Organizer;
+import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class DBConnectorInstrumentedTest {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    Organizer mockUser = document.toObject(Organizer.class);
+                    User mockUser = document.toObject(User.class);
                     if (mockUser != null && mockUser.getId().equals(mockUserID)) {
                         System.out.println("Test passes");
                     } else {

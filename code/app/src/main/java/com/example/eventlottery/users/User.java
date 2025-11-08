@@ -1,20 +1,15 @@
 package com.example.eventlottery.users;
 
-
 import android.content.Context;
 import android.provider.Settings;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
-
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Represents a user within the Event Lottery application.
@@ -37,12 +32,17 @@ public class User implements Serializable {
     private String phoneNumber;
     /** List of events the user has joined. */
     private ArrayList<String> waitlistedEvents;
+    /** List of events that the user has created */
+    private ArrayList<String> createdEvents;
     /** Map of events the user is registered in. */
     private HashMap<String, String> registeredEvents; // Event ID: Notified/Rejected/Accepted
     /** List of joined event IDs. */
     private ArrayList<String> joinedEventIds = new ArrayList<>();
     /** Firebase Cloud Messaging token for push notifications. */
     private String fcmToken;
+    /** Indicates if the user is banned from creating events. (US 03.07.01) */
+    private boolean creationBan = false;
+
     /** Default empty constructor required by Firestore. */
     public User() {}
 
@@ -64,6 +64,7 @@ public class User implements Serializable {
         this.phoneNumber = "";
         this.waitlistedEvents = new ArrayList<>();
         this.registeredEvents = new HashMap<>();
+        this.createdEvents = new ArrayList<>();
     }
 
     /**
@@ -80,6 +81,7 @@ public class User implements Serializable {
         this.phoneNumber = "";
         this.waitlistedEvents = new ArrayList<>();
         this.registeredEvents = new HashMap<>();
+        this.createdEvents = new ArrayList<>();
     }
 
 
@@ -98,6 +100,7 @@ public class User implements Serializable {
         this.phoneNumber = phoneNumber;
         this.waitlistedEvents = new ArrayList<>();
         this.registeredEvents = new HashMap<>();
+        this.createdEvents = new ArrayList<>();
     }
 
     /**
@@ -199,12 +202,42 @@ public class User implements Serializable {
     }
 
     /**
+     * Returns the list of event IDs created by this organizer.
+     * @return A list of created event IDs.
+     */
+    public ArrayList<String> getCreatedEvents() {
+        return createdEvents;
+    }
+
+    /**
+     * Sets the list of created events for this organizer.
+     * @param createdEvents A list of event IDs to associate with this organizer.
+     */
+    public void setCreatedEvents(ArrayList<String> createdEvents) {
+        this.createdEvents = createdEvents;
+    }
+
+    /**
+     * Adds a new event to the list of created events.
+     * @param newEvent The event ID of the newly created event.
+     */
+    public void createEvent(String newEvent) {
+        createdEvents.add(newEvent);
+    }
+
+    /**
+     * Removes an event from the list of created events.
+     * @param eventToRemove The event ID to remove from the list.
+     */
+    public void removeEvent(String eventToRemove) {
+        createdEvents.remove(eventToRemove);
+    }
+
+    /**
      * Checks if the user has joined an event.
      * @param eventId
      * @return
      */
-
-
     public boolean isJoined(String eventId) {
         return joinedEventIds != null && joinedEventIds.contains(eventId);
     }
@@ -305,5 +338,13 @@ public class User implements Serializable {
 
     public boolean canReceiveNotifications() {
         return fcmToken != null && !fcmToken.isEmpty();
+    }
+
+    public boolean isCreationBan() {
+        return creationBan;
+    }
+
+    public void setCreationBan(boolean creationBan) {
+        this.creationBan = creationBan;
     }
 }

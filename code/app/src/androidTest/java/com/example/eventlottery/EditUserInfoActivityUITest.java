@@ -24,7 +24,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.eventlottery.events.DBConnector;
-import com.example.eventlottery.users.Organizer;
+import com.example.eventlottery.users.User;
 import com.example.eventlottery.view.EditUserInfoActivity;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -65,7 +65,7 @@ public class EditUserInfoActivityUITest {
         db = new DBConnector(ApplicationProvider.getApplicationContext());
         DocumentSnapshot documentSnapshot = Tasks.await(db.getUserDoc(MOCK_ID).get());
         if (!documentSnapshot.exists()) {
-            Organizer organizer = new Organizer(ApplicationProvider.getApplicationContext());
+            User organizer = new User(ApplicationProvider.getApplicationContext());
             organizer.setName("placeholder");
             organizer.setEmailAddress("placeholder");
             Tasks.await(db.getUserDoc(MOCK_ID).set(organizer));

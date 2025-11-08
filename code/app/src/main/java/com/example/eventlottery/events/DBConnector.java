@@ -1,14 +1,12 @@
 package com.example.eventlottery.events;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -17,7 +15,6 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Connects to FirebaseFirestore database
@@ -75,9 +72,9 @@ public class DBConnector {
      * @param context: the context of the application
      * @return the UUID of the user
      */
+    @SuppressLint("HardwareIds")
     protected String getUUID(Context context) {
-        String uuid = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        return uuid;
+        return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     /**
@@ -86,7 +83,7 @@ public class DBConnector {
      * @return DocumentReference from UUID
      */
     public DocumentReference getUserDoc(String id) {
-        return this.db.collection("users").document(id);
+        return this.db.collection("users-p4").document(id);
     }
 
     /**
@@ -96,14 +93,14 @@ public class DBConnector {
      * @param context The activity it's called in.
      */
     public void saveNewUser(Context context) {
-        CollectionReference usersRef = db.collection("users");
+        CollectionReference usersRef = db.collection("users-p4");
         DocumentReference userRef = usersRef.document(this.id);
         // Asynchronous so added onCompleteListener
         userRef.get().addOnCompleteListener(task -> {
             DocumentSnapshot document = task.getResult();
             // If user doesn't already exist, create & set
             if (!document.exists()) {
-                Organizer organizer = new Organizer(context);
+                User organizer = new User(context);
                 userRef.set(organizer);
             }
         });
@@ -131,11 +128,11 @@ public class DBConnector {
         getUserDoc(id).get().addOnCompleteListener(task -> {
             DocumentSnapshot document = task.getResult();
             if (document == null || !document.exists()) {
-                Organizer organizer = new Organizer(context);
-                organizer.setName(name);
-                organizer.setEmailAddress(email);
-                organizer.setPhoneNumber(phoneNum);
-                getUserDoc(id).set(organizer);
+                User user = new User(context);
+                user.setName(name);
+                user.setEmailAddress(email);
+                user.setPhoneNumber(phoneNum);
+                getUserDoc(id).set(user);
             } else {
                 getUserDoc(id)
                         .set(items, SetOptions.merge())
@@ -147,8 +144,8 @@ public class DBConnector {
         });
     }
 
-    public void updateOrganizerCreatedEvents(Organizer organizer) {
-        CollectionReference users = db.collection("users");
+    public void updateOrganizerCreatedEvents(User organizer) {
+        CollectionReference users = db.collection("users-p4");
         DocumentReference user = users.document(organizer.getId());
         user.update("createdEvents", organizer.getCreatedEvents());
     }

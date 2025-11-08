@@ -20,7 +20,6 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.NotificationSystem;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -73,22 +72,6 @@ public class MainActivity extends AppCompatActivity {
     private DBConnector connector;
 
     /**
-     * Retrieves the device UUID from SharedPreferences, or generates a new one if it does not exist.
-     * @param context The context used to access SharedPreferences.
-     * @return A string representing the unique device ID.
-     */
-    private String getDeviceId(Context context) {
-        SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
-        String storedUUID = storedData.getString("UUID", "");
-        if (storedUUID.isEmpty()) {
-            String randomUUID = String.valueOf(UUID.randomUUID());
-            storedUUID = randomUUID;
-            storedData.edit().putString("UUID", randomUUID).apply();
-        }
-        return storedUUID;
-    }
-
-    /**
      * Lifecycle method called when the activity is created.
      * Initializes UI elements, sets up RecyclerView and SearchView,
      * loads or creates the user, and populates sample event data.
@@ -118,14 +101,14 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intent, REQ_FILTER);
         });
 
-        DEVICE_ID = getDeviceId(this);
+        DEVICE_ID = Settings.System.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
         db = FirebaseFirestore.getInstance();
         connector = new DBConnector(this);
         connector.loadUserInfo(DEVICE_ID, task -> {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    currentUser = document.toObject(Organizer.class);
+                    currentUser = document.toObject(User.class);
                 }
             }
         });
@@ -282,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
     public User getCurrentUser() { return currentUser; }
 
     private void loadEventsFromFirestore() {
-        db.collection("event")
+        db.collection("event-p4")
                 .orderBy("startTime")
                 .get()
                 .addOnSuccessListener(query -> {

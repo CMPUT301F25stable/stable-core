@@ -5,14 +5,14 @@ import com.example.eventlottery.users.User;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Finalizedlist implements Serializable{
+public class FinalizedList implements Serializable {
     private ArrayList<User> finalizedUsers;
 
-    public Finalizedlist() {
+    public FinalizedList() {
         finalizedUsers = new ArrayList<>();
     }
 
-    public Finalizedlist(ArrayList<User> finalizedUsers) {
+    public FinalizedList(ArrayList<User> finalizedUsers) {
         this.finalizedUsers = finalizedUsers;
     }
 
