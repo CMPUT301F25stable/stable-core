@@ -277,7 +277,7 @@ public class InfoActivity extends AppCompatActivity {
         userUpdates.put("registeredEvents." + eventId, "Declined");
       
         db.collection("users-p4").document(currentUser.getId())
-                .update(updates)
+                .update(userUpdates)
                 .addOnSuccessListener(aVoid -> {
                     // Local update
                     currentUser.getRegisteredEvents().put(eventId, "Declined");
