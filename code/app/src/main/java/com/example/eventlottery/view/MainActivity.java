@@ -264,6 +264,10 @@ public class MainActivity extends AppCompatActivity {
      */
     public User getCurrentUser() { return currentUser; }
 
+    /**
+     * Adds valid events to data. A valid event is:
+     * 1. An event not created by the user
+     */
     private void loadEventsFromFirestore() {
         db.collection("event-p4")
                 .orderBy("startTime")
@@ -278,7 +282,17 @@ public class MainActivity extends AppCompatActivity {
                         if (event.getId() == null || event.getId().isEmpty()) {
                             event.setId(doc.getId());
                         }
-                        data.add(event);
+
+                        // Check if event is valid, by definition of function comment
+                        String eventId = event.getId();
+                        ArrayList<String> createdEvents = getCurrentUser().getCreatedEvents();
+                        for (String createdEventId : createdEvents) {
+                            if (eventId.equals(createdEventId)) {
+                                continue;  // This event was created by the user
+                            }
+                            // If conditions pass, add event
+                            data.add(event);
+                        }
                     }
 
                     if (!selectedTags.isEmpty() || !selectedDatesMidnight.isEmpty()) {
