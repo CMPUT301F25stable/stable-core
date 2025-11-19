@@ -21,6 +21,9 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,11 +38,10 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private static final String TAG = "EventJoinAndLeave";
     private Button joinButton;
     private String eventId;
-
     private FirebaseFirestore db;
     private DocumentReference userDoc;
     private ListenerRegistration userListener;
-
+    private Date registrationEnd;
     private User user;
     private boolean isJoined = false;
 
@@ -71,6 +73,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         String timeStart = getIntent().getStringExtra("timeStart");
         String dateEnd   = getIntent().getStringExtra("dateEnd");
         String timeEnd   = getIntent().getStringExtra("timeEnd");
+        registrationEnd = (Date) getIntent().getSerializableExtra("registrationEnd");
 
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
@@ -128,10 +131,18 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
     /**
      * Toggles the user's join status for the event.
+     * Checks first if the registration date is already past.
      * If joined, the user leaves the event; if not, they join.
      * Updates Firestore accordingly and refreshes the button state.
      */
     private void toggleJoin(String eventId, User user) {
+        // Check if date now is past registration. If it is, cancel joining waitlist.
+        Date now = new Date();
+        if (now.after(registrationEnd)) {
+            Toast.makeText(this, "Registration has ended", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         boolean newState = !isJoined;
         updateJoinButton(newState); // Update the button to reflect the new state
 
