@@ -59,6 +59,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         TextView subtitle = findViewById(R.id.eventSubtitle);
         TextView desc = findViewById(R.id.eventDescription);
         TextView details = findViewById(R.id.eventDetails);
+        TextView showWaitlistSize = findViewById(R.id.showWaitlistSize);
         joinButton = findViewById(R.id.joinButton);
         Button homeButton = findViewById(R.id.homeButton);
 
@@ -94,9 +95,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         details.setText(when + "\n\n📍 Location: " + location + "\n\n🎟️ Organizer: " + organizer);
 
-        // Note: This does not show up for the test events on the MainActivity unless they are valid
-        // events in firebase
-        getWaitListSize(eventId, details);
+        // Shows the waitlist size of the event
+        getWaitListSize(eventId, showWaitlistSize);
 
         Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(image);
 
@@ -122,7 +122,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         });
 
         joinButton.setOnClickListener(v -> {
-            toggleJoin(eventId, user);
+            toggleJoin(eventId, user, showWaitlistSize);
         });
     }
 
@@ -131,7 +131,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
      * If joined, the user leaves the event; if not, they join.
      * Updates Firestore accordingly and refreshes the button state.
      */
-    private void toggleJoin(String eventId, User user) {
+    private void toggleJoin(String eventId, User user, TextView showWaitListSize) {
         boolean newState = !isJoined;
         updateJoinButton(newState); // Update the button to reflect the new state
 
@@ -141,6 +141,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
                         user.AddJoinedWaitlist(eventId);
                         updateJoinEventWaitlist(eventId, user);
                         isJoined = true;
+                        getWaitListSize(eventId, showWaitListSize);
                     })
                     .addOnFailureListener(e -> {
                         updateJoinButton(isJoined);
@@ -152,6 +153,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
                         user.RemoveLeftWaitlist(eventId);
                         updateLeaveEventWaitlist(eventId, user);
                         isJoined = false;
+                        getWaitListSize(eventId, showWaitListSize);
                     })
                     .addOnFailureListener(e -> {
                         updateJoinButton(isJoined);
@@ -253,7 +255,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
                         List<Object> waitlistUsers = (List<Object>) waitlistMap.get("waitlistedUsers");
                         if (waitlistUsers != null) {
                             int size = waitlistUsers.size();
-                            textView.append("\n🧍 Waitlist: " + size);
+                            textView.setText("\n🧍 Waitlist: " + size);
                         } else {
                             int size = 0;
                             textView.append("\n🧍 Waitlist: " + size);

@@ -100,6 +100,15 @@
                     android:textColor="@color/black"
                     android:lineSpacingExtra="3dp" />
 
+                <TextView
+                    android:id="@+id/showWaitlistSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Show Waitlist Size"
+                    android:textSize="14sp"
+                    android:textColor="@color/black"/>
+
             </LinearLayout>
 
 
