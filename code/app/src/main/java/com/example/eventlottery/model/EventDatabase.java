@@ -3,7 +3,7 @@ package com.example.eventlottery.model;
 import android.util.Log;
 
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Organizer;
+import com.example.eventlottery.users.User;
 import com.example.eventlottery.view.EventAdapter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.CollectionReference;
@@ -35,7 +35,7 @@ public class EventDatabase {
      */
     public EventDatabase() {
         this.db = FirebaseFirestore.getInstance();
-        this.eventsRef = db.collection("event");
+        this.eventsRef = db.collection("event-p4");
     }
     /** @return the FirebaseFirestore instance used by this database */
     public FirebaseFirestore getDb() {
@@ -86,11 +86,11 @@ public class EventDatabase {
      * to refresh the UI.
      * </p>
      *
-     * @param organizer the {@link Organizer} whose events are to be retrieved
+     * @param organizer the {@link User} whose events are to be retrieved
      * @param data      the {@link ArrayList} to store the retrieved events
      * @param adapter   the {@link EventAdapter} to notify when data changes
      */
-    public void organizerGetEvents(Organizer organizer, ArrayList<Event> data, EventAdapter adapter) {
+    public void organizerGetEvents(User organizer, ArrayList<Event> data, EventAdapter adapter) {
         // Get eventIDs. Return prematurely if there are no events
         ArrayList<String> eventIDs = organizer.getCreatedEvents();
         if (eventIDs.isEmpty()) {

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -20,19 +19,15 @@ import androidx.cardview.widget.CardView;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.Firebase;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -90,16 +85,16 @@ public class UserPanel extends AppCompatActivity {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
                     // User exists - load their data
-                    currentUser = document.toObject(Organizer.class);
+                    currentUser = document.toObject(User.class);
                 } else {
                     // First time user - create new user with default name
-                    currentUser = new Organizer(this);
+                    currentUser = new User(this);
                     // Save to database
                     connector.saveNewUser(this);
                 }
             } else {
                 // Error loading - create new user anyway
-                currentUser = new Organizer(this);
+                currentUser = new User(this);
                 connector.saveNewUser(this);
             }
 
@@ -113,7 +108,7 @@ public class UserPanel extends AppCompatActivity {
             // Update username in the UI
             // Reference: https://firebase.google.com/docs/firestore/query-data/get-data#java
             TextView userNameView = findViewById(R.id.user_name);
-            DocumentReference userDoc = db.collection("users").document(currentUser.getId());;
+            DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());;
 
             // Asynchronously fetch the user document from Firestore
             userDoc.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -181,7 +176,7 @@ public class UserPanel extends AppCompatActivity {
             TextView userNameView = findViewById(R.id.user_name);
             if (currentUser != null && userNameView != null) {
                 // Fetch the latest user data from Firestore
-                DocumentReference userDoc = db.collection("users").document(currentUser.getId());
+                DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());
                 userDoc.get().addOnCompleteListener(task -> {
                     // Check if the document was successfully retrieved
                     if (task.isSuccessful()) {
@@ -220,7 +215,7 @@ public class UserPanel extends AppCompatActivity {
      */
     private void displayEvents() {
         // Get user document from Firestore
-        DocumentReference userDoc = db.collection("users").document(currentUser.getId());
+        DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());
 
         userDoc.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
@@ -538,7 +533,7 @@ public class UserPanel extends AppCompatActivity {
         Map<String, Object> updates = new HashMap<>();
         updates.put("registeredEvents." + testEventId, "Notified");
 
-        db.collection("users").document(currentUser.getId())
+        db.collection("users-p4").document(currentUser.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
                     Log.d("TestEvent", "Test notified event created successfully!");
