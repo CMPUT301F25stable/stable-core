@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 /** USER STORY - 01.02.03
  * <p>
@@ -107,6 +108,8 @@ public class InfoActivity extends AppCompatActivity {
             return;
         }
 
+        //cleanupTestData(); // Clean up data function
+
         // Retrieve user from Firestore FIRST
         db.collection("users-p4").document(userId)
                 .get()
@@ -130,7 +133,9 @@ public class InfoActivity extends AppCompatActivity {
 
                         // NOW load event data after user is loaded
                         loadEventData(intent);
-                    } else {
+                        //setupTestData(); // TESTING DATA
+                    }
+                    else {
                         Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
                         finish();
                     }
@@ -240,7 +245,10 @@ public class InfoActivity extends AppCompatActivity {
 
     /**
      * Handles the logic for when a user declines an event invitation.
-     * Updates user status, displays confirmation, and disables further interaction.
+     * Implements User Story 01.05.01: Replace declined user with new one from waitlist.
+     *
+     * Winners are defined as users with "Notified" or "Accepted" status.
+     * When a winner declines, they are replaced by someone from the waitlist.
      */
     private void handleDecline() {
         if (currentEvent == null || currentUser == null) {
@@ -249,6 +257,7 @@ public class InfoActivity extends AppCompatActivity {
         }
 
         final String eventId = currentEvent.getId();
+        final String userId = currentUser.getId();
 
         // Disable buttons immediately
         acceptButton.setEnabled(false);
@@ -256,36 +265,186 @@ public class InfoActivity extends AppCompatActivity {
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Single-field Firestore update
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("registeredEvents." + eventId, "Declined");
+        // Check if this user was a winner BEFORE declining
+        String currentUserStatus = currentUser.getRegisteredEvents().get(eventId);
+        boolean wasWinner = "Notified".equals(currentUserStatus) || "Accepted".equals(currentUserStatus);
 
+        android.util.Log.d("InfoActivity", "User declining with status: " + currentUserStatus);
+        android.util.Log.d("InfoActivity", "Was user a winner? " + wasWinner);
+
+        // Update the declining user's status in Firestore
+        Map<String, Object> userUpdates = new HashMap<>();
+        userUpdates.put("registeredEvents." + eventId, "Declined");
+      
         db.collection("users-p4").document(currentUser.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    // Local update
                     currentUser.getRegisteredEvents().put(eventId, "Declined");
                     currentStatus = "Declined";
                     updateStatusDisplay();
 
-                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                    // If user was NOT a winner, no need to do lottery replacement
+                    if (!wasWinner) {
+                        android.util.Log.d("InfoActivity", "User was not a winner, no replacement needed");
+                        Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                        finishActivityWithResult(eventId, "Declined");
+                        return;
+                    }
 
-                    Intent out = new Intent(this, UserPanel.class);
-                    out.putExtra("USER_ID", currentUser.getId());
-                    out.putExtra("UPDATED_EVENT_ID", eventId);
-                    out.putExtra("UPDATED_STATUS", "Declined");
-                    setResult(RESULT_OK, out);
-                    startActivity(out);
-                    finish();
+                    // User WAS a winner - need to find replacement from waitlist
+                    android.util.Log.d("InfoActivity", "User was a winner, searching for replacement...");
+
+                    // Step 2: Retrieve event document to access lottery system data
+                    db.collection("event").document(eventId)
+                            .get()
+                            .addOnSuccessListener(eventDoc -> {
+                                if (!eventDoc.exists()) {
+                                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                                    finishActivityWithResult(eventId, "Declined");
+                                    return;
+                                }
+
+                                // Get waitlist object from event
+                                Map<String, Object> waitlistMap = (Map<String, Object>) eventDoc.get("waitlist");
+                                if (waitlistMap == null) {
+                                    android.util.Log.d("InfoActivity", "No waitlist found in event");
+                                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                                    finishActivityWithResult(eventId, "Declined");
+                                    return;
+                                }
+
+                                // Get waitlistedUsers array from waitlist map
+                                ArrayList<Map<String, Object>> waitlistedUsers =
+                                        (ArrayList<Map<String, Object>>) waitlistMap.get("waitlistedUsers");
+
+                                if (waitlistedUsers == null) {
+                                    waitlistedUsers = new ArrayList<>();
+                                }
+
+                                android.util.Log.d("InfoActivity", "Waitlist size: " + waitlistedUsers.size());
+
+                                if (waitlistedUsers.isEmpty()) {
+                                    // No replacement available - winner declined but no one to replace them
+                                    android.util.Log.d("InfoActivity", "Waitlist is empty, no replacement available");
+                                    Toast.makeText(this, "❌ You declined. No replacement available.", Toast.LENGTH_SHORT).show();
+                                    finishActivityWithResult(eventId, "Declined");
+                                    return;
+                                }
+
+                                // Step 3: User was a winner - select random replacement from waitlist
+                                Random random = new Random();
+                                int randomIndex = random.nextInt(waitlistedUsers.size());
+                                Map<String, Object> replacementUserMap = waitlistedUsers.get(randomIndex);
+
+                                String replacementUserId = (String) replacementUserMap.get("id");
+                                String replacementUserName = (String) replacementUserMap.get("name");
+
+                                android.util.Log.d("InfoActivity", "Random index selected: " + randomIndex);
+                                android.util.Log.d("InfoActivity", "Replacement user: " + replacementUserName + " (ID: " + replacementUserId + ")");
+
+                                if (replacementUserId == null || replacementUserId.isEmpty()) {
+                                    Toast.makeText(this, "Failed to find replacement user", Toast.LENGTH_SHORT).show();
+                                    reEnableButtons();
+                                    return;
+                                }
+
+                                // Remove replacement from waitlist
+                                waitlistedUsers.remove(randomIndex);
+
+                                // Step 4: Update event document with new waitlist
+                                Map<String, Object> eventUpdates = new HashMap<>();
+                                eventUpdates.put("waitlist.waitlistedUsers", waitlistedUsers);
+
+                                db.collection("event").document(eventId)
+                                        .update(eventUpdates)
+                                        .addOnSuccessListener(aVoid2 -> {
+                                            android.util.Log.d("InfoActivity", "✅ Waitlist updated successfully");
+
+                                            // Step 5: Update replacement user's status to "Notified" (making them a winner)
+                                            Map<String, Object> replacementUpdates = new HashMap<>();
+                                            replacementUpdates.put("registeredEvents." + eventId, "Notified");
+
+                                            db.collection("users").document(replacementUserId)
+                                                    .update(replacementUpdates)
+                                                    .addOnSuccessListener(aVoid3 -> {
+                                                        android.util.Log.d("InfoActivity", "✅ Replacement user notified (now a winner)");
+
+                                                        // Step 6: Remove event from replacement's waitlistedEvents array
+                                                        db.collection("users").document(replacementUserId)
+                                                                .update("waitlistedEvents",
+                                                                        com.google.firebase.firestore.FieldValue.arrayRemove(eventId))
+                                                                .addOnSuccessListener(aVoid4 -> {
+                                                                    android.util.Log.d("InfoActivity", "✅ Removed event from replacement's waitlist");
+                                                                    Toast.makeText(this,
+                                                                            "❌ You declined. " + replacementUserName + " selected from waitlist!",
+                                                                            Toast.LENGTH_SHORT).show();
+                                                                    finishActivityWithResult(eventId, "Declined");
+                                                                })
+                                                                .addOnFailureListener(e -> {
+                                                                    // Still successful, just couldn't update array
+                                                                    android.util.Log.w("InfoActivity", "Couldn't remove from waitlistedEvents: " + e.getMessage());
+                                                                    Toast.makeText(this,
+                                                                            "❌ You declined. Replacement selected from waitlist.",
+                                                                            Toast.LENGTH_SHORT).show();
+                                                                    finishActivityWithResult(eventId, "Declined");
+                                                                });
+                                                    })
+                                                    .addOnFailureListener(e -> {
+                                                        android.util.Log.e("InfoActivity", "❌ Failed to notify replacement: " + e.getMessage());
+                                                        Toast.makeText(this,
+                                                                "Failed to notify replacement: " + e.getMessage(),
+                                                                Toast.LENGTH_SHORT).show();
+                                                        reEnableButtons();
+                                                    });
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            android.util.Log.e("InfoActivity", "❌ Failed to update waitlist: " + e.getMessage());
+                                            Toast.makeText(this,
+                                                    "Failed to update waitlist: " + e.getMessage(),
+                                                    Toast.LENGTH_SHORT).show();
+                                            reEnableButtons();
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                android.util.Log.e("InfoActivity", "❌ Failed to retrieve event: " + e.getMessage());
+                                Toast.makeText(this,
+                                        "Failed to retrieve event: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                                reEnableButtons();
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    // Re-enable buttons on failure
-                    acceptButton.setEnabled(true);
-                    declineButton.setEnabled(true);
-                    acceptButton.setAlpha(1.0f);
-                    declineButton.setAlpha(1.0f);
-
+                    android.util.Log.e("InfoActivity", "❌ Failed to save decline: " + e.getMessage());
                     Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    reEnableButtons();
                 });
+    }
+
+    /**
+     * Helper method to re-enable buttons after a failed operation.
+     */
+    private void reEnableButtons() {
+        acceptButton.setEnabled(true);
+        declineButton.setEnabled(true);
+        acceptButton.setAlpha(1.0f);
+        declineButton.setAlpha(1.0f);
+    }
+
+    /**
+     * Helper method to finish activity and return result to caller.
+     *
+     * @param eventId The ID of the event
+     * @param status The final status of the user
+     */
+    private void finishActivityWithResult(String eventId, String status) {
+        Intent out = new Intent(this, UserPanel.class);
+        out.putExtra("USER_ID", currentUser.getId());
+        out.putExtra("UPDATED_EVENT_ID", eventId);
+        out.putExtra("UPDATED_STATUS", status);
+        setResult(RESULT_OK, out);
+        startActivity(out);
+        finish();
     }
 
     /**
@@ -382,4 +541,169 @@ public class InfoActivity extends AppCompatActivity {
         // Update status display
         updateStatusDisplay();
     }
+
+    /**
+     * AUTOMATIC TEST DATA SETUP
+     *
+     * Add this to the END of your onCreate() method in InfoActivity.
+     * It will automatically run when you open the event details.
+     *
+     * To enable: Uncomment the setupTestData() call
+     * To disable: Comment it out
+     *
+     * This creates:
+     * 1. Sets your user as a winner ("Notified" status)
+     * 2. Adds test users to the event's waitlist
+     * 3. Creates the test user documents
+     */
+
+    /**
+     * Automatically sets up test data when activity loads
+     */
+    private void setupTestData() {
+        final String eventId = "4b89c209-33e7-4d2f-8b5f-2b3b0a569784"; // Your Demon Slayer event
+
+        if (currentUser == null) {
+            android.util.Log.e("TestSetup", "Current user is null, skipping test setup");
+            return;
+        }
+
+        final String yourUserId = currentUser.getId();
+
+        android.util.Log.d("TestSetup", "Starting automatic test data setup...");
+
+        // Step 1: Make yourself a winner
+        Map<String, Object> makeYouWinner = new HashMap<>();
+        makeYouWinner.put("registeredEvents." + eventId, "Notified");
+
+        db.collection("users").document(yourUserId)
+                .update(makeYouWinner)
+                .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("TestSetup", "✅ You are now a winner!");
+
+                    // Step 2: Create test waitlist users
+                    createTestWaitlistUsers(eventId);
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("TestSetup", "❌ Failed to make you winner: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Creates test users and adds them to the event's waitlist
+     */
+    private void createTestWaitlistUsers(String eventId) {
+        android.util.Log.d("TestSetup", "Creating test users...");
+
+        // Create 2 test users
+        createTestUser("testUser1", "Alice Wonderland", "alice@test.com", eventId);
+        createTestUser("testUser2", "Bob Builder", "bob@test.com", eventId);
+
+        // Wait a bit for users to be created, then add them to event waitlist
+        new android.os.Handler().postDelayed(() -> {
+            addUsersToEventWaitlist(eventId);
+        }, 2000); // Wait 2 seconds
+    }
+
+    /**
+     * Creates a single test user document
+     */
+    private void createTestUser(String userId, String name, String email, String eventId) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("id", userId);
+        userData.put("name", name);
+        userData.put("email", email);
+
+        // Add this event to their waitlisted events
+        ArrayList<String> waitlistedEvents = new ArrayList<>();
+        waitlistedEvents.add(eventId);
+        userData.put("waitlistedEvents", waitlistedEvents);
+
+        // Empty registered events map
+        userData.put("registeredEvents", new HashMap<String, String>());
+
+        db.collection("users").document(userId)
+                .set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("TestSetup", "✅ Created user: " + name);
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("TestSetup", "❌ Failed to create " + name + ": " + e.getMessage());
+                });
+    }
+
+    /**
+     * Adds the test users to the event's waitlist
+     */
+    private void addUsersToEventWaitlist(String eventId) {
+        android.util.Log.d("TestSetup", "Adding users to event waitlist...");
+
+        // Create waitlist user objects
+        ArrayList<Map<String, Object>> waitlistUsers = new ArrayList<>();
+
+        Map<String, Object> user1 = new HashMap<>();
+        user1.put("id", "testUser1");
+        user1.put("name", "Alice Wonderland");
+        user1.put("email", "alice@test.com");
+        waitlistUsers.add(user1);
+
+        Map<String, Object> user2 = new HashMap<>();
+        user2.put("id", "testUser2");
+        user2.put("name", "Bob Builder");
+        user2.put("email", "bob@test.com");
+        waitlistUsers.add(user2);
+
+        // Update the event's waitlist
+        Map<String, Object> waitlistUpdate = new HashMap<>();
+        waitlistUpdate.put("waitlist.waitlistedUsers", waitlistUsers);
+
+        db.collection("event").document(eventId)
+                .update(waitlistUpdate)
+                .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("TestSetup", "✅ TEST DATA READY! You can now test decline.");
+                    Toast.makeText(this, "✅ Test data loaded - Ready to test decline!",
+                            Toast.LENGTH_LONG).show();
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("TestSetup", "❌ Failed to update waitlist: " + e.getMessage());
+                });
+    }
+
+// ============================================
+// OPTIONAL: CLEANUP FUNCTION
+// Call this manually if you want to reset
+// ============================================
+    /**
+     * Cleans up test data
+     * To use: Temporarily call cleanupTestData() in onCreate() instead of setupTestData()
+     */
+    private void cleanupTestData() {
+        final String eventId = "4b89c209-33e7-4d2f-8b5f-2b3b0a569784";
+
+        android.util.Log.d("TestSetup", "Cleaning up test data...");
+
+        // Remove test users from Firebase
+        db.collection("users").document("testUser1").delete()
+                .addOnSuccessListener(aVoid -> android.util.Log.d("TestSetup", "Deleted testUser1"))
+                .addOnFailureListener(e -> android.util.Log.e("TestSetup", "Failed to delete testUser1"));
+
+        db.collection("users").document("testUser2").delete()
+                .addOnSuccessListener(aVoid -> android.util.Log.d("TestSetup", "Deleted testUser2"))
+                .addOnFailureListener(e -> android.util.Log.e("TestSetup", "Failed to delete testUser2"));
+
+        // Clear the event's waitlist
+        Map<String, Object> clearWaitlist = new HashMap<>();
+        clearWaitlist.put("waitlist.waitlistedUsers", new ArrayList<>());
+
+        db.collection("event").document(eventId)
+                .update(clearWaitlist)
+                .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("TestSetup", "✅ Test data cleaned up!");
+                    Toast.makeText(this, "✅ Test data cleaned up!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("TestSetup", "❌ Cleanup failed: " + e.getMessage());
+                });
+    }
+
 }
