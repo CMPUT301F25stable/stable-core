@@ -148,7 +148,8 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("location", item.getLocation());
             intent.putExtra("organizer", item.getOrganizer());
             intent.putExtra("image", item.getImage());
-            intent.putExtra("registrationEnd", item.getEndTime());  // Unformatted end date.
+            intent.putExtra("registrationEnd", item.getEndTime());      // Unformatted end date.
+            intent.putExtra("registrationStart", item.getStartTime());  // Unformatted start date.
             startActivity(intent);
         });
 

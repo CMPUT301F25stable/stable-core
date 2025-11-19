@@ -42,6 +42,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private DocumentReference userDoc;
     private ListenerRegistration userListener;
     private Date registrationEnd;
+    private Date registrationStart;
     private User user;
     private boolean isJoined = false;
 
@@ -74,6 +75,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         String dateEnd   = getIntent().getStringExtra("dateEnd");
         String timeEnd   = getIntent().getStringExtra("timeEnd");
         registrationEnd = (Date) getIntent().getSerializableExtra("registrationEnd");
+        registrationStart = (Date) getIntent().getSerializableExtra("registrationStart");
 
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
@@ -136,10 +138,18 @@ public class EventJoinAndLeave extends AppCompatActivity {
      * Updates Firestore accordingly and refreshes the button state.
      */
     private void toggleJoin(String eventId, User user) {
-        // Check if date now is past registration. If it is, cancel joining waitlist.
+        // Check if registration is open. If it isn't, cancel joining waitlist.
         Date now = new Date();
+
+        // Case 1: Registration is over
         if (now.after(registrationEnd)) {
             Toast.makeText(this, "Registration has ended", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Case 2: Registration hasn't started
+        if (now.before(registrationStart)) {
+            Toast.makeText(this, "Registration hasn't started", Toast.LENGTH_SHORT).show();
             return;
         }
 
