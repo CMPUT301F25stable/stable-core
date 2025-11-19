@@ -13,7 +13,6 @@ import androidx.core.content.ContextCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -109,11 +108,11 @@ public class InfoActivity extends AppCompatActivity {
         }
 
         // Retrieve user from Firestore FIRST
-        db.collection("users").document(userId)
+        db.collection("users-p4").document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        currentUser = documentSnapshot.toObject(Organizer.class);
+                        currentUser = documentSnapshot.toObject(User.class);
 
                         if (currentUser == null) {
                             Toast.makeText(this, "Failed to parse user data", Toast.LENGTH_SHORT).show();
@@ -209,7 +208,7 @@ public class InfoActivity extends AppCompatActivity {
         Map<String, Object> updates = new HashMap<>();
         updates.put("registeredEvents." + eventId, "Accepted");
 
-        db.collection("users").document(currentUser.getId())
+        db.collection("users-p4").document(currentUser.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
                     // Update local model safely
@@ -261,7 +260,7 @@ public class InfoActivity extends AppCompatActivity {
         Map<String, Object> updates = new HashMap<>();
         updates.put("registeredEvents." + eventId, "Declined");
 
-        db.collection("users").document(currentUser.getId())
+        db.collection("users-p4").document(currentUser.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
                     currentUser.getRegisteredEvents().put(eventId, "Declined");

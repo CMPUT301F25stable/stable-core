@@ -8,8 +8,6 @@ import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
-import com.example.eventlottery.R;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.view.InfoActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -79,7 +77,7 @@ public class InfoActivityUITest {
         userData.put("registeredEvents", registeredEvents);
         userData.put("waitlistedEvents", new ArrayList<String>());
 
-        db.collection("users").document(testUserId)
+        db.collection("users-p4").document(testUserId)
                 .set(userData);
 
         // Wait for Firestore operation to complete
@@ -94,7 +92,7 @@ public class InfoActivityUITest {
      * Cleans up test data from Firestore
      */
     private void cleanupTestData() {
-        db.collection("users").document(testUserId).delete();
+        db.collection("users-p4").document(testUserId).delete();
     }
 
     /**
@@ -352,7 +350,7 @@ public class InfoActivityUITest {
         }
 
         // Verify the status was updated in Firestore
-        db.collection("users").document(testUserId)
+        db.collection("users-p4").document(testUserId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -405,7 +403,7 @@ public class InfoActivityUITest {
         }
 
         // Verify the status was updated in Firestore
-        db.collection("users").document(testUserId)
+        db.collection("users-p4").document(testUserId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {

@@ -12,7 +12,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -21,9 +20,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.events.Finalizedlist;
+import com.example.eventlottery.events.FinalizedList;
 import com.example.eventlottery.model.EventDatabase;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -79,8 +77,8 @@ public class OrganizerPanel extends AppCompatActivity {
     /** The {@link DBConnector} used to load and update organizer information from Firestore. */
     private DBConnector userDatabase;
 
-    /** The {@link Organizer} object representing the logged-in organizer. */
-    private Organizer organizer;
+    /** The {@link User} object representing the logged-in organizer. */
+    private User organizer;
 
     /** The list of events owned or created by the organizer. */
     private ArrayList<Event> data = new ArrayList<>();
@@ -135,7 +133,7 @@ public class OrganizerPanel extends AppCompatActivity {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    organizer = document.toObject(Organizer.class);
+                    organizer = document.toObject(User.class);
                     Log.d("OrganizerPanel", "Organizer loaded");
 
                     // Load events after organizer data is retrieved
@@ -244,7 +242,7 @@ public class OrganizerPanel extends AppCompatActivity {
         viewFinalList.setOnClickListener(v -> {
             if (selectedEventIndex != -1) {
                 selectedEvent = data.get(selectedEventIndex);
-                Finalizedlist finalizedList = selectedEvent.getFinalizedlist();
+                FinalizedList finalizedList = selectedEvent.getFinalizedList();
                 ArrayList<User> users;
 
                 // finalizedList is initialized as null this checks for that

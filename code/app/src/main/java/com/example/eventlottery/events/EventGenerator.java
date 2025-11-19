@@ -85,7 +85,7 @@ public class EventGenerator {
 
     private void storeEvent(Event event) {
         Log.d("Seed", "about to write tags = " + event.getFilterTags());
-        db.collection("event")
+        db.collection("event-p4")
                 .document(event.getId())
                 .set(event)
                 .addOnSuccessListener(v -> Log.d("Seed", "wrote " + event.getId()))

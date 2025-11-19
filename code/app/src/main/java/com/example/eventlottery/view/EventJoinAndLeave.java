@@ -104,7 +104,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         user = new User(this);
         db = FirebaseFirestore.getInstance(); // get firestore instance
-        userDoc = db.collection("users").document(user.getId()); // get user
+        userDoc = db.collection("users-p4").document(user.getId()); // get user
 
         // Check if user has already joined any events before loading
         userDoc.get().addOnSuccessListener(documentSnapshot -> {
@@ -167,7 +167,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
      */
     private void updateJoinEventWaitlist(String eventId, User user) {
         db = FirebaseFirestore.getInstance();
-        DocumentReference documentReference = db.collection("event").document(eventId);
+        DocumentReference documentReference = db.collection("event-p4").document(eventId);
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
         userInfo.put("name", user.getName());
@@ -192,7 +192,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         userInfo.put("id", user.getId());
         userInfo.put("name", user.getName());
         userInfo.put("email", user.getEmailAddress());
-        DocumentReference documentReference = db.collection("event").document(eventId);
+        DocumentReference documentReference = db.collection("event-p4").document(eventId);
         documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfo))
                 .addOnSuccessListener(unused -> {
                             Log.d(TAG, "user left waitlist in event " + eventId);

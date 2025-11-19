@@ -7,7 +7,6 @@ import com.example.eventlottery.users.User;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -45,13 +44,11 @@ public class Event implements Serializable {
     private String formattedEndDate;
     /** Formatted end time string. */
     private String formattedEndTime;
-    /** QR code associated with this event. */
-    private QRCode qrCode;
     /** Waitlist containing users who have registered or are waiting to participate. */
     private Waitlist waitlist;
     /** Finalized list of users who have been selected as winners. */
     private java.util.List<String> filterTags = new java.util.ArrayList<>();
-    private Finalizedlist finalizedlist;
+    private FinalizedList finalizedList;
     /** List of users who have been selected as winners. */
     private final List<User> chosenEntrants = new ArrayList<>();
     /** Lottery system used for selecting winners. */
@@ -107,14 +104,13 @@ public class Event implements Serializable {
         this.image = image;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         formatDates();
     }
 
     public Event(String id, String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For pre-existing events
-        this.finalizedlist = new Finalizedlist();
+        this.finalizedList = new FinalizedList();
         formatDates();
     }
 
@@ -141,135 +137,148 @@ public class Event implements Serializable {
         this.image = image;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.qrCode = new QRCode(this.id);
         this.waitlist = new Waitlist();
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
-        this.finalizedlist = new Finalizedlist();
+        this.finalizedList = new FinalizedList();
         formatDates();
     }
 
-
     public void setId(String id) { this.id = id; }
-
 
     /** @return the unique ID of the event */
     public String getId() {
         return id;
     }
+
     /** @return the name of the event */
     public String getName() {
         return name;
     }
+
     /** @param name the new name of the event */
     public void setName(String name) {
         this.name = name;
     }
+
     /** @return the event description */
     public String getDescription() {
         return description;
     }
+
     /** @param description the new event description */
     public void setDescription(String description) {
         this.description = description;
     }
+
     /** @return the event location */
     public String getLocation() {
         return location;
     }
+
     /** @param location the new event location */
     public void setLocation(String location) {
         this.location = location;
     }
+
     /** @return the event organizer */
     public String getOrganizer() {
         return organizer;
     }
+
     /** @param organizer the new event organizer */
     public void setOrganizer(String organizer) {
         this.organizer = organizer;
     }
+
     /** @return the image URL or path of the event */
     public String getImage() {
         return image;
     }
+
     /** @param image the new image URL or path */
     public void setImage(String image) {
         this.image = image;
     }
+
     /** @return the event start time */
     public Date getStartTime() {
         return startTime;
     }
+
     /** @param startTime the new event start time */
     public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
+
     /** @return the event end time */
     public Date getEndTime() {
         return endTime;
     }
+
     /** @param endTime the new event end time */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
+
     public List<String> getFilterTags() {
         return filterTags;
     }
+
     public void setFilterTags(List<String> filterTags) {
         this.filterTags = filterTags;
     }
+
     public void addFilterTag(String tag) {
         if (this.filterTags == null) {
             this.filterTags = new ArrayList<>();
         }
         this.filterTags.add(tag);
     }
+
     public void removeFilterTag(String tag) {
         if (this.filterTags != null) {
             this.filterTags.remove(tag);
         }
     }
 
-
     /** @return the formatted start date string */
     public String getFormattedStartDate() {
         return formattedStartDate;
     }
+
     /** @param formattedStartDate the formatted start date string */
     public void setFormattedStartDate(String formattedStartDate) {
         this.formattedStartDate = formattedStartDate;
     }
+
     /** @return the formatted start time string */
     public String getFormattedStartTime() {
         return formattedStartTime;
     }
+
     /** @param formattedStartTime the formatted start time string */
     public void setFormattedStartTime(String formattedStartTime) {
         this.formattedStartTime = formattedStartTime;
     }
+
     /** @return the formatted end date string */
     public String getFormattedEndDate() {
         return formattedEndDate;
     }
+
     /** @param formattedEndDate the formatted end date string */
     public void setFormattedEndDate(String formattedEndDate) {
         this.formattedEndDate = formattedEndDate;
     }
+
     /** @return the formatted end time string */
     public String getFormattedEndTime() {
         return formattedEndTime;
     }
+
     /** @param formattedEndTime the formatted end time string */
     public void setFormattedEndTime(String formattedEndTime) {
         this.formattedEndTime = formattedEndTime;
-    }
-    /** @return the {@link QRCode} associated with this event */
-    public QRCode getQrCode() {
-        return qrCode;
-    }
-    /** @param qrCode the {@link QRCode} to associate with this event */
-    public void setQrCode(QRCode qrCode) {
-        this.qrCode = qrCode;
     }
 
     /** @return the {@link Waitlist} associated with this event */
@@ -306,9 +315,6 @@ public class Event implements Serializable {
      */
     public int getWaitlistMax() {return this.waitlist.getMaxSize();};
 
-
-
-
     /**
      * Searches for an Event in an ArrayList of events.
      * @param events The Event ArrayList to be searched.
@@ -325,12 +331,12 @@ public class Event implements Serializable {
         return -1;
     }
 
-    public Finalizedlist getFinalizedlist() {
-        return finalizedlist;
+    public FinalizedList getFinalizedList() {
+        return finalizedList;
     }
 
-    public void setFinalizedlist(Finalizedlist finalizedlist) {
-        this.finalizedlist = finalizedlist;
+    public void setFinalizedList(FinalizedList finalizedList) {
+        this.finalizedList = finalizedList;
     }
 
     /**
@@ -338,7 +344,7 @@ public class Event implements Serializable {
      * @param user The user to add.
      */
     public void addToFinalizedList(User user) {
-        this.finalizedlist.addUser(user);
+        this.finalizedList.addUser(user);
     }
 
     /**
