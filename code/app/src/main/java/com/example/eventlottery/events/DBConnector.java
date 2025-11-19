@@ -1,14 +1,12 @@
 package com.example.eventlottery.events;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -17,7 +15,6 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Connects to FirebaseFirestore database
@@ -75,9 +72,9 @@ public class DBConnector {
      * @param context: the context of the application
      * @return the UUID of the user
      */
+    @SuppressLint("HardwareIds")
     protected String getUUID(Context context) {
-        String uuid = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        return uuid;
+        return Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     /**
@@ -86,7 +83,7 @@ public class DBConnector {
      * @return DocumentReference from UUID
      */
     public DocumentReference getUserDoc(String id) {
-        return this.db.collection("users").document(id);
+        return this.db.collection("users-p4").document(id);
     }
 
     /**
@@ -96,45 +93,59 @@ public class DBConnector {
      * @param context The activity it's called in.
      */
     public void saveNewUser(Context context) {
-        CollectionReference usersRef = db.collection("users");
+        CollectionReference usersRef = db.collection("users-p4");
         DocumentReference userRef = usersRef.document(this.id);
         // Asynchronous so added onCompleteListener
         userRef.get().addOnCompleteListener(task -> {
             DocumentSnapshot document = task.getResult();
             // If user doesn't already exist, create & set
             if (!document.exists()) {
-                Organizer organizer = new Organizer(context);
+                User organizer = new User(context);
                 userRef.set(organizer);
             }
         });
     }
 
     /**
-     * Saved the personal info of the user
+     * Saved the personal info of the user, if the user deleted their account, a new account
+     * will be made
      * @param id:       the UUID of the user
      * @param name:     the name of the user
      * @param email:    the email of the user
      * @param phoneNum: the phone number of the user
+     * @param context:  the context of the application
      * @param listener: listener called when saving user
      * @return
      */
     public void saveUserInfo(String id, String name, String email,
-                             String phoneNum, OnCompleteListener<Void> listener) {
+                             String phoneNum, Context context, OnCompleteListener<Void> listener) {
 
         Map<String, Object> items = new HashMap<>();
         items.put("name", name);
         items.put("emailAddress", email);
         items.put("phoneNumber", phoneNum);
-        getUserDoc(id)
-                .set(items, SetOptions.merge())
-                .addOnCompleteListener(listener)
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed save info" + id, e);
-                });
+
+        getUserDoc(id).get().addOnCompleteListener(task -> {
+            DocumentSnapshot document = task.getResult();
+            if (document == null || !document.exists()) {
+                User user = new User(context);
+                user.setName(name);
+                user.setEmailAddress(email);
+                user.setPhoneNumber(phoneNum);
+                getUserDoc(id).set(user);
+            } else {
+                getUserDoc(id)
+                        .set(items, SetOptions.merge())
+                        .addOnCompleteListener(listener)
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Failed save info" + id, e);
+                        });
+            }
+        });
     }
 
-    public void updateOrganizerCreatedEvents(Organizer organizer) {
-        CollectionReference users = db.collection("users");
+    public void updateOrganizerCreatedEvents(User organizer) {
+        CollectionReference users = db.collection("users-p4");
         DocumentReference user = users.document(organizer.getId());
         user.update("createdEvents", organizer.getCreatedEvents());
     }

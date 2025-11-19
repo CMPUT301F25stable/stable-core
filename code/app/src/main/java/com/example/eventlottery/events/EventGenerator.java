@@ -1,7 +1,11 @@
 package com.example.eventlottery.events;
 
+import android.util.Log;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,7 +36,8 @@ public class EventGenerator {
                 "Anime Alberta",
                 "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp",
                 startTime1,
-                endTime1
+                endTime1,
+                new ArrayList<>(Arrays.asList("Anime", "Action"))
         );
 
         // Test Event 2
@@ -42,13 +47,14 @@ public class EventGenerator {
         Date endTime2 = calendar.getTime();
 
         Event event2 = new Event(
-                "City League Hocket Night",
+                "City League Hockey Night",
                 "Weekly rec league double-header.",
                 "Terwillegar Rec Centre",
                 "YEG Sports",
                 "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp",
                 startTime2,
-                endTime2
+                endTime2,
+                new ArrayList<>(Arrays.asList("Hockey", "Recreational"))
         );
 
         // Test Event 3
@@ -64,8 +70,12 @@ public class EventGenerator {
                 "Dance Society",
                 "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg",
                 startTime3,
-                endTime3
+                endTime3,
+                new ArrayList<>(Arrays.asList("Dance", "Hip-Hop"))
         );
+
+        event1.setFilterTags(Arrays.asList("Anime", "Action"));
+
 
         // Store events in Firebase
         storeEvent(event1);
@@ -74,25 +84,19 @@ public class EventGenerator {
     }
 
     private void storeEvent(Event event) {
-        if (event.getId() == null || event.getId().isEmpty()) {
-            event.setId(UUID.randomUUID().toString());
-        }
-
-        db.collection("event")
+        Log.d("Seed", "about to write tags = " + event.getFilterTags());
+        db.collection("event-p4")
                 .document(event.getId())
                 .set(event)
-                .addOnSuccessListener(aVoid -> {
-                    System.out.println("Event " + event.getName() + " added successfully with ID: " + event.getId());
-                })
-                .addOnFailureListener(e -> {
-                    System.out.println("Error adding event " + event.getName() + ": " + e.getMessage());
-                });
+                .addOnSuccessListener(v -> Log.d("Seed", "wrote " + event.getId()))
+                .addOnFailureListener(e -> Log.e("Seed", "failed", e));
     }
+
 
     // If you need to create an event with a specific ID (for pre-existing events):
     public Event createPreExistingEvent(String id, String name, String description,
                                         String location, String organizer, String image,
                                         Date startTime, Date endTime) {
-        return new Event(id, name, description, location, organizer, image, startTime, endTime);
+        return new Event(id, name, description, location, organizer, image, startTime, endTime, new ArrayList<>());
     }
 }

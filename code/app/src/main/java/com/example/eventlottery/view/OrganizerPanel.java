@@ -9,9 +9,9 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -20,31 +20,75 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.events.FinalizedList;
 import com.example.eventlottery.model.EventDatabase;
-import com.example.eventlottery.users.Organizer;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
-
 import java.util.ArrayList;
 
+/**
+ * The {@code OrganizerPanel} class represents the main interface for organizers.
+ * It allows them to view, edit, and create events, as well as access the waitlists
+ * of their current events. This activity connects to Firebase to load organizer data
+ * and synchronize event information.
+ * <p><b>Features:</b></p>
+ * <ul>
+ *     <li>Displays a list of events owned by the organizer</li>
+ *     <li>Allows organizers to edit, create, and view event waitlists</li>
+ *     <li>Synchronizes organizer and event data using Firestore</li>
+ * </ul>
+ * <p>
+ */
 public class OrganizerPanel extends AppCompatActivity {
-    String userID;
-    LinearLayout previous;
-    ListView eventList;
-    Button viewWaitlist;
-    Button editEvent;
-    Button createEvent;
-    Button viewFinalList;
-    int selectedEventIndex = 0;  // default is first item
-    Event selectedEvent;
-    EventAdapter adapter;
-    EventDatabase organizerEventDatabase;
-    DBConnector userDatabase;
-    Organizer organizer;
-    ArrayList<Event> data = new ArrayList<>();
+    /** The unique Android device ID for the current organizer. */
+    private String userID;
 
+    /** The layout representing the "previous" section or navigation area. */
+    private LinearLayout previous;
 
+    /** The {@link ListView} displaying the organizer's events. */
+    private ListView eventList;
+
+    /** The button used to view the waitlist of the selected event. */
+    private Button viewWaitlist;
+
+    /** The button used to edit the currently selected event. */
+    private Button editEvent;
+
+    /** The button used to create a new event. */
+    private Button createEvent;
+
+    /** The button used to view the final list. */
+    private Button viewFinalList;
+
+    /** The index of the currently selected event in the list (default is -1). */
+    private int selectedEventIndex = -1;
+
+    /** The {@link Event} currently selected by the organizer. */
+    private Event selectedEvent;
+
+    /** The adapter used to bind event data to the {@link ListView}. */
+    private EventAdapter adapter;
+
+    /** The {@link EventDatabase} managing event-related Firestore operations. */
+    private EventDatabase organizerEventDatabase;
+
+    /** The {@link DBConnector} used to load and update organizer information from Firestore. */
+    private DBConnector userDatabase;
+
+    /** The {@link User} object representing the logged-in organizer. */
+    private User organizer;
+
+    /** The list of events owned or created by the organizer. */
+    private ArrayList<Event> data = new ArrayList<>();
+
+    /**
+     * Called when the activity is created. Initializes the layout, retrieves organizer data,
+     * and sets up button listeners and the event list adapter.
+     *
+     * @param savedInstanceState The previously saved state of the activity (if any).
+     */
     @SuppressLint("HardwareIds")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +101,7 @@ public class OrganizerPanel extends AppCompatActivity {
             return insets;
         });
 
-        // Get buttons & such, & set listeners
+        // Initialize UI components and event listeners
         eventList = findViewById(R.id.eventList);
         previous = findViewById(R.id.previous);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
@@ -66,7 +110,7 @@ public class OrganizerPanel extends AppCompatActivity {
         viewFinalList = findViewById(R.id.view_finalized_list_button);
         setClickListeners();
 
-        // Initialize other variables such as the databases & users
+        // Initialize databases and organizer info
         userID = Settings.Secure.getString(
                 getContentResolver(),
                 Settings.Secure.ANDROID_ID
@@ -79,20 +123,20 @@ public class OrganizerPanel extends AppCompatActivity {
     }
 
     /**
-     * Gets the organizer object from Firestore, & sets up 'data'.
+     * Retrieves the organizer's information from Firestore and loads their associated events.
+     * The result is asynchronously handled and triggers a database update for event listings.
+     * <p>References:
+     * <a href="https://firebase.google.com/docs/firestore/query-data/get-data#java">Firestore: Get a Document (Java)</a></p>
      */
     public void getOrganizerInfo() {
-        // References: https://firebase.google.com/docs/firestore/query-data/get-data#java
-        // Specifically, Get a Document -> Java
         userDatabase.loadUserInfo(userID, task -> {
             if (task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
-                    organizer = document.toObject(Organizer.class);
+                    organizer = document.toObject(User.class);
                     Log.d("OrganizerPanel", "Organizer loaded");
 
-                    // Note: Called here because this function is asynchronous
-                    // Will cause a crash if organizer is not loaded in by then
+                    // Load events after organizer data is retrieved
                     organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
@@ -104,18 +148,18 @@ public class OrganizerPanel extends AppCompatActivity {
     }
 
     /**
-     * Sets the click listeners for all buttons in the organizer panel.
-     * TODO: Not all event listeners are implemented!
+     * Sets up all click listeners for buttons and list items in the organizer panel.
+     * This includes viewing waitlists, editing events, and creating new events.
      */
     private void setClickListeners() {
         eventList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             /**
-             * Updates selectedEventIndex to the most recently clicked event.
-             * @param parent The AdapterView where the click happened.
-             * @param view The view within the AdapterView that was clicked (this
-             *            will be a view provided by the adapter)
-             * @param position The position of the view in the adapter.
-             * @param id The row id of the item that was clicked.
+             * Updates {@link #selectedEventIndex} when the user selects a new event from the list.
+             *
+             * @param parent The AdapterView where the click occurred.
+             * @param view The view representing the clicked item.
+             * @param position The position of the clicked item.
+             * @param id The row ID of the clicked item.
              */
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -125,7 +169,8 @@ public class OrganizerPanel extends AppCompatActivity {
 
         previous.setOnClickListener(new View.OnClickListener() {
             /**
-             * Makes the previousButton end this activity, to go back to the previous one.
+             * Handles the "Previous" button click. Ends this activity to return to the previous screen.
+             *
              * @param v The view that was clicked.
              */
             @Override
@@ -134,54 +179,54 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
-
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
             /**
-             * Sets the listener for the view waitlist button. Opens the dialog when clicked
+             * Handles the "View Waitlist" button click.
+             * Opens a dialog showing all users currently on the selected event's waitlist.
+             *
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
-                // Event we want to view waitlist for
-                selectedEvent = data.get(selectedEventIndex);
-
-                // Get ArrayList of users & pass into dialog
-                ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
-                WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
-
-                // Display waitlist
-                waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
+                if (selectedEventIndex != -1) {
+                    selectedEvent = data.get(selectedEventIndex);
+                    ArrayList<User> users = selectedEvent.getWaitlist().getWaitlistedUsers();
+                    WaitlistDialog waitlistDialog = WaitlistDialog.newInstance(users);
+                    waitlistDialog.show(getSupportFragmentManager(), "WaitlistDialog");
+                } else {
+                    Toast.makeText(OrganizerPanel.this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         editEvent.setOnClickListener(v -> {
-            // Event we want to edit
-            selectedEvent = data.get(selectedEventIndex);
+            if (selectedEventIndex != -1) {
+                selectedEvent = data.get(selectedEventIndex);
+                EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
 
-            // Create dialog and pass in the event
-            EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
+                // Updates event in Firestore and refreshes adapter when an edit is made
+                dialog.setOnEventUpdatedListener(updatedEvent -> {
+                    organizerEventDatabase.organizerUpdateEvent(updatedEvent);
+                    adapter.notifyDataSetChanged();
+                });
 
-            // Set listener for updating firestore & notify that a change was made
-            dialog.setOnEventUpdatedListener(updatedEvent -> {
-                organizerEventDatabase.organizerUpdateEvent(updatedEvent);
-                adapter.notifyDataSetChanged();
-            });
-
-            // Display dialog
-            dialog.show(getSupportFragmentManager(), "EditEventDialog");
+                dialog.show(getSupportFragmentManager(), "EditEventDialog");
+            } else {
+                Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+            }
         });
 
         createEvent.setOnClickListener(new View.OnClickListener() {
             /**
-             * Sets listener for creating events. Displays the dialog, & updates the firestore.
+             * Handles the "Create Event" button click.
+             * Displays a dialog for creating a new event, updates Firestore, and refreshes the event list.
+             *
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
-                // Create the dialog
                 CreateEventDialog createDialog = new CreateEventDialog();
 
-                // Set listener for creating an event: Updates data & the firestore database as well.
                 createDialog.setOnEventCreatedListener(event -> {
                     data.add(event);
                     organizer.createEvent(event.getId());
@@ -190,19 +235,28 @@ public class OrganizerPanel extends AppCompatActivity {
                     adapter.notifyDataSetChanged();
                 });
 
-                // Display dialog
                 createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
             }
         });
 
         viewFinalList.setOnClickListener(v -> {
-            selectedEvent = data.get(selectedEventIndex);
-            ArrayList<User> users = selectedEvent.getFinalizedlist().getFinalizedUsers();
+            if (selectedEventIndex != -1) {
+                selectedEvent = data.get(selectedEventIndex);
+                FinalizedList finalizedList = selectedEvent.getFinalizedList();
+                ArrayList<User> users;
 
-            FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
+                // finalizedList is initialized as null this checks for that
+                if (finalizedList != null && finalizedList.getFinalizedUsers() != null) {
+                    users = finalizedList.getFinalizedUsers();
+                } else {
+                    users = new ArrayList<>();
+                }
 
-            // Display finalized list
-            finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
+                FinalListDialog finalListDialog = FinalListDialog.newInstance(users);
+                finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
+            } else {
+                Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

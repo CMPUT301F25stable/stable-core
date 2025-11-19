@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.model.EventDatabase;
+import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
@@ -82,37 +84,45 @@ public class TaskbarFragment extends Fragment {
             startActivity(intent);
         });
 
+        /**
+         * This handles the QR scanner's results and launches the Join/Leave Waitlist activity if the scanned content of the QR code is valid.
+         */
         ActivityResultLauncher<ScanOptions> qrLauncher = registerForActivityResult(new ScanContract(), result -> {
             if (result.getContents() != null) {
                 String content = result.getContents().strip();
-                if (content.length() == 36) {
-                    eventDatabase.get(content, task -> {
-                        if (task.isSuccessful()) {
-                            DocumentSnapshot doc = task.getResult();
-                            if (doc.exists()) {
-                                Event eventToDisplay = doc.toObject(Event.class);
-                                if (eventToDisplay != null) {
-                                    Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
-                                    intent.putExtra("id", eventToDisplay.getId());
-                                    intent.putExtra("name", eventToDisplay.getName());
-                                    intent.putExtra("description", eventToDisplay.getDescription());
-                                    intent.putExtra("dateStart", eventToDisplay.getFormattedStartDate());
-                                    intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
-                                    intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
-                                    intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
-                                    intent.putExtra("location", eventToDisplay.getLocation());
-                                    intent.putExtra("organizer", eventToDisplay.getOrganizer());
-                                    intent.putExtra("image", eventToDisplay.getImage());
-                                    startActivity(intent);
-                                }
+                eventDatabase.get(content, task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot doc = task.getResult();
+                        if (doc.exists()) {
+                            Event eventToDisplay = doc.toObject(Event.class);
+                            if (eventToDisplay != null) {
+                                Intent intent = new Intent(getActivity(), EventJoinAndLeave.class);
+                                intent.putExtra("id", eventToDisplay.getId());
+                                intent.putExtra("name", eventToDisplay.getName());
+                                intent.putExtra("description", eventToDisplay.getDescription());
+                                intent.putExtra("dateStart", eventToDisplay.getFormattedStartDate());
+                                intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
+                                intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
+                                intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
+                                intent.putExtra("location", eventToDisplay.getLocation());
+                                intent.putExtra("organizer", eventToDisplay.getOrganizer());
+                                intent.putExtra("image", eventToDisplay.getImage());
+                                startActivity(intent);
                             }
+                        } else {
+                            Toast.makeText(getContext(), "The QR Code that you scanned is invalid.", Toast.LENGTH_SHORT).show();
                         }
-                    });
-                }
+                    } else {
+                        Toast.makeText(getContext(), "The QR Code that you scanned is invalid.", Toast.LENGTH_SHORT).show();
+                    }
+                });
                 Log.d("TaskbarFragment - QRLauncher", content);
             }
         });
 
+        /**
+         * Launches the QR scanner when the camera icon is pressed.
+         */
         View cameraIcon = view.findViewById(R.id.cameraIcon);
         cameraIcon.setOnClickListener(v -> {
             ScanOptions scanOptions = new ScanOptions();

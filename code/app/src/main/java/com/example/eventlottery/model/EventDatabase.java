@@ -3,7 +3,7 @@ package com.example.eventlottery.model;
 import android.util.Log;
 
 import com.example.eventlottery.events.Event;
-import com.example.eventlottery.users.Organizer;
+import com.example.eventlottery.users.User;
 import com.example.eventlottery.view.EventAdapter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.CollectionReference;
@@ -17,29 +17,39 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Connects to the Firestore database for events
+ * Provides an interface for interacting with the Firestore database
+ * containing Event objects.
+ * <p>
+ * This class is primarily for handling basic CRUD operations such as retrieving, inserting,
+ * and updating events, as well as fetching all events created by a particular organizer.
+ * </p>
  */
 public class EventDatabase {
+    /** The Firebase Firestore instance used to access the database. */
     private FirebaseFirestore db;
+    /** Reference to the "event" collection in Firestore. */
     private CollectionReference eventsRef;
-
+    /**
+     * Default constructor initializes the Firestore instance and
+     * sets the reference to the "event" collection.
+     */
     public EventDatabase() {
         this.db = FirebaseFirestore.getInstance();
-        this.eventsRef = db.collection("event");
+        this.eventsRef = db.collection("event-p4");
     }
-
+    /** @return the FirebaseFirestore instance used by this database */
     public FirebaseFirestore getDb() {
         return db;
     }
-
+    /** @param db sets the FirebaseFirestore instance to use */
     public void setDb(FirebaseFirestore db) {
         this.db = db;
     }
-
+    /** @return the CollectionReference for the "event" collection */
     public CollectionReference getEventsRef() {
         return eventsRef;
     }
-
+    /** @param eventsRef sets the CollectionReference for the "event" collection */
     public void setEventsRef(CollectionReference eventsRef) {
         this.eventsRef = eventsRef;
     }
@@ -70,9 +80,17 @@ public class EventDatabase {
     }
 
     /**
-     * Gets all of the events associated with a particular organizer.
+     * Retrieves all events associated with a particular organizer.
+     * <p>
+     * Each event is added to the provided data list, and the adapter is notified
+     * to refresh the UI.
+     * </p>
+     *
+     * @param organizer the {@link User} whose events are to be retrieved
+     * @param data      the {@link ArrayList} to store the retrieved events
+     * @param adapter   the {@link EventAdapter} to notify when data changes
      */
-    public void organizerGetEvents(Organizer organizer, ArrayList<Event> data, EventAdapter adapter) {
+    public void organizerGetEvents(User organizer, ArrayList<Event> data, EventAdapter adapter) {
         // Get eventIDs. Return prematurely if there are no events
         ArrayList<String> eventIDs = organizer.getCreatedEvents();
         if (eventIDs.isEmpty()) {

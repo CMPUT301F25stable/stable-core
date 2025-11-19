@@ -16,14 +16,33 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * A dialog fragment that allows organizers to create new {@link Event} objects.
+ * <p>
+ * The dialog currently supports setting only the waitlist maximum size but can
+ * be extended in the future to support more event parameters such as name,
+ * description, and date. Once an event is created, the dialog notifies a
+ * listener via the {@link OnEventCreatedListener} interface.
+ * </p>
+ */
 public class CreateEventDialog extends DialogFragment {
     private OnEventCreatedListener listener;
-
+    /**
+     * Listener interface for receiving event creation callbacks.
+     * Implementations of this interface are notified when a new {@link Event}
+     * is created through this dialog.
+     */
     public interface OnEventCreatedListener {
+        /**
+         * Called when a new event is created by the user.
+         *
+         * @param event The newly created {@link Event} object.
+         */
         void onEventCreated(Event event);
     }
 
@@ -134,7 +153,7 @@ public class CreateEventDialog extends DialogFragment {
              * 3. Create event, given the inputs *
              *************************************/
             // TODO: This can only set waiting list max, start and end date right now. Implement more later
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end);
+            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end, new ArrayList<>());
             newEvent.setWaitlistMax(maxSize);
 
             // Run organizer panel's listener if something was created

@@ -21,9 +21,16 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The {@code EventJoinAndLeave} class allows a user to view event details
+ * and either join or leave an event. It updates both the UI and Firestore
+ * to reflect the user's participation status.
+ * Reference: https://firebase.google.com/docs/firestore/manage-data/add-data#update_fields_in_nested_objects
+ */
 public class EventJoinAndLeave extends AppCompatActivity {
     private static final String TAG = "EventJoinAndLeave";
     private Button joinButton;
@@ -36,13 +43,18 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private User user;
     private boolean isJoined = false;
 
+    /**
+     * Initializes the activity, sets up the UI, retrieves event details from intent extras,
+     * and checks whether the user has already joined the event.
+     *
+     * @param savedInstanceState the saved instance state of the activity
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.event_join_leave_page);
 
         ImageView image = findViewById(R.id.imageView);
-        ImageView background = findViewById(R.id.backgroundImage);
         TextView title = findViewById(R.id.eventTitle);
         TextView subtitle = findViewById(R.id.eventSubtitle);
         TextView desc = findViewById(R.id.eventDescription);
@@ -87,13 +99,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
         getWaitListSize(eventId, details);
 
         Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(image);
-        Glide.with(this).load(imageURL).placeholder(R.drawable.placeholder).into(background);
 
         homeButton.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 
         user = new User(this);
         db = FirebaseFirestore.getInstance(); // get firestore instance
-        userDoc = db.collection("users").document(user.getId()); // get user
+        userDoc = db.collection("users-p4").document(user.getId()); // get user
 
         // Check if user has already joined any events before loading
         userDoc.get().addOnSuccessListener(documentSnapshot -> {
@@ -110,23 +121,25 @@ public class EventJoinAndLeave extends AppCompatActivity {
             }
         });
 
-        joinButton.setOnClickListener(v -> toggleJoin());
+        joinButton.setOnClickListener(v -> {
+            toggleJoin(eventId, user);
+        });
     }
 
     /**
-     * Toggle the user's join status.
-     * If the user is already joined, leave the event.
-     * If the user is not joined, join the event.
+     * Toggles the user's join status for the event.
+     * If joined, the user leaves the event; if not, they join.
+     * Updates Firestore accordingly and refreshes the button state.
      */
-    private void toggleJoin() {
+    private void toggleJoin(String eventId, User user) {
         boolean newState = !isJoined;
         updateJoinButton(newState); // Update the button to reflect the new state
-
 
         if (newState) { // If joined
             userDoc.update("waitlistedEvents", FieldValue.arrayUnion(eventId)) // Add to Firestore
                     .addOnSuccessListener(v -> {
                         user.AddJoinedWaitlist(eventId);
+                        updateJoinEventWaitlist(eventId, user);
                         isJoined = true;
                     })
                     .addOnFailureListener(e -> {
@@ -137,6 +150,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
             userDoc.update("waitlistedEvents", FieldValue.arrayRemove(eventId)) // Remove from Firestore
                     .addOnSuccessListener(v -> {
                         user.RemoveLeftWaitlist(eventId);
+                        updateLeaveEventWaitlist(eventId, user);
                         isJoined = false;
                     })
                     .addOnFailureListener(e -> {
@@ -146,6 +160,55 @@ public class EventJoinAndLeave extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates waitlistedUsers in DB when a user joins an event
+     * @param eventId the eventID
+     * @param user the userID
+     */
+    private void updateJoinEventWaitlist(String eventId, User user) {
+        db = FirebaseFirestore.getInstance();
+        DocumentReference documentReference = db.collection("event-p4").document(eventId);
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("name", user.getName());
+        userInfo.put("email", user.getEmailAddress());
+        documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayUnion(userInfo))
+                .addOnSuccessListener(unused -> {
+                    Log.d(TAG, "user joined waitlist in event " + eventId);
+                        }
+                ).addOnFailureListener(e -> {
+                    Log.e(TAG, "user failed to joined waitlist in event " + eventId, e);
+                });
+    }
+
+    /**
+     * Updates waitlistedUsers in DB when a user leaves an event
+     * @param eventId the eventID
+     * @param user the userID
+     */
+    private void updateLeaveEventWaitlist(String eventId, User user) {
+        db = FirebaseFirestore.getInstance();
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("name", user.getName());
+        userInfo.put("email", user.getEmailAddress());
+        DocumentReference documentReference = db.collection("event-p4").document(eventId);
+        documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfo))
+                .addOnSuccessListener(unused -> {
+                            Log.d(TAG, "user left waitlist in event " + eventId);
+                        }
+                ).addOnFailureListener(e -> {
+                    Log.e(TAG, "user failed to leave waitlist in event " + eventId, e);
+                });
+
+    }
+
+    /**
+     * Updates the "Join"/"Leave" button text and color
+     * based on whether the user has joined the event.
+     *
+     * @param joined true if the user is currently joined; false otherwise
+     */
     private void updateJoinButton(boolean joined) {
         if (joined) {
             joinButton.setText("Leave Waitlist");
@@ -159,8 +222,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
     }
 
     /**
-     * Removes the listener when the activity is destroyed.
-     * Prevents memory leaks
+     * Removes the Firestore listener when the activity is destroyed.
+     * Prevents potential memory leaks.
      */
     @Override
     protected void onDestroy() {
@@ -171,6 +234,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
         }
     }
 
+    /**
+     * Updates textview showing the description of the event to include the number of
+     * people the in waitlist
+     * @param eventId the eventID
+     * @param textView the textview to update
+     */
     private void getWaitListSize(String eventId, TextView textView) {
         EventDatabase eventDatabase = new EventDatabase();
 
