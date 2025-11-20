@@ -44,6 +44,9 @@
             android:name=".view.FilterActivity"
             android:exported="false" />
         <activity
+            android:name=".view.OrganizerEventInfo"
+            android:exported="false" />
+        <activity
             android:name=".view.SplashScreen"
             android:exported="true">
             <intent-filter>
