@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CustomSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="colorControlActivated">#000000</item>
+        <item name="colorSwitchThumbNormal">#999999</item>
+        <item name="android:colorForeground">#999999</item>
+    </style>
+
+    <!-- Add any other custom styles here -->
+</resources>
