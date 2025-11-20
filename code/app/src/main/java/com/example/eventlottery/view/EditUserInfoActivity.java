@@ -3,9 +3,12 @@ package com.example.eventlottery.view;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -150,6 +153,11 @@ public class EditUserInfoActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "Failed loading user" + id);
             }
+
+        ProgressBar progressBar = findViewById(R.id.load_progress);
+        LinearLayout layout = findViewById(R.id.linearLayout);
+        progressBar.setVisibility(View.INVISIBLE);
+        layout.setVisibility(View.VISIBLE);
     }
 
     /**

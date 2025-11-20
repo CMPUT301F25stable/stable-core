@@ -24,6 +24,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your Info"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:layout_centerVertical="true"/>
+
             <Button
                 android:id="@+id/delete_account_btn"
                 android:layout_width="wrap_content"
@@ -36,118 +45,141 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:visibility="visible">
+
+        <ProgressBar
+            android:id="@+id/load_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/name_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:paddingStart="25dp"
+                android:text="Name:"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:ignore="RtlSymmetry" />
+
+            <EditText
+                android:id="@+id/name_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/edit_text_bg"
+                android:ellipsize="end"
+                android:inputType="text"
+                android:singleLine="true"
+                android:hint="Full Name" />
+
+            <TextView
+                android:id="@+id/email_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:paddingStart="25dp"
+                android:text="Email:"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:ignore="RtlSymmetry" />
+
+            <EditText
+                android:id="@+id/email_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/edit_text_bg"
+                android:ellipsize="end"
+                android:inputType="textEmailAddress"
+                android:singleLine="true"
+                android:hint="Email Address" />
+
+            <TextView
+                android:id="@+id/phoneNum_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:paddingStart="25dp"
+                android:text="Phone:"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:ignore="RtlSymmetry" />
+
+            <EditText
+                android:id="@+id/phoneNum_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/edit_text_bg"
+                android:ellipsize="end"
+                android:inputType="phone"
+                android:singleLine="true"
+                android:hint="Phone-Number (Optional)" />
+        </LinearLayout>
+    </LinearLayout>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageButton
-            android:id="@+id/back_btn"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/back_arrow_icon"
-            android:scaleType="fitCenter"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_marginStart="20dp"
-            android:layout_marginBottom="20dp"
+        <RelativeLayout
+            android:id="@+id/relativeLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="25dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <ImageButton
-            android:id="@+id/confirm_btn"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="20dp"
-            android:layout_marginBottom="20dp"
-            android:scaleType="fitCenter"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/check_icon"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/name_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Name:"
-            android:textSize="20sp"
-            android:layout_marginTop="120dp"
-            android:paddingStart="25dp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="RtlSymmetry" />
-
-        <EditText
-            android:id="@+id/name_edit_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="110dp"
-            android:hint="name"
-            android:layout_marginEnd="10dp"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:inputType="text"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/name_textView"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="parent">
 
-        <EditText
-            android:id="@+id/email_edit_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="23dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="10dp"
-            android:hint="email"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:inputType="textEmailAddress"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/email_textView"
-            app:layout_constraintTop_toBottomOf="@+id/name_edit_text" />
+            <ImageButton
+                android:id="@+id/back_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="20dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@drawable/back_arrow_icon"
+                android:contentDescription="Back Button"/>
 
-        <EditText
-            android:id="@+id/phoneNum_edit_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="25dp"
-            android:layout_marginEnd="10dp"
-            android:hint="phone-number"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:inputType="phone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/phoneNum_textView"
-            app:layout_constraintTop_toBottomOf="@+id/email_edit_text" />
-
-        <TextView
-            android:id="@+id/email_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Email:"
-            android:textStyle="bold"
-            android:textSize="20sp"
-            android:paddingStart="25dp"
-            android:layout_marginTop="40dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/name_textView"
-            tools:ignore="RtlSymmetry" />
-
-        <TextView
-            android:id="@+id/phoneNum_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Phone-Number:"
-            android:textSize="20sp"
-            android:paddingStart="25dp"
-            android:layout_marginTop="40dp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/email_textView"
-            tools:ignore="RtlSymmetry" />
-
+            <ImageButton
+                android:id="@+id/confirm_btn"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="20dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:scaleType="fitCenter"
+                android:src="@drawable/check_icon"
+                android:contentDescription="Confirm Button"/>
+        </RelativeLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>
