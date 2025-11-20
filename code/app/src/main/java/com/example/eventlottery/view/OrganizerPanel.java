@@ -1,6 +1,7 @@
 package com.example.eventlottery.view;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -160,9 +161,18 @@ public class OrganizerPanel extends AppCompatActivity {
              * @param position The position of the clicked item.
              * @param id The row ID of the clicked item.
              */
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 selectedEventIndex = position;
+                selectedEvent = data.get(position);
+
+                Intent intent = new Intent(OrganizerPanel.this, OrganizerEventInfo.class);
+                intent.putExtra("EVENT_ID", selectedEvent.getId());
+                intent.putExtra("EVENT_NAME", selectedEvent.getName());
+                intent.putExtra("WAITLIST_COUNT", selectedEvent.getWaitlist().getWaitlistedUsers().size());
+                // TODO: figure out how to get the selected and cancelled entrants
+                startActivity(intent);
             }
         });
 
