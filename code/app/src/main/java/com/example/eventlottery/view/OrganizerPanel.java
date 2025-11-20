@@ -103,7 +103,6 @@ public class OrganizerPanel extends AppCompatActivity {
 
         // Initialize UI components and event listeners
         eventList = findViewById(R.id.eventList);
-        previous = findViewById(R.id.previous);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
@@ -154,7 +153,7 @@ public class OrganizerPanel extends AppCompatActivity {
     private void setClickListeners() {
         eventList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             /**
-             * Updates {@link #selectedEventIndex} when the user selects a new event from the list.
+             * Updates when the user selects a new event from the list.
              *
              * @param parent The AdapterView where the click occurred.
              * @param view The view representing the clicked item.
@@ -167,17 +166,17 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
-        previous.setOnClickListener(new View.OnClickListener() {
-            /**
-             * Handles the "Previous" button click. Ends this activity to return to the previous screen.
-             *
-             * @param v The view that was clicked.
-             */
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+//        previous.setOnClickListener(new View.OnClickListener() {
+//            /**
+//             * Handles the "Previous" button click. Ends this activity to return to the previous screen.
+//             *
+//             * @param v The view that was clicked.
+//             */
+//            @Override
+//            public void onClick(View v) {
+//                finish();
+//            }
+//        });
 
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
             /**
