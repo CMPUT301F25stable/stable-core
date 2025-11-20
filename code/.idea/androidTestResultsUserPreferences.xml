@@ -3,6 +3,11 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
+<<<<<<< HEAD
+<<<<<<< HEAD
+        <entry key="-851265342">
+=======
+=======
         <entry key="-2050685806">
           <value>
             <AndroidTestResultsTableState>
@@ -30,13 +35,58 @@
             </AndroidTestResultsTableState>
           </value>
         </entry>
+>>>>>>> main
         <entry key="-1562532761">
+>>>>>>> b51d701f22e0a19a0fb2f302bc1c3cca80d52899
           <value>
             <AndroidTestResultsTableState>
               <option name="preferredColumnWidths">
                 <map>
                   <entry key="Duration" value="90" />
+<<<<<<< HEAD
+                  <entry key="Google Pixel 6a" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="40782673">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Google Pixel 6a" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="427999290">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Medium_Phone" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="1917552003">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Google Pixel 6a" value="120" />
+=======
                   <entry key="Pixel_3" value="120" />
+>>>>>>> b51d701f22e0a19a0fb2f302bc1c3cca80d52899
                   <entry key="Tests" value="360" />
                 </map>
               </option>
