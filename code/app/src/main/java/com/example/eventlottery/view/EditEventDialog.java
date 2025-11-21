@@ -1,10 +1,13 @@
 package com.example.eventlottery.view;
 
+import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -87,6 +90,11 @@ public class EditEventDialog extends DialogFragment {
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
+        Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
+
+        // Set click listeners for the TimePickerDialog
+        startDate.setOnClickListener(v -> openDatePicker(startDate));
+        endDate.setOnClickListener(v -> openDatePicker(endDate));
 
         /****************************************************
          * 1. Update text to represent what it currently is *
@@ -171,12 +179,21 @@ public class EditEventDialog extends DialogFragment {
             cal.set(Calendar.SECOND, 59);
             end = cal.getTime();
 
+            /****************************
+             * 4. Get geolocation input *
+             ****************************/
+            boolean geolocation;
+            if (geolocationSwitch.isChecked()) {
+                geolocation = true;
+            } else { geolocation = false; }
+
             /***********************************************************
-             * 4. Update event locally & run OrganizerPanel's listener *
+             * 5. Update event locally & run OrganizerPanel's listener *
              ***********************************************************/
             event.setWaitlistMax(maxSize);
             event.setStartTime(start);
             event.setEndTime(end);
+            event.setGeolocation(geolocation);
             if (listener != null) {
                 listener.onEventUpdated(event);
             }
@@ -185,4 +202,24 @@ public class EditEventDialog extends DialogFragment {
         return builder.create();
     }
 
+
+    /**
+     * Opens the built-in DatePickerDialog from Android Studio, given a target text field.
+     * References: https://www.youtube.com/watch?v=TCUfcNzS6Xk
+     * @param targetText the text field we want to set a listener on
+     */
+    private void openDatePicker(EditText targetText) {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog dialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                targetText.setText(String.valueOf(year) + "-" + String.valueOf(month) + "-" + String.valueOf(dayOfMonth));
+            }
+        }, year, month, day);
+        dialog.show();
+    }
 }

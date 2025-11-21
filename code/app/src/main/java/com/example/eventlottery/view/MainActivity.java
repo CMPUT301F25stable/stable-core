@@ -288,11 +288,18 @@ public class MainActivity extends AppCompatActivity {
                         // Check if event is valid, by definition of function comment
                         String eventId = event.getId();
                         ArrayList<String> createdEvents = getCurrentUser().getCreatedEvents();
-                        for (String createdEventId : createdEvents) {
-                            if (eventId.equals(createdEventId)) {
-                                continue;  // This event was created by the user
+                        // Case 1: User has created events
+                        if (createdEvents.size() != 0) {
+                            for (String createdEventId : createdEvents) {
+                                if (eventId.equals(createdEventId)) {
+                                    continue;  // This event was created by the user
+                                }
+                                // If conditions pass, add event
+                                data.add(event);
                             }
-                            // If conditions pass, add event
+                        }
+                        // Case 2: No created events. Just add the event by default.
+                        else {
                             data.add(event);
                         }
                     }
