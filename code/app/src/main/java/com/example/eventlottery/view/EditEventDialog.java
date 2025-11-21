@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -89,6 +90,7 @@ public class EditEventDialog extends DialogFragment {
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
+        Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
 
         // Set click listeners for the TimePickerDialog
         startDate.setOnClickListener(v -> openDatePicker(startDate));
@@ -177,12 +179,21 @@ public class EditEventDialog extends DialogFragment {
             cal.set(Calendar.SECOND, 59);
             end = cal.getTime();
 
+            /****************************
+             * 4. Get geolocation input *
+             ****************************/
+            boolean geolocation;
+            if (geolocationSwitch.isChecked()) {
+                geolocation = true;
+            } else { geolocation = false; }
+
             /***********************************************************
-             * 4. Update event locally & run OrganizerPanel's listener *
+             * 5. Update event locally & run OrganizerPanel's listener *
              ***********************************************************/
             event.setWaitlistMax(maxSize);
             event.setStartTime(start);
             event.setEndTime(end);
+            event.setGeolocation(geolocation);
             if (listener != null) {
                 listener.onEventUpdated(event);
             }

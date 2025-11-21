@@ -53,6 +53,8 @@ public class Event implements Serializable {
     private final List<User> chosenEntrants = new ArrayList<>();
     /** Lottery system used for selecting winners. */
     private transient LotterySystem lotteryEngine;
+    /** Determines if geolocation is on (true) or not (false) */
+    private boolean geolocation;
 
     /**
      * Generates a new universally unique identifier (UUID) for an event.
@@ -95,7 +97,7 @@ public class Event implements Serializable {
         this.filterTags = new java.util.ArrayList<>();
     }
 
-    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) { // For new events (not yet in database)
+    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags, boolean geolocation) { // For new events (not yet in database)
         this.id = generateUUID();
         this.name = name;
         this.description = description;
@@ -106,6 +108,23 @@ public class Event implements Serializable {
         this.endTime = endTime;
         this.waitlist = new Waitlist();
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
+        this.geolocation = geolocation;
+        formatDates();
+    }
+
+    // Old method: I'm keeping this so it doesn't break every instance of an event being created - John
+    public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags) {
+        this.id = generateUUID();
+        this.name = name;
+        this.description = description;
+        this.location = location;
+        this.organizer = organizer;
+        this.image = image;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.waitlist = new Waitlist();
+        this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
+        this.geolocation = false;
         formatDates();
     }
 
@@ -218,6 +237,16 @@ public class Event implements Serializable {
     /** @param endTime the new event end time */
     public void setEndTime(Date endTime) {
         this.endTime = endTime;
+    }
+
+    /** @return geolocation status (true or false) */
+    public boolean getGeolocation() {
+        return geolocation;
+    }
+
+    /** @param geolocation the new geolocation status */
+    public void setGeolocation(boolean geolocation) {
+        this.geolocation = geolocation;
     }
 
     public List<String> getFilterTags() {

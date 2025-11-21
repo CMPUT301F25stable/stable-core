@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -75,6 +76,7 @@ public class CreateEventDialog extends DialogFragment {
         EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
+        Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
 
         // Set click listeners for the TimePickerDialog
         startDate.setOnClickListener(v -> openDatePicker(startDate));
@@ -154,12 +156,19 @@ public class CreateEventDialog extends DialogFragment {
             cal.set(Calendar.SECOND, 59);
             end = cal.getTime();
 
+            /****************************
+             * 3. Get geolocation input *
+             ****************************/
+            boolean geolocation;
+            if (geolocationSwitch.isChecked()) {
+                geolocation = true;
+            } else { geolocation = false; }
 
             /*************************************
-             * 3. Create event, given the inputs *
+             * 4. Create event, given the inputs *
              *************************************/
-            // TODO: This can only set waiting list max, start and end date right now. Implement more later
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end, new ArrayList<>());
+            // TODO: This can only set waiting list max, start and end date, and geolocation right now. Implement more later
+            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end, new ArrayList<>(), geolocation);
             newEvent.setWaitlistMax(maxSize);
 
             // Run organizer panel's listener if something was created

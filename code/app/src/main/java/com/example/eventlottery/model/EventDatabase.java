@@ -130,6 +130,7 @@ public class EventDatabase {
         String formattedStartTime = formattedDates.get(1);
         String formattedEndDate = formattedDates.get(2);
         String formattedEndTime = formattedDates.get(3);
+        Boolean geolocation = event.getGeolocation();
 
         // Update event in firestore
         eventRef.update(
@@ -139,7 +140,8 @@ public class EventDatabase {
                 "formattedStartTime", formattedStartTime,
                 "formattedEndTime", formattedEndTime,
                 "formattedStartDate", formattedStartDate,
-                "formattedEndDate", formattedEndDate
+                "formattedEndDate", formattedEndDate,
+                "geolocation", geolocation
         );
     }
 
