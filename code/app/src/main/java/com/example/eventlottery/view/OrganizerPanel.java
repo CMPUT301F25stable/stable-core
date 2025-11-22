@@ -1,14 +1,11 @@
 package com.example.eventlottery.view;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -46,11 +43,8 @@ public class OrganizerPanel extends AppCompatActivity {
     /** The unique Android device ID for the current organizer. */
     private String userID;
 
-    /** The layout representing the "previous" section or navigation area. */
-    private LinearLayout previous;
-
-    /** The {@link ListView} displaying the organizer's events. */
-    private ListView eventList;
+    /** The eventlist fragment. */
+    private EventlistFragment eventList;
 
     /** The button used to view the waitlist of the selected event. */
     private Button viewWaitlist;
@@ -104,7 +98,7 @@ public class OrganizerPanel extends AppCompatActivity {
         });
 
         // Initialize UI components and event listeners
-        eventList = findViewById(R.id.eventList);
+        eventList = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView8);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
@@ -119,8 +113,6 @@ public class OrganizerPanel extends AppCompatActivity {
         organizerEventDatabase = new EventDatabase();
         userDatabase = new DBConnector(this);
         getOrganizerInfo();
-        adapter = new EventAdapter(this, data);
-        eventList.setAdapter(adapter);
 
         // Handle back button press using OnBackPressedDispatcher
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -159,7 +151,9 @@ public class OrganizerPanel extends AppCompatActivity {
                     Log.d("OrganizerPanel", "Organizer loaded");
 
                     // Load events after organizer data is retrieved
+                    adapter = new EventAdapter(OrganizerPanel.this, data);
                     organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
+                    eventList.setAdapter(adapter);
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
                 }
@@ -174,37 +168,34 @@ public class OrganizerPanel extends AppCompatActivity {
      * This includes viewing waitlists, editing events, and creating new events.
      */
     private void setClickListeners() {
-        eventList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            /**
-             * Updates when the user selects a new event from the list.
-             *
-             * @param parent The AdapterView where the click occurred.
-             * @param view The view representing the clicked item.
-             * @param position The position of the clicked item.
-             * @param id The row ID of the clicked item.
-             */
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectedEventIndex = position;
-                selectedEvent = data.get(position);
+        /**
+         * Updates when the user selects a new event from the list.
+         *
+         * @param parent The AdapterView where the click occurred.
+         * @param view The view representing the clicked item.
+         * @param position The position of the clicked item.
+         * @param id The row ID of the clicked item.
+         */
+        eventList.setOnItemClickListener((parent, view, position, id) -> {
+            selectedEventIndex = position;
+            selectedEvent = data.get(position);
 
-                int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
+            int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
 
-                // Show the fragment container (which dims the background)
-                findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+            // Show the fragment container (which dims the background)
+            findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
 
-                // Create and show the fragment in the inner content area
-                OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
-                        selectedEvent.getId(),
-                        selectedEvent.getName(),
-                        waitlistCount
-                );
+            // Create and show the fragment in the inner content area
+            OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
+                    selectedEvent.getId(),
+                    selectedEvent.getName(),
+                    waitlistCount
+            );
 
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_content, fragment)  // Changed to fragment_content
-                        .addToBackStack(null)
-                        .commit();
-            }
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_content, fragment)  // Changed to fragment_content
+                    .addToBackStack(null)
+                    .commit();
         });
 
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
