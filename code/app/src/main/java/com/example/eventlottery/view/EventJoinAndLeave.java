@@ -1,28 +1,43 @@
 package com.example.eventlottery.view;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +48,7 @@ import java.util.Map;
  * and either join or leave an event. It updates both the UI and Firestore
  * to reflect the user's participation status.
  * Reference: https://firebase.google.com/docs/firestore/manage-data/add-data#update_fields_in_nested_objects
+ * https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
  */
 public class EventJoinAndLeave extends AppCompatActivity {
     private static final String TAG = "EventJoinAndLeave";
@@ -45,6 +61,16 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private Date registrationStart;
     private User currentUser;
     private User user;
+
+
+    // For US02.02.03 - geolocation
+    private FusedLocationProviderClient mFusedLocationClient;
+    // Arbitrary integer for permission_id
+    private int PERMISSION_ID = 44;
+    private Map<String, Object> userLocation;
+    private boolean geolocation;
+
+
     private boolean isJoined = false;
 
     /**
@@ -66,6 +92,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
         TextView showWaitlistSize = findViewById(R.id.showWaitlistSize);
         joinButton = findViewById(R.id.joinButton);
         Button homeButton = findViewById(R.id.homeButton);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        userLocation = new HashMap<>();
 
         // ---- Get intent extras (must include a stable eventId) ----
         eventId     = getIntent().getStringExtra("id");
@@ -78,6 +106,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         String timeEnd   = getIntent().getStringExtra("timeEnd");
         registrationEnd = (Date) getIntent().getSerializableExtra("registrationEnd");
         registrationStart = (Date) getIntent().getSerializableExtra("registrationStart");
+        geolocation = (boolean) getIntent().getSerializableExtra("geolocation");
 
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
@@ -109,6 +138,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         homeButton.setOnClickListener(v -> startActivity(new Intent(this, MainActivity.class)));
 
         user = new User(this);
+        userLocation.put("userId", user.getId());
         db = FirebaseFirestore.getInstance(); // get firestore instance
         userDoc = db.collection("users-p4").document(user.getId()); // get user
 
@@ -131,6 +161,11 @@ public class EventJoinAndLeave extends AppCompatActivity {
         joinButton.setOnClickListener(v -> {
             toggleJoin(eventId, currentUser, showWaitlistSize);
         });
+
+        // Check if geolocation is enabled & entrant has not joined. Request location if so
+        if (geolocation && !isJoined) {
+            getLastLocation();
+        }
     }
 
     /**
@@ -197,6 +232,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         userInfo.put("id", user.getId());
         userInfo.put("name", user.getName());
         userInfo.put("email", user.getEmailAddress());
+
         documentReference.update("waitlist.waitlistedUsers", FieldValue.arrayUnion(userInfo))
                 .addOnSuccessListener(unused -> {
                     Log.d(TAG, "user joined waitlist in event " + eventId);
@@ -204,6 +240,13 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 ).addOnFailureListener(e -> {
                     Log.e(TAG, "user failed to joined waitlist in event " + eventId, e);
                 });
+
+        // If geolocation is on, store that data
+        if (geolocation) {
+            if (userLocation != null) {
+                documentReference.update("userLocations", FieldValue.arrayUnion(userLocation));
+            }
+        }
     }
 
     /**
@@ -225,6 +268,13 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 ).addOnFailureListener(e -> {
                     Log.e(TAG, "user failed to leave waitlist in event " + eventId, e);
                 });
+
+        // If geolocation is on, remove that data
+        if (geolocation) {
+            if (userLocation != null) {
+                documentReference.update("userLocations", FieldValue.arrayRemove(userLocation));
+            }
+        }
 
     }
 
@@ -295,6 +345,115 @@ public class EventJoinAndLeave extends AppCompatActivity {
         });
     }
 
+    /**
+     * Gets the last location of the user.
+     */
+    @SuppressLint("MissingPermission")
+    private void getLastLocation() {
+        // Check if permissions are enabled
+        if (!checkPermissions()) {
+            requestPermissions();
+            return;
+        }
 
+        // Check if location is enabled
+        if (!isLocationEnabled()) {
+            Toast.makeText(this, "Please turn on your location", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivity(intent);
+            return;
+        }
 
+        mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+            @Override
+            public void onComplete(@NonNull Task<Location> task) {
+                Location location = task.getResult();
+                if (location == null) {
+                    requestNewLocationData();
+                } else {
+                    userLocation.put("latitude", location.getLatitude());
+                    userLocation.put("longitude", location.getLongitude());
+                }
+            }
+        });
+    }
+
+    /**
+     * Checks if the permissions for geolocation are enabled or not.
+     * @return true if they are, false otherwise
+     * Reference: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+     */
+    private boolean checkPermissions() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Method to request for geolocation permission
+     * Reference: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+     */
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
+    }
+
+    /**
+     * Method to check if location is enabled.
+     * @return true if it is, false otherwise
+     * Reference: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+     */
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    }
+
+    /**
+     * Requests new location data from the user.
+     * Reference: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+     */
+    @SuppressLint("MissingPermission")
+    private void requestNewLocationData() {
+        // Initializing LocationRequest
+        // object with appropriate methods
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(1000);
+        mLocationRequest.setFastestInterval(500);
+        mLocationRequest.setNumUpdates(1);
+
+        // setting LocationRequest
+        // on FusedLocationClient
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+    }
+
+    // If everything is alright then
+    // References: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+    @Override
+    public void
+    onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_ID) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLastLocation();
+            }
+        }
+    }
+
+    /**
+     * Define the callback that runs everytime FusedLocationProvider delivers a new location update.
+     * References: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
+     */
+    private LocationCallback mLocationCallback = new LocationCallback() {
+
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            Location mLastLocation = locationResult.getLastLocation();
+            userLocation.put("latitude", mLastLocation.getLatitude());
+            userLocation.put("longitude", mLastLocation.getLongitude());
+        }
+    };
 }

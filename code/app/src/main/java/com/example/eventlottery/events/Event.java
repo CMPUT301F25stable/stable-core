@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -55,6 +56,8 @@ public class Event implements Serializable {
     private transient LotterySystem lotteryEngine;
     /** Determines if geolocation is on (true) or not (false) */
     private boolean geolocation;
+    /** An array of all user locations for an event. The map stores the user ID, latitude, & longitude. */
+    private ArrayList<Map<String, Object>> userLocations;
 
     /**
      * Generates a new universally unique identifier (UUID) for an event.
@@ -95,6 +98,7 @@ public class Event implements Serializable {
     public Event() {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
         this.filterTags = new java.util.ArrayList<>();
+        this.userLocations = new ArrayList<>();
     }
 
     public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags, boolean geolocation) { // For new events (not yet in database)
@@ -109,6 +113,7 @@ public class Event implements Serializable {
         this.waitlist = new Waitlist();
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         this.geolocation = geolocation;
+        this.userLocations = new ArrayList<>();
         formatDates();
     }
 
@@ -125,6 +130,7 @@ public class Event implements Serializable {
         this.waitlist = new Waitlist();
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         this.geolocation = false;
+        this.userLocations = new ArrayList<>();
         formatDates();
     }
 
@@ -314,6 +320,16 @@ public class Event implements Serializable {
     public Waitlist getWaitlist() { return waitlist; }
     /** @param waitlist the new {@link Waitlist} to associate with this event */
     public void setWaitlist(Waitlist waitlist) { this.waitlist = waitlist; }
+
+    /** getter for userLocations. */
+    public ArrayList<Map<String, Object>> getUserLocations() {
+        return userLocations;
+    }
+
+    /** setter for userLocations */
+    public void setUserLocations(ArrayList<Map<String, Object>> userLocations) {
+        this.userLocations = userLocations;
+    }
 
     /**
      * Adds one user to the waitlist.

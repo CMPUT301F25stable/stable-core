@@ -151,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("image", item.getImage());
             intent.putExtra("registrationEnd", item.getEndTime());      // Unformatted end date.
             intent.putExtra("registrationStart", item.getStartTime());  // Unformatted start date.
+            intent.putExtra("geolocation", item.getGeolocation());
             startActivity(intent);
         });
 
