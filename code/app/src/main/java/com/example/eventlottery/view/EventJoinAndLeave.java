@@ -43,6 +43,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private ListenerRegistration userListener;
     private Date registrationEnd;
     private Date registrationStart;
+    private User currentUser;
     private User user;
     private boolean isJoined = false;
 
@@ -116,6 +117,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
             if (documentSnapshot.exists()) { // If user exists, check if they are in any events
                 List<String> joinedWaitlist = (List<String>) documentSnapshot.get("waitlistedEvents");
                 user.setWaitlistedEventIds(joinedWaitlist);
+                currentUser = documentSnapshot.toObject(User.class);
 
                 isJoined = user.isWaitlisted(eventId); // Check if user is joined in current event
                 updateJoinButton(isJoined);
@@ -127,7 +129,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         });
 
         joinButton.setOnClickListener(v -> {
-            toggleJoin(eventId, user, showWaitlistSize);
+            toggleJoin(eventId, currentUser, showWaitlistSize);
         });
     }
 
@@ -186,7 +188,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
     /**
      * Updates waitlistedUsers in DB when a user joins an event
      * @param eventId the eventID
-     * @param user the userID
+     * @param user the current User
      */
     private void updateJoinEventWaitlist(String eventId, User user) {
         db = FirebaseFirestore.getInstance();
@@ -207,7 +209,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
     /**
      * Updates waitlistedUsers in DB when a user leaves an event
      * @param eventId the eventID
-     * @param user the userID
+     * @param user the the current User
      */
     private void updateLeaveEventWaitlist(String eventId, User user) {
         db = FirebaseFirestore.getInstance();
@@ -279,7 +281,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
                             textView.setText("\n🧍 Waitlist: " + size);
                         } else {
                             int size = 0;
-                            textView.append("\n🧍 Waitlist: " + size);
+                            textView.setText("\n🧍 Waitlist: " + size);
                         }
                     } else {
                         Log.d(TAG, "waitlistMap DNE: " + eventId);
