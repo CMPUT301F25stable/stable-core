@@ -285,21 +285,21 @@ public class MainActivity extends AppCompatActivity {
                             event.setId(doc.getId());
                         }
 
-                        // Check if event is valid, by definition of function comment
+                        // Add null check for currentUser
                         String eventId = event.getId();
-                        ArrayList<String> createdEvents = getCurrentUser().getCreatedEvents();
-                        // Case 1: User has created events
-                        if (createdEvents.size() != 0) {
-                            for (String createdEventId : createdEvents) {
-                                if (eventId.equals(createdEventId)) {
-                                    continue;  // This event was created by the user
-                                }
-                                // If conditions pass, add event
-                                data.add(event);
+                        boolean shouldAddEvent = true;
+
+                        // Only filter out created events if currentUser exists
+                        if (currentUser != null && currentUser.getCreatedEvents() != null) {
+                            ArrayList<String> createdEvents = currentUser.getCreatedEvents();
+
+                            // Don't add events created by this user
+                            if (createdEvents.contains(eventId)) {
+                                shouldAddEvent = false;
                             }
                         }
-                        // Case 2: No created events. Just add the event by default.
-                        else {
+
+                        if (shouldAddEvent) {
                             data.add(event);
                         }
                     }

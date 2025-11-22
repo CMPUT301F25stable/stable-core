@@ -13,6 +13,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -120,6 +121,27 @@ public class OrganizerPanel extends AppCompatActivity {
         getOrganizerInfo();
         adapter = new EventAdapter(this, data);
         eventList.setAdapter(adapter);
+
+        // Handle back button press using OnBackPressedDispatcher
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                // If fragment is showing, pop it and restore the list view
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                    findViewById(R.id.fragment_container).setVisibility(View.GONE);
+
+                    // Show the main content again
+                    findViewById(R.id.searchBar).setVisibility(View.VISIBLE);
+                    findViewById(R.id.eventList).setVisibility(View.VISIBLE);
+                    findViewById(R.id.linearLayout5).setVisibility(View.VISIBLE);
+                } else {
+                    // Let the system handle the back press
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 
     /**
@@ -161,32 +183,29 @@ public class OrganizerPanel extends AppCompatActivity {
              * @param position The position of the clicked item.
              * @param id The row ID of the clicked item.
              */
-
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 selectedEventIndex = position;
                 selectedEvent = data.get(position);
 
-                Intent intent = new Intent(OrganizerPanel.this, OrganizerEventInfo.class);
-                intent.putExtra("EVENT_ID", selectedEvent.getId());
-                intent.putExtra("EVENT_NAME", selectedEvent.getName());
-                intent.putExtra("WAITLIST_COUNT", selectedEvent.getWaitlist().getWaitlistedUsers().size());
-                // TODO: figure out how to get the selected and cancelled entrants
-                startActivity(intent);
+                int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
+
+                // Show the fragment container (which dims the background)
+                findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+
+                // Create and show the fragment in the inner content area
+                OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
+                        selectedEvent.getId(),
+                        selectedEvent.getName(),
+                        waitlistCount
+                );
+
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_content, fragment)  // Changed to fragment_content
+                        .addToBackStack(null)
+                        .commit();
             }
         });
-
-//        previous.setOnClickListener(new View.OnClickListener() {
-//            /**
-//             * Handles the "Previous" button click. Ends this activity to return to the previous screen.
-//             *
-//             * @param v The view that was clicked.
-//             */
-//            @Override
-//            public void onClick(View v) {
-//                finish();
-//            }
-//        });
 
         viewWaitlist.setOnClickListener(new View.OnClickListener() {
             /**
