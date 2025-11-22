@@ -2,6 +2,7 @@ package com.example.eventlottery.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -14,6 +15,8 @@ import androidx.core.content.ContextCompat;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -32,6 +35,8 @@ import java.util.Random;
  * @author Jensen Lee
  */
 public class InfoActivity extends AppCompatActivity {
+    /** Tag for logging debug information. */
+    private static final String TAG = "InfoActivity";
 
     /** Header TextView displaying the name of the event. */
     private TextView eventNameHeader;
@@ -220,6 +225,9 @@ public class InfoActivity extends AppCompatActivity {
                     currentUser.getRegisteredEvents().put(eventId, "Accepted");
                     currentStatus = "Accepted";
                     updateStatusDisplay();
+
+                    // Adds to finalizedUsers
+                    updateJoinFinalizedUsers(eventId, currentUser);
 
                     Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
 
@@ -540,6 +548,28 @@ public class InfoActivity extends AppCompatActivity {
 
         // Update status display
         updateStatusDisplay();
+    }
+
+    /**
+     * Updates finalizedUsers in DB when a user accepts an event invitation
+     * @param eventId the eventID
+     * @param user the current User
+     */
+    private void updateJoinFinalizedUsers(String eventId, User user) {
+        db = FirebaseFirestore.getInstance();
+        DocumentReference documentReference = db.collection("event-p4").document(eventId);
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("name", user.getName());
+        userInfo.put("emailAddress", user.getEmailAddress());
+        userInfo.put("phoneNumber", user.getPhoneNumber());
+        documentReference.update("finalizedList.finalizedUsers", FieldValue.arrayUnion(userInfo))
+                .addOnSuccessListener(unused -> {
+                    Log.d(TAG, "user joined finalizedUsers for event " + eventId);
+                }
+                ).addOnFailureListener(e -> {
+                    Log.e(TAG, "user failed to joined finalizedUsers for event " + eventId, e);
+                });
     }
 
     /**
