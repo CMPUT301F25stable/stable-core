@@ -235,6 +235,7 @@ public class OrganizerPanel extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 CreateEventDialog createDialog = new CreateEventDialog();
+                createDialog.setOrganizerName(organizer.getName());
 
                 createDialog.setOnEventCreatedListener(event -> {
                     data.add(event);
