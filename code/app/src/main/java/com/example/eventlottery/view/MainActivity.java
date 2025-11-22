@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
                     currentUser = document.toObject(User.class);
+                    loadEventsFromFirestore();
                 }
             }
         });
@@ -154,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         recyclerView.setAdapter(adapter);
-        loadEventsFromFirestore();
 
         // Configure SearchView filtering
         searchView = findViewById(R.id.searchView);
