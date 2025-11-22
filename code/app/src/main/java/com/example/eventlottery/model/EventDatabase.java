@@ -116,12 +116,15 @@ public class EventDatabase {
 
     /**
      * Updates the event in firestore, according to what an organizer changes.
-     * TODO: Right now it just updates the waitlistMax & start + end date.
+     * TODO: Needs to be able to update the image
      * @param event The event to update.
      */
     public void organizerUpdateEvent(Event event) {
         // Get reference to event & relevant variables to update
         DocumentReference eventRef = eventsRef.document(event.getId());
+        String title = event.getName();
+        String description = event.getDescription();
+        String location = event.getLocation();
         int newMaxSize = event.getWaitlistMax();
         Date startTime = event.getStartTime();
         Date endTime = event.getEndTime();
@@ -134,6 +137,9 @@ public class EventDatabase {
 
         // Update event in firestore
         eventRef.update(
+                "name", title,
+                "description", description,
+                "location", location,
                 "waitlist.maxSize", newMaxSize,
                 "startTime", startTime,
                 "endTime", endTime,
