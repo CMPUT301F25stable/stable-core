@@ -233,8 +233,8 @@ public class CreateEventDialog extends DialogFragment {
 
         DatePickerDialog dialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
             @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                targetText.setText(String.valueOf(year) + "-" + String.valueOf(month) + "-" + String.valueOf(dayOfMonth));
+            public void onDateSet(DatePicker view, int year, int monthIndex, int dayOfMonth) {
+                targetText.setText(String.valueOf(year) + "-" + String.valueOf(monthIndex + 1) + "-" + String.valueOf(dayOfMonth));
             }
         }, year, month, day);
         dialog.show();
