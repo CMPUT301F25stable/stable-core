@@ -48,7 +48,7 @@
             android:name=".view.FilterActivity"
             android:exported="false" />
         <activity
-            android:name=".view.OrganizerEventInfo"
+            android:name=".view.OrganizerEventInfoFragment"
             android:exported="false" />
         <activity
             android:name=".view.SplashScreen"
