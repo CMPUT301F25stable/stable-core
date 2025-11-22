@@ -35,6 +35,7 @@ import java.util.Locale;
  */
 public class CreateEventDialog extends DialogFragment {
     private OnEventCreatedListener listener;
+    private String organizerName;
     /**
      * Listener interface for receiving event creation callbacks.
      * Implementations of this interface are notified when a new {@link Event}
@@ -58,6 +59,14 @@ public class CreateEventDialog extends DialogFragment {
     }
 
     /**
+     * Sets the organizer name for this dialog.
+     * @param organizerName The organizer's name.
+     */
+    public void setOrganizerName(String organizerName) {
+        this.organizerName = organizerName;
+    }
+
+    /**
      * Returns the dialog for creating an event.
      * @param savedInstanceState The last saved instance state of the Fragment,
      * or null if this is a freshly created Fragment.
@@ -73,6 +82,9 @@ public class CreateEventDialog extends DialogFragment {
         View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
 
         // Set up variables for getting input
+        EditText title = dialogView.findViewById(R.id.titleInput);
+        EditText description = dialogView.findViewById(R.id.descriptionInput);
+        EditText location = dialogView.findViewById(R.id.locationInput);
         EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
@@ -88,22 +100,46 @@ public class CreateEventDialog extends DialogFragment {
         builder.setView(dialogView);
         builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
         builder.setPositiveButton("Save", (dialog, which) -> {
-            // Get user inputs
-            String text = waitlistMax.getText().toString();
-            String startDateText = startDate.getText().toString();
-            String endDateText = endDate.getText().toString();
 
-            /******************************
-             * 1. Get valid integer input *
-             ******************************/
+            /**********************
+             * 1. Get title input *
+             **********************/
+            String titleText  = title.getText().toString();
+            if (titleText.isEmpty()) {
+                Toast.makeText(requireContext(), "Title can't be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            /****************************
+             * 2. Get description input *
+             ****************************/
+            String descriptionText = description.getText().toString();
+            if (descriptionText.isEmpty()) {
+                Toast.makeText(requireContext(), "Description can't be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            /*************************
+             * 3. Get location input *
+             *************************/
+            String locationText = location.getText().toString();
+            if (locationText.isEmpty()) {
+                Toast.makeText(requireContext(), "Location can't be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            /*****************************
+             * 4. Get waitlist max input *
+             *****************************/
+            String waitlistMaxText = waitlistMax.getText().toString();
 
             // Assume no waitlist limit unless there is valid text input
             int maxSize = Integer.MAX_VALUE;
 
-            // Get valid integer if there's any input
-            if (!text.isEmpty()) {
+            // Get valid integer if there's any input. Check if input was valid
+            if (!waitlistMaxText.isEmpty()) {
                 try {
-                    maxSize = Integer.parseInt(text);
+                    maxSize = Integer.parseInt(waitlistMaxText);
                 } catch (NumberFormatException e) {
                     Toast.makeText(requireContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
                     return;
@@ -117,9 +153,13 @@ public class CreateEventDialog extends DialogFragment {
             }
 
             /***************************
-             * 2. Get valid date input *
+             * 5. Get valid date input *
              ***************************/
-            // Initialize stuff for getting date
+            // Get date inputs
+            String startDateText = startDate.getText().toString();
+            String endDateText = endDate.getText().toString();
+
+            // Initialize date formatter & variables for storing start & end date
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
             Date start;
             Date end;
@@ -157,7 +197,7 @@ public class CreateEventDialog extends DialogFragment {
             end = cal.getTime();
 
             /****************************
-             * 3. Get geolocation input *
+             * 6. Get geolocation input *
              ****************************/
             boolean geolocation;
             if (geolocationSwitch.isChecked()) {
@@ -165,10 +205,10 @@ public class CreateEventDialog extends DialogFragment {
             } else { geolocation = false; }
 
             /*************************************
-             * 4. Create event, given the inputs *
+             * 7. Create event, given the inputs *
              *************************************/
-            // TODO: This can only set waiting list max, start and end date, and geolocation right now. Implement more later
-            Event newEvent = new Event("Filler Title", "Event Description", "Event Location", "Organizer ID", "", start, end, new ArrayList<>(), geolocation);
+            // TODO: Can't take in image input yet
+            Event newEvent = new Event(titleText, descriptionText, locationText, organizerName, "", start, end, new ArrayList<>(), geolocation);
             newEvent.setWaitlistMax(maxSize);
 
             // Run organizer panel's listener if something was created
