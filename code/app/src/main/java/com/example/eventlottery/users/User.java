@@ -42,6 +42,7 @@ public class User implements Serializable {
     private String fcmToken;
     /** Indicates if the user is banned from creating events. (US 03.07.01) */
     private boolean creationBan = false;
+    private boolean isAdmin;
 
     /** Default empty constructor required by Firestore. */
     public User() {}
@@ -65,6 +66,7 @@ public class User implements Serializable {
         this.waitlistedEvents = new ArrayList<>();
         this.registeredEvents = new HashMap<>();
         this.createdEvents = new ArrayList<>();
+        this.isAdmin = false;
     }
 
     /**
@@ -148,6 +150,16 @@ public class User implements Serializable {
     /** @return A list of event IDs the user is waitlisted for. */
     public ArrayList<String> getWaitlistedEvents() {
         return waitlistedEvents;
+    }
+
+    /** Getter for isAdmin() */
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    /** Setter for isAdmin() */
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 
     // in User.java
