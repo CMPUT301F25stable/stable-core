@@ -80,6 +80,7 @@ dependencies {
     // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage:22.0.1")
 
     // --- Third-party libraries ---
     implementation("com.google.zxing:core:3.4.1")
