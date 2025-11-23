@@ -2,18 +2,29 @@ package com.example.eventlottery.view;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.users.User;
+import com.example.eventlottery.events.NotificationSystem;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -119,7 +130,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         closeButton.setOnClickListener(v -> {
             // Close the fragment
             requireActivity().getSupportFragmentManager().popBackStack();
-            requireActivity().findViewById(R.id.fragment_container).setVisibility(View.GONE);
+            //requireActivity().findViewById(R.id.fragment_container).setVisibility(View.GONE);
         });
 
         // Populate the UI with data from arguments
@@ -149,11 +160,90 @@ public class OrganizerEventInfoFragment extends Fragment {
     private void setClickListeners() {
         // Click listener for waiting list card - notifies all waitlisted entrants
         waitingListCard.setOnClickListener(v -> {
-            // TODO: Implement notification logic for waiting list entrants
-            // This should trigger a notification to all users in the waiting list state
+            // Show a dialog to get custom message from organizer
+            showNotificationDialog();
         });
         // TODO: Add click listeners for selected and cancelled cards
 
+    }
+
+    /**
+     * Shows a dialog allowing the organizer to compose and send a notification
+     * to all waitlisted entrants for this event.
+     * */
+    private void showNotificationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Notify Waiting List");
+
+        // Create input field for custom message
+        final EditText input = new EditText(requireContext());
+        input.setHint("Enter message for walisted entrants...");
+        input.setMinLines(3);
+        input.setGravity(Gravity.TOP | Gravity.START);
+
+        builder.setView(input);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            // Send notification to all waitlisted entrants
+            String message = input.getText().toString().trim();
+            if (!message.isEmpty()) {
+                sendWaitlistNotifications(message);
+            }
+            else {
+                Toast.makeText(requireContext(), "Please enter a message", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            dialog.cancel();
+        });
+
+        builder.show();
+    }
+
+    /**
+     * Fetches waitlisted entrants from Firebase and sends notifications to them
+     * @param message The custom message to waitlist entrants
+     * */
+    private void sendWaitlistNotifications(String message) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("event-p4").document(eventId)
+                .collection("waitlist")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<User> waitlistedUsers = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        User user = doc.toObject(User.class);
+                        if (user != null) {
+                            waitlistedUsers.add(user);
+                        }
+                    }
+
+                    if (!waitlistedUsers.isEmpty()) {
+                        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+                        notificationSystem.notifyWaitlistedEntrants(
+                                waitlistedUsers,
+                                getArguments().getString(ARG_EVENT_NAME),
+                                eventId,
+                                message
+                        );
+                        Toast.makeText(requireContext(),
+                                "Notifications sent to " + waitlistedUsers.size() + " entrants",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        Toast.makeText(requireContext(),
+                                "No entrants on waiting list",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("OrganizerEventInfo", "Error fetching waitlist", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to send notifications",
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 
     /**
