@@ -225,10 +225,26 @@ public class OrganizerPanel extends AppCompatActivity {
         });
 
         map.setOnClickListener(new View.OnClickListener() {
+            /**
+             * Handles the click listener for the maps button.
+             * Starts the maps activity given that the event has geolocation enabled.
+             *
+             * @param v The view that was clicked.
+             */
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(OrganizerPanel.this, MapActivity.class);
-                startActivity(intent);
+                if (selectedEventIndex != -1) {
+                    selectedEvent = data.get(selectedEventIndex);
+                    boolean geolocationOn = selectedEvent.getGeolocation();
+                    if (geolocationOn) {
+                        Intent intent = new Intent(OrganizerPanel.this, MapActivity.class);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(OrganizerPanel.this, "This event doesn't have geolocation on", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(OrganizerPanel.this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
