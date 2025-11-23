@@ -10,6 +10,7 @@ import static org.hamcrest.CoreMatchers.anything;
 
 import android.os.SystemClock;
 
+import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
@@ -36,6 +37,9 @@ public class MapActivityUITest {
      */
     @Test
     public void testOpenMaps() {
+        // Initialize intents for espresso
+        Intents.init();
+
         // Navigate to Organizer Panel
         onView(withId(R.id.OrganizerIcon)).perform(click());
 
@@ -50,5 +54,8 @@ public class MapActivityUITest {
 
         // Verify map activity opened
         intended(hasComponent(MapActivity.class.getName()));
+
+        // Release intents
+        Intents.release();
     }
 }
