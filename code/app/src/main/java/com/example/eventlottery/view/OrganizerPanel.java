@@ -27,6 +27,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * The {@code OrganizerPanel} class represents the main interface for organizers.
@@ -228,23 +229,55 @@ public class OrganizerPanel extends AppCompatActivity {
             /**
              * Handles the click listener for the maps button.
              * Starts the maps activity given that the event has geolocation enabled.
-             *
+             * Serializes latitudes & longitudes, and the user's name.
              * @param v The view that was clicked.
              */
             @Override
             public void onClick(View v) {
-                if (selectedEventIndex != -1) {
-                    selectedEvent = data.get(selectedEventIndex);
-                    boolean geolocationOn = selectedEvent.getGeolocation();
-                    if (geolocationOn) {
-                        Intent intent = new Intent(OrganizerPanel.this, MapActivity.class);
-                        startActivity(intent);
-                    } else {
-                        Toast.makeText(OrganizerPanel.this, "This event doesn't have geolocation on", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
+                if (selectedEventIndex == -1) {
                     Toast.makeText(OrganizerPanel.this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+
+                selectedEvent = data.get(selectedEventIndex);
+                boolean geolocationOn = selectedEvent.getGeolocation();
+                if (!geolocationOn) {
+                    Toast.makeText(OrganizerPanel.this, "This event doesn't have geolocation on", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Grab userLocations & user objects (so I can extract their name)
+                ArrayList<Map<String, Object>> userLocations = selectedEvent.getUserLocations();
+                ArrayList<User> waitlistedUsers = selectedEvent.getWaitlist().getWaitlistedUsers();
+
+                // Turn from Map<String, Object> to ArrayList since maps aren't serializable
+                ArrayList<Double> latitudes = new ArrayList<>();
+                ArrayList<Double> longitudes = new ArrayList<>();
+                ArrayList<String> names = new ArrayList<>();
+
+                for (Map<String, Object> userLocation : userLocations) {
+                    // grab user Id & initialize name String
+                    String userId = (String) userLocation.get("userId");
+                    String name = "Your Name";  // Filler name
+
+                    // Match userId to name
+                    for (User user : waitlistedUsers) {
+                        if (user.getId().equals(userId)) {
+                            name = user.getName();
+                        }
+                    }
+
+                    // Add to the user's name, latitude, and longitude to arraylist (they're parallel)
+                    names.add(name);
+                    latitudes.add((Double) userLocation.get("latitude"));
+                    longitudes.add((Double) userLocation.get("longitude"));
+                }
+
+                // Make intent & serialize coordinates
+                Intent intent = new Intent(OrganizerPanel.this, MapActivity.class);
+                intent.putExtra("latitudes", latitudes);
+                intent.putExtra("longitudes", longitudes);
+                intent.putExtra("names", names);
+                startActivity(intent);
             }
         });
 
