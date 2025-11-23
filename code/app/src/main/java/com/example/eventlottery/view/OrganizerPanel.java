@@ -1,6 +1,7 @@
 package com.example.eventlottery.view;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -22,6 +23,7 @@ import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.FinalizedList;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
@@ -57,6 +59,9 @@ public class OrganizerPanel extends AppCompatActivity {
 
     /** The button used to view the final list. */
     private Button viewFinalList;
+
+    /** The button used to view where entrants have joined */
+    private Button map;
 
     /** The index of the currently selected event in the list (default is -1). */
     private int selectedEventIndex = -1;
@@ -103,6 +108,7 @@ public class OrganizerPanel extends AppCompatActivity {
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
         viewFinalList = findViewById(R.id.view_finalized_list_button);
+        map = findViewById(R.id.mapButton);
         setClickListeners();
 
         // Initialize databases and organizer info
@@ -215,6 +221,14 @@ public class OrganizerPanel extends AppCompatActivity {
                 } else {
                     Toast.makeText(OrganizerPanel.this, "Please click on an event first", Toast.LENGTH_SHORT).show();
                 }
+            }
+        });
+
+        map.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(OrganizerPanel.this, MapActivity.class);
+                startActivity(intent);
             }
         });
 
