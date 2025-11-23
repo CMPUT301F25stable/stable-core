@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -70,7 +71,10 @@ public class UserPanel extends AppCompatActivity {
         String userIdFromIntent = intent.getStringExtra("USER_ID");
 
         // Get Device ID
-        String deviceId = getDeviceId(this);
+        String deviceId = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
 
         String userIdToLoad = (userIdFromIntent != null && !userIdFromIntent.isEmpty())
                 ? userIdFromIntent
@@ -506,15 +510,6 @@ public class UserPanel extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
-    }
-
-    /**
-     * Helper function to get deviceId
-     * @param context Context of the activity
-     * */
-    private String getDeviceId(Context context) {
-        SharedPreferences storedData = context.getSharedPreferences("DeviceId", Context.MODE_PRIVATE);
-        return storedData.getString("UUID", "");
     }
 
     /**
