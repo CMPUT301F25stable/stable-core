@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/white"
@@ -66,12 +67,26 @@
         android:id="@+id/notificationIcon"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:layout_marginBottom="16dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        app:srcCompat="@drawable/outline_circle_notifications_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/OrganizerIcon"
+        app:layout_constraintEnd_toStartOf="@+id/adminPanelIcon"
+        app:srcCompat="@drawable/outline_circle_notifications_24" />
+
+    <!-- Admin Panel Icon -->
+    <ImageView
+        android:id="@+id/adminPanelIcon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="16dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/notificationIcon"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
+        app:srcCompat="@drawable/outline_admin_panel_settings_24" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

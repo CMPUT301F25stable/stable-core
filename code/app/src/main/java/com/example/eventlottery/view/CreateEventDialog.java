@@ -237,8 +237,16 @@ public class CreateEventDialog extends DialogFragment {
                 geolocation = true;
             } else { geolocation = false; }
 
+            /****************************
+             * 7. Select and upload image
+             ****************************/
+            if (eventImg == null || eventImg.isEmpty()) {
+                Toast.makeText(requireContext(), "Please select and upload an image", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             /*************************************
-             * 7. Create event, given the inputs *
+             * 8. Create event, given the inputs *
              *************************************/
             Event newEvent = new Event(titleText, descriptionText, locationText, organizerName, eventImg, start, end, new ArrayList<>(), geolocation);
             newEvent.setWaitlistMax(maxSize);

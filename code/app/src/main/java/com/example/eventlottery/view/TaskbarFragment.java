@@ -22,8 +22,37 @@ import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
 public class TaskbarFragment extends Fragment {
+    private User user;
+
     /**
-     * Inflates the home taskbar by default. TODO: Make it dynamically display taskbars later
+     * Creates a new instance of the taskbar, given a user as an input.
+     * @param user The user inputted.
+     * @return A new fragment instance
+     */
+    public static TaskbarFragment newInstance(User user) {
+        TaskbarFragment fragment = new TaskbarFragment();
+        Bundle args = new Bundle();
+        args.putSerializable("User", user);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    /**
+     * Retrieves newInstance inputs & puts them into a private variable
+     * @param savedInstanceState If the fragment is being re-created from
+     * a previous saved state, this is the state.
+     */
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            user = (User) getArguments().getSerializable("User");
+        }
+    }
+
+    /**
+     * Inflates one of two taskbars: the default, & the one with the admin panel
+     * depending on if the user is an admin.
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
@@ -37,12 +66,16 @@ public class TaskbarFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home_taskbar, container, false);
+        // Inflate admin taskbar if user is loaded in & is an admin
+        if (user != null && user.isAdmin()) {
+            return inflater.inflate(R.layout.fragment_admin_taskbar, container, false);
+        } else {
+            return inflater.inflate(R.layout.fragment_home_taskbar, container, false);
+        }
     }
 
     /**
-     * Right now, it just adds an event listener to the 'person' icon to start OrganizerPanel.
-     * TODO: Add event listeners to all icons, and have the 'person' icon go to the user profile.
+     * Adds event listeners for every icon
      * @param view The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
      * @param savedInstanceState If non-null, this fragment is being re-constructed
      * from a previous saved state as given here.
@@ -83,6 +116,18 @@ public class TaskbarFragment extends Fragment {
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
+
+        /**
+         * Set event listener for admin panel, if it exists (only shown it as an admin)
+         */
+        View adminIcon = view.findViewById(R.id.adminPanelIcon);
+        if (adminIcon != null) {
+            adminIcon.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), AdminPanel.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+            });
+        }
 
         /**
          * This handles the QR scanner's results and launches the Join/Leave Waitlist activity if the scanned content of the QR code is valid.
