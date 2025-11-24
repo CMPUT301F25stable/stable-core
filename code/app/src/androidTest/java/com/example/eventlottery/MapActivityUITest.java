@@ -32,8 +32,9 @@ public class MapActivityUITest {
     public ActivityScenarioRule<MainActivity> scenario = new ActivityScenarioRule<>(MainActivity.class);
 
     /**
+     * US 02.02.02, US02.02.03
      * Tests opening the google maps activity.
-     * Assumes that as an organizer, your first event has geolocation on
+     * Assumes that as an organizer, your first event has geolocation on & has an entrant that joined with their precise location enabled.
      */
     @Test
     public void testOpenMaps() {
