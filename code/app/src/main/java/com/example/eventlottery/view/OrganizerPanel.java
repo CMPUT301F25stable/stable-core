@@ -23,7 +23,6 @@ import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.FinalizedList;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
@@ -104,7 +103,7 @@ public class OrganizerPanel extends AppCompatActivity {
         });
 
         // Initialize UI components and event listeners
-        eventList = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView8);
+        eventList = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.eventListFragment);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
@@ -125,6 +124,16 @@ public class OrganizerPanel extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                // Check if we're showing the event info fragment
+                if (getSupportFragmentManager().findFragmentById(R.id.eventListFragment) instanceof OrganizerEventInfoFragment) {
+                    showEventList();
+                }
+                else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+
+                /*
                 // If fragment is showing, pop it and restore the list view
                 if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                     getSupportFragmentManager().popBackStack();
@@ -139,6 +148,7 @@ public class OrganizerPanel extends AppCompatActivity {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
                 }
+                 */
             }
         });
     }
@@ -190,7 +200,7 @@ public class OrganizerPanel extends AppCompatActivity {
             int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
 
             // Show the fragment container (which dims the background)
-            findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
+            //findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
 
             // Create and show the fragment in the inner content area
             OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
@@ -200,7 +210,7 @@ public class OrganizerPanel extends AppCompatActivity {
             );
 
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_content, fragment)  // Changed to fragment_content
+                    .replace(R.id.eventListFragment, fragment)
                     .addToBackStack(null)
                     .commit();
         });
@@ -341,5 +351,17 @@ public class OrganizerPanel extends AppCompatActivity {
                 Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    /**
+     * Helper method to return to the event list view
+     */
+    private void showEventList() {
+        // Show the search bar and button panel again
+        findViewById(R.id.searchBar).setVisibility(View.VISIBLE);
+        findViewById(R.id.linearLayout5).setVisibility(View.VISIBLE);
+
+        // Pop the back stack to return to the event list
+        getSupportFragmentManager().popBackStack();
     }
 }

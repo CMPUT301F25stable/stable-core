@@ -248,4 +248,76 @@ public class NotificationSystem {
     private int generateNotificationId(String userId) {
         return userId.hashCode();
     }
+
+    // Add these methods to your existing NotificationSystem class
+
+    /**
+     * US 02.05.01: Sends notification to waitlisted entrants.
+     * This allows organizers to send custom messages to all users on the waiting list.
+     *
+     * @param entrants  the list of {@link User}s on the waiting list
+     * @param eventName the name of the event
+     * @param eventId   the unique identifier for the event
+     * @param message   custom message from the organizer
+     */
+    public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants for event: " + eventName);
+
+        for (User entrant : entrants) {
+            notifyWaitlistedEntrant(entrant, eventName, eventId, message);
+        }
+    }
+
+    /**
+     * Sends an individual notification to a waitlisted entrant.
+     * The notification informs the user about updates regarding their waitlist status.
+     *
+     * @param entrant   the {@link User} on the waiting list
+     * @param eventName the name of the event
+     * @param eventId   the event identifier
+     * @param message   custom message from organizer
+     */
+    private void notifyWaitlistedEntrant(User entrant, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending waitlist notification to: " + entrant.getName());
+
+        // Create intent to open event details when notification is clicked
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.putExtra("waitlist_notification", true);
+        intent.putExtra("event_id", eventId);
+        intent.putExtra("event_name", eventName);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                context,
+                generateNotificationId(entrant.getId() + "_waitlist_" + eventId),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        // Build notification content with organizer's custom message
+        String contentText = "Update about " + eventName;
+        String bigText = "Hi " + entrant.getName() + "!\n\n" + message +
+                "\n\nEvent: " + eventName;
+
+        // Build notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Waiting List Update 📢")
+                .setContentText(contentText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setVibrate(new long[]{0, 250, 100, 250});
+
+        // Send notification
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (notificationManager != null) {
+            int notificationId = generateNotificationId(entrant.getId() + "_waitlist_" + eventId);
+            notificationManager.notify(notificationId, builder.build());
+            Log.d(TAG, "Waitlist notification sent successfully to " + entrant.getName());
+        }
+    }
 }
