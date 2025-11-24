@@ -138,6 +138,7 @@ public class CreateEventDialog extends DialogFragment {
         AlertDialog dialog = builder.create();
 
         // Override Save button logic so that it only closes when all inputs are valid
+        // Reference: https://stackoverflow.com/questions/2620444/how-to-prevent-a-dialog-from-closing-when-a-button-is-clicked
         dialog.setOnShowListener(d -> {
             Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             saveButton.setOnClickListener(v -> {

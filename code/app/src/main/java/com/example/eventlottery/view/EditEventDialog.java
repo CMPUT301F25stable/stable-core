@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -137,128 +138,140 @@ public class EditEventDialog extends DialogFragment {
         builder.setTitle("Event Parameters");
         builder.setView(dialogView);
         builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
-        builder.setPositiveButton("Save", (dialog, which) -> {
 
-            /**********************
-             * 3. Get title input *
-             **********************/
-            String titleText  = title.getText().toString();
-            if (titleText.isEmpty()) {
-                Toast.makeText(requireContext(), "Title can't be empty", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            /****************************
-             * 4. Get description input *
-             ****************************/
-            String descriptionText = description.getText().toString();
-            if (descriptionText.isEmpty()) {
-                Toast.makeText(requireContext(), "Description can't be empty", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            /*************************
-             * 5. Get location input *
-             *************************/
-            String locationText = location.getText().toString();
-            if (locationText.isEmpty()) {
-                Toast.makeText(requireContext(), "Location can't be empty", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            /*****************************
-             * 6. Get waitlist max input *
-             *****************************/
-            String waitlistMaxText = waitlistMax.getText().toString();
-
-            // Assume no waitlist limit unless there is valid text input
-            int maxSize = Integer.MAX_VALUE;
-
-            // Get valid integer if there's any input. Check if input was valid
-            if (!waitlistMaxText.isEmpty()) {
-                try {
-                    maxSize = Integer.parseInt(waitlistMaxText);
-                } catch (NumberFormatException e) {
-                    Toast.makeText(requireContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+        // Override setPositiveButton's listener so that it only
+        // References: https://stackoverflow.com/questions/2620444/how-to-prevent-a-dialog-from-closing-when-a-button-is-clicked
+        builder.setPositiveButton("Save", null);
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> {
+            Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            saveButton.setOnClickListener(v -> {
+                /**********************
+                 * 3. Get title input *
+                 **********************/
+                String titleText = title.getText().toString();
+                if (titleText.isEmpty()) {
+                    Toast.makeText(requireContext(), "Title can't be empty", Toast.LENGTH_SHORT).show();
                     return;
                 }
-            }
 
-            // Check if input is negative
-            if (maxSize < 0) {
-                Toast.makeText(requireContext(), "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                /****************************
+                 * 4. Get description input *
+                 ****************************/
+                String descriptionText = description.getText().toString();
+                if (descriptionText.isEmpty()) {
+                    Toast.makeText(requireContext(), "Description can't be empty", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            /***************************
-             * 7. Get valid date input *
-             ***************************/
-            // Get date inputs
-            String startDateText = startDate.getText().toString();
-            String endDateText = endDate.getText().toString();
+                /*************************
+                 * 5. Get location input *
+                 *************************/
+                String locationText = location.getText().toString();
+                if (locationText.isEmpty()) {
+                    Toast.makeText(requireContext(), "Location can't be empty", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            // Initialize date formatter & variables for storing start & end date
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-            Date start;
-            Date end;
+                /*****************************
+                 * 6. Get waitlist max input *
+                 *****************************/
+                String waitlistMaxText = waitlistMax.getText().toString();
 
-            // Check if either start or end date is empty
-            if (startDateText.isEmpty() || endDateText.isEmpty()) {
-                Toast.makeText(requireContext(), "Please enter both start and end dates", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                // Assume no waitlist limit unless there is valid text input
+                int maxSize = Integer.MAX_VALUE;
 
-            // Parse inputs into dates
-            try {
-                start = dateFormat.parse(startDateText);
-                end = dateFormat.parse(endDateText);
-            } catch (Exception e) {
-                Toast.makeText(requireContext(), "Please enter valid dates (YYYY-MM-DD)", Toast.LENGTH_SHORT).show();
-                return;
-            }
+                // Get valid integer if there's any input. Check if input was valid
+                if (!waitlistMaxText.isEmpty()) {
+                    try {
+                        maxSize = Integer.parseInt(waitlistMaxText);
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(requireContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
 
-            // Initialize calendar object
-            Calendar cal = Calendar.getInstance();
+                // Check if input is negative
+                if (maxSize < 0) {
+                    Toast.makeText(requireContext(), "Waitlist max can't be negative", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            // Set start time to 11:59:59 of that day
-            cal.setTime(start);
-            cal.set(Calendar.HOUR_OF_DAY, 23);
-            cal.set(Calendar.MINUTE, 59);
-            cal.set(Calendar.SECOND, 59);
-            start = cal.getTime();
+                /***************************
+                 * 7. Get valid date input *
+                 ***************************/
+                // Get date inputs
+                String startDateText = startDate.getText().toString();
+                String endDateText = endDate.getText().toString();
 
-            // Set end time to 11:59:59 as well
-            cal.setTime(end);
-            cal.set(Calendar.HOUR_OF_DAY, 23);
-            cal.set(Calendar.MINUTE, 59);
-            cal.set(Calendar.SECOND, 59);
-            end = cal.getTime();
+                // Initialize date formatter & variables for storing start & end date
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
+                Date start;
+                Date end;
 
-            /****************************
-             * 8. Get geolocation input *
-             ****************************/
-            boolean geolocation;
-            if (geolocationSwitch.isChecked()) {
-                geolocation = true;
-            } else { geolocation = false; }
+                // Check if either start or end date is empty
+                if (startDateText.isEmpty() || endDateText.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please enter both start and end dates", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-            /***********************************************************
-             * 9. Update event locally & run OrganizerPanel's listener *
-             ***********************************************************/
-            // TODO: Can't update event image yet
-            event.setName(titleText);
-            event.setDescription(descriptionText);
-            event.setLocation(locationText);
-            event.setWaitlistMax(maxSize);
-            event.setStartTime(start);
-            event.setEndTime(end);
-            event.setGeolocation(geolocation);
-            if (listener != null) {
-                listener.onEventUpdated(event);
-            }
+                // Parse inputs into dates
+                try {
+                    start = dateFormat.parse(startDateText);
+                    end = dateFormat.parse(endDateText);
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), "Please enter valid dates (YYYY-MM-DD)", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Initialize calendar object
+                Calendar cal = Calendar.getInstance();
+
+                // Set start time to 11:59:59 of that day
+                cal.setTime(start);
+                cal.set(Calendar.HOUR_OF_DAY, 23);
+                cal.set(Calendar.MINUTE, 59);
+                cal.set(Calendar.SECOND, 59);
+                start = cal.getTime();
+
+                // Set end time to 11:59:59 as well
+                cal.setTime(end);
+                cal.set(Calendar.HOUR_OF_DAY, 23);
+                cal.set(Calendar.MINUTE, 59);
+                cal.set(Calendar.SECOND, 59);
+                end = cal.getTime();
+
+                /****************************
+                 * 8. Get geolocation input *
+                 ****************************/
+                boolean geolocation;
+                if (geolocationSwitch.isChecked()) {
+                    geolocation = true;
+                } else {
+                    geolocation = false;
+                }
+
+                /***********************************************************
+                 * 9. Update event locally & run OrganizerPanel's listener *
+                 ***********************************************************/
+                // TODO: Can't update event image yet
+                event.setName(titleText);
+                event.setDescription(descriptionText);
+                event.setLocation(locationText);
+                event.setWaitlistMax(maxSize);
+                event.setStartTime(start);
+                event.setEndTime(end);
+                event.setGeolocation(geolocation);
+                if (listener != null) {
+                    listener.onEventUpdated(event);
+                }
+
+                // Dialog only dismisses if all inputs are valid
+                dialog.dismiss();
+            });
         });
 
-        return builder.create();
+        return dialog;
     }
 
 
