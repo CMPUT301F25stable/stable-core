@@ -1,58 +1,71 @@
 package com.example.eventlottery.view;
 
+import android.animation.ObjectAnimator;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlottery.R;
-import com.example.eventlottery.users.User;
 import com.example.eventlottery.events.NotificationSystem;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.example.eventlottery.users.User;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
 
 /**
- * Fragment that displays detailed infromation about a specific event for organizers.
+ * Fragment that displays detailed information about a specific event for organizers.
  * Shows counts and allows notifications for waiting list, selected, and cancelled entrants.
- * */
+ */
 public class OrganizerEventInfoFragment extends Fragment {
     // constant variables
+    private static final String TAG = "OrganizerEventInfo";
     private static final String ARG_EVENT_ID = "event_id";
     private static final String ARG_EVENT_NAME = "event_name";
     private static final String ARG_WAITLIST_COUNT = "waitlist_count";
 
     // UI elements
-
     private TextView eventName;
     private TextView waitingCountText;
     private CardView waitingListCard;
 
+    // Data fields
     private String eventId;
     private int waitlistCount;
 
+    // Firebase
+    private FirebaseFirestore db;
+
     /**
-     * method to create a new instance of this fragment with event data
+     * Method to create a new instance of this fragment with event data
      *
      * @param eventId The unique ID of the event
-     * */
+     * @param eventName The name of the event
+     * @param waitlistCount The number of users on the waitlist
+     */
     public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount) {
         OrganizerEventInfoFragment fragment = new OrganizerEventInfoFragment();
 
@@ -70,6 +83,9 @@ public class OrganizerEventInfoFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Initialize Firestore
+        db = FirebaseFirestore.getInstance();
+
         // Retrieve arguments passed to the fragment
         if (getArguments() != null) {
             eventId = getArguments().getString(ARG_EVENT_ID);
@@ -81,37 +97,16 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Called to create the view hierarchy associated with the fragment.
-     * This inflates the fragment's layout from XML.
-     * <p>
-     * Unlike Activities that use setContentView(), Fragments must inflate their layout
-     * and return the root View. The layout is then attached to the parent container
-     * by the FragmentManager.
-     * </p>
-     *
-     * @param inflater The LayoutInflater object that can be used to inflate views
-     * @param container The parent view that the fragment's UI should be attached to
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state
-     * @return The root View of the inflated layout for this fragment
      */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        // Note: Pass 'false' for attachToRoot - the FragmentManager handles attachment
         return inflater.inflate(R.layout.organizer_event_info, container, false);
     }
 
     /**
      * Called immediately after onCreateView() when the fragment's view hierarchy has been created.
      * This is where we initialize UI components and set up listeners.
-     * <p>
-     * At this point, findViewById() calls are safe because the view has been inflated.
-     * We use view.findViewById() instead of just findViewById() because we need to search
-     * within the fragment's view hierarchy, not the entire activity.
-     * </p>
-     *
-     * @param view The View returned by onCreateView()
-     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state
      */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -130,7 +125,6 @@ public class OrganizerEventInfoFragment extends Fragment {
         closeButton.setOnClickListener(v -> {
             // Close the fragment
             requireActivity().getSupportFragmentManager().popBackStack();
-            //requireActivity().findViewById(R.id.fragment_container).setVisibility(View.GONE);
         });
 
         // Populate the UI with data from arguments
@@ -148,101 +142,275 @@ public class OrganizerEventInfoFragment extends Fragment {
      * Sets up click listeners for the three interactive cards in the fragment.
      * Each card represents a different entrant state and allows the organizer to
      * send notifications to all entrants in that state.
-     * <p>
-     * The three states are:
-     * <ul>
-     *     <li><b>Waiting List:</b> Users who have joined the waitlist but haven't been selected</li>
-     *     <li><b>Selected:</b> Users who have been chosen to participate in the event</li>
-     *     <li><b>Cancelled:</b> Users whose participation has been cancelled</li>
-     * </ul>
-     * </p>
      */
     private void setClickListeners() {
         // Click listener for waiting list card - notifies all waitlisted entrants
         waitingListCard.setOnClickListener(v -> {
-            // Show a dialog to get custom message from organizer
-            showNotificationDialog();
+            if (waitlistCount > 0) {
+                showNotificationDialog();
+            } else {
+                Toast.makeText(requireContext(),
+                        "No entrants on waiting list",
+                        Toast.LENGTH_SHORT).show();
+            }
         });
         // TODO: Add click listeners for selected and cancelled cards
-
     }
 
     /**
-     * Shows a dialog allowing the organizer to compose and send a notification
-     * to all waitlisted entrants for this event.
-     * */
+     * Shows a Material 3 styled dialog with quick suggestions allowing the organizer
+     * to compose and send a notification to all waitlisted entrants.
+     */
     private void showNotificationDialog() {
+        // Inflate custom dialog layout
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_send_notification, null);
+
+        // Find views in the custom layout
+        TextInputEditText messageInput = dialogView.findViewById(R.id.messageInput);
+        Chip recipientCount = dialogView.findViewById(R.id.recipientCount);
+        MaterialButton sendButton = dialogView.findViewById(R.id.sendButton);
+        MaterialButton cancelButton = dialogView.findViewById(R.id.cancelButton);
+
+        // Quick suggestion chips
+        Chip suggestionChip1 = dialogView.findViewById(R.id.suggestionChip1);
+        Chip suggestionChip2 = dialogView.findViewById(R.id.suggestionChip2);
+        Chip suggestionChip3 = dialogView.findViewById(R.id.suggestionChip3);
+
+        // Set the recipient count with proper grammar
+        recipientCount.setText(waitlistCount + " " +
+                (waitlistCount == 1 ? "recipient" : "recipients"));
+
+        // Create and configure the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Notify Waiting List");
+        builder.setView(dialogView);
 
-        // Create input field for custom message
-        final EditText input = new EditText(requireContext());
-        input.setHint("Enter message for walisted entrants...");
-        input.setMinLines(3);
-        input.setGravity(Gravity.TOP | Gravity.START);
+        AlertDialog dialog = builder.create();
 
-        builder.setView(input);
+        // Make dialog background transparent for rounded corners to show
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
 
-        builder.setPositiveButton("Send", (dialog, which) -> {
-            // Send notification to all waitlisted entrants
-            String message = input.getText().toString().trim();
+        // Quick suggestion templates
+        Map<Chip, String> suggestionTemplates = new HashMap<>();
+        suggestionTemplates.put(suggestionChip1,
+                "Thank you for joining the waitlist for " + getArguments().getString(ARG_EVENT_NAME) + "! We'll notify you of any updates.");
+        suggestionTemplates.put(suggestionChip2,
+                "Important update regarding " + getArguments().getString(ARG_EVENT_NAME) + ": ");
+        suggestionTemplates.put(suggestionChip3,
+                "Reminder: The event " + getArguments().getString(ARG_EVENT_NAME) + " is coming up soon!");
+
+        // Set up quick suggestion chip click listeners
+        for (Map.Entry<Chip, String> entry : suggestionTemplates.entrySet()) {
+            entry.getKey().setOnClickListener(v -> {
+                messageInput.setText(entry.getValue());
+                messageInput.setSelection(entry.getValue().length()); // Move cursor to end
+
+                // Animate chip selection
+                entry.getKey().animate()
+                        .scaleX(0.95f)
+                        .scaleY(0.95f)
+                        .setDuration(100)
+                        .withEndAction(() ->
+                                entry.getKey().animate()
+                                        .scaleX(1f)
+                                        .scaleY(1f)
+                                        .setDuration(100)
+                                        .start())
+                        .start();
+            });
+        }
+
+        // Character counter and send button state
+        messageInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Enable/disable send button based on input
+                boolean hasText = s.length() > 0;
+                sendButton.setEnabled(hasText);
+                sendButton.setAlpha(hasText ? 1f : 0.5f);
+
+                // Animate send button when enabled (only when transitioning from empty to non-empty)
+                if (hasText && before == 0 && count > 0) {
+                    sendButton.animate()
+                            .scaleX(1.05f)
+                            .scaleY(1.05f)
+                            .setDuration(100)
+                            .withEndAction(() ->
+                                    sendButton.animate()
+                                            .scaleX(1f)
+                                            .scaleY(1f)
+                                            .setDuration(100)
+                                            .start())
+                            .start();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Initially disable send button
+        sendButton.setEnabled(false);
+        sendButton.setAlpha(0.5f);
+
+        // Set up the send button with loading state
+        sendButton.setOnClickListener(v -> {
+            String message = messageInput.getText().toString().trim();
             if (!message.isEmpty()) {
+                // Disable button and show loading state
+                sendButton.setEnabled(false);
+                sendButton.setText("Sending...");
+                sendButton.setIcon(null);
+
+                dialog.dismiss();
                 sendWaitlistNotifications(message);
-            }
-            else {
-                Toast.makeText(requireContext(), "Please enter a message", Toast.LENGTH_SHORT).show();
+            } else {
+                // Shake animation for error
+                shakeView(messageInput);
             }
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            dialog.cancel();
+        // Set up the cancel button
+        cancelButton.setOnClickListener(v -> {
+            // Fade out animation
+            dialogView.animate()
+                    .alpha(0f)
+                    .scaleX(0.95f)
+                    .scaleY(0.95f)
+                    .setDuration(150)
+                    .withEndAction(dialog::dismiss)
+                    .start();
         });
 
-        builder.show();
+        // Show dialog with scale and fade in animation
+        dialog.show();
+        dialogView.setAlpha(0f);
+        dialogView.setScaleX(0.9f);
+        dialogView.setScaleY(0.9f);
+        dialogView.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(250)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
+
+        // Focus on input and show keyboard
+        messageInput.requestFocus();
+        messageInput.postDelayed(() -> {
+            if (getActivity() != null) {
+                android.view.inputmethod.InputMethodManager imm =
+                        (android.view.inputmethod.InputMethodManager)
+                                getActivity().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(messageInput,
+                            android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+        }, 100);
     }
 
     /**
-     * Fetches waitlisted entrants from Firebase and sends notifications to them
-     * @param message The custom message to waitlist entrants
-     * */
+     * Adds a shake animation to a view (used for error feedback)
+     * @param view The view to animate
+     */
+    private void shakeView(View view) {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(view, "translationX",
+                0f, 25f, -25f, 25f, -25f, 15f, -15f, 6f, -6f, 0f);
+        animator.setDuration(500);
+        animator.start();
+    }
+
+    /**
+     * Fetches waitlisted entrants from Firebase and sends notifications to them.
+     * Reads the waitlist map structure from the event document and extracts user information.
+     *
+     * @param message The custom message to send to waitlisted entrants
+     */
     private void sendWaitlistNotifications(String message) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("event-p4").document(eventId)
-                .collection("waitlist")
+        // Show loading indicator
+        Toast.makeText(requireContext(), "Sending notifications...", Toast.LENGTH_SHORT).show();
+
+        // Fetch the event document from Firestore
+        db.collection("event-p4")
+                .document(eventId)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    List<User> waitlistedUsers = new ArrayList<>();
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Extract waitlist data from the document
+                        Map<String, Object> waitlist = (Map<String, Object>) documentSnapshot.get("waitlist");
 
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        User user = doc.toObject(User.class);
-                        if (user != null) {
-                            waitlistedUsers.add(user);
+                        if (waitlist != null) {
+                            // Get the waitlistedUsers array from the waitlist map
+                            List<Map<String, Object>> waitlistedUsersData =
+                                    (List<Map<String, Object>>) waitlist.get("waitlistedUsers");
+
+                            if (waitlistedUsersData != null && !waitlistedUsersData.isEmpty()) {
+                                // Convert the map data to User objects
+                                List<User> waitlistedUsers = new ArrayList<>();
+
+                                for (Map<String, Object> userData : waitlistedUsersData) {
+                                    String userId = (String) userData.get("id");
+                                    String userName = (String) userData.get("name");
+                                    String userEmail = (String) userData.get("email");
+
+                                    if (userId != null && userName != null) {
+                                        User user = new User(userId, userName,
+                                                userEmail != null ? userEmail : "");
+                                        waitlistedUsers.add(user);
+                                    }
+                                }
+
+                                // Send notifications to all waitlisted users
+                                if (!waitlistedUsers.isEmpty()) {
+                                    NotificationSystem notificationSystem =
+                                            new NotificationSystem(requireContext());
+
+                                    String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+                                    notificationSystem.notifyWaitlistedEntrants(
+                                            waitlistedUsers,
+                                            eventNameStr,
+                                            eventId,
+                                            message
+                                    );
+
+                                    Toast.makeText(requireContext(),
+                                            "Notifications sent to " + waitlistedUsers.size() + " entrants",
+                                            Toast.LENGTH_LONG).show();
+
+                                    Log.d(TAG, "Successfully sent notifications to " +
+                                            waitlistedUsers.size() + " waitlisted entrants");
+                                } else {
+                                    Toast.makeText(requireContext(),
+                                            "No valid users found on waiting list",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(requireContext(),
+                                        "No entrants on waiting list",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(requireContext(),
+                                    "Waitlist data not found",
+                                    Toast.LENGTH_SHORT).show();
                         }
-                    }
-
-                    if (!waitlistedUsers.isEmpty()) {
-                        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
-                        notificationSystem.notifyWaitlistedEntrants(
-                                waitlistedUsers,
-                                getArguments().getString(ARG_EVENT_NAME),
-                                eventId,
-                                message
-                        );
+                    } else {
                         Toast.makeText(requireContext(),
-                                "Notifications sent to " + waitlistedUsers.size() + " entrants",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                    else {
-                        Toast.makeText(requireContext(),
-                                "No entrants on waiting list",
+                                "Event not found",
                                 Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("OrganizerEventInfo", "Error fetching waitlist", e);
+                    Log.e(TAG, "Error fetching waitlist data", e);
                     Toast.makeText(requireContext(),
-                            "Failed to send notifications",
-                            Toast.LENGTH_SHORT).show();
+                            "Failed to send notifications: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 });
     }
 
@@ -250,28 +418,17 @@ public class OrganizerEventInfoFragment extends Fragment {
      * Updates the counts displayed in the fragment for all three entrant categories.
      * This method can be called after the fragment is created to refresh the displayed
      * numbers without recreating the entire fragment.
-     * <p>
-     * This is useful when entrant statuses change (e.g., someone moves from waiting list
-     * to selected, or cancels their participation) and the UI needs to reflect the new counts.
-     * </p>
      *
      * @param waitlist Number of users currently on the waiting list
      */
     public void updateCounts(int waitlist) {
         // Update the stored count values
         this.waitlistCount = waitlist;
-        //this.selectedCount = selected;
-        //this.cancelledCount = cancelled;
 
         // Update the UI only if the views have been created
         // This null check prevents crashes if called before onViewCreated()
         if (waitingCountText != null) {
             waitingCountText.setText(String.valueOf(waitlist));
-            //selectedCountText.setText(String.valueOf(selected));
-            //cancelledCountText.setText(String.valueOf(cancelled));
         }
     }
 }
-
-
-

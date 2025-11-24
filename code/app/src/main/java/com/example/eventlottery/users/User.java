@@ -25,7 +25,7 @@ public class User implements Serializable {
     /** Unique device-based user identifier. */
     private String id; // Device identifier
     /** User's name. */
-    private String name;g
+    private String name;
     /** User's email address. */
     private String emailAddress;
     /** User's phone number. */
