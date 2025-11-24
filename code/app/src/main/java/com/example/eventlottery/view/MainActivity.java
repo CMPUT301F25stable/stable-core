@@ -110,6 +110,13 @@ public class MainActivity extends AppCompatActivity {
                 if (document.exists()) {
                     currentUser = document.toObject(User.class);
                     loadEventsFromFirestore();
+
+                    // Replace taskbar with admin taskbar if user is an admin
+                    TaskbarFragment taskbar = TaskbarFragment.newInstance(currentUser);
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragmentContainerView, taskbar)
+                            .commit();
                 }
             }
         });
