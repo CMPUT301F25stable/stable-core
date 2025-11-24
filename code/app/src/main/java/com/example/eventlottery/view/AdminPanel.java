@@ -68,8 +68,6 @@ public class AdminPanel extends AppCompatActivity {
         userList = new ArrayList<User>();
         db = FirebaseFirestore.getInstance();
 
-        // Load in events & users
-        loadEventsFromFirestore();
         loadProfilesFromFirestore();
     }
 
@@ -87,6 +85,7 @@ public class AdminPanel extends AppCompatActivity {
                     // Create adapter & load all events from firestore
                     eventAdapter = new EventAdapter(AdminPanel.this, eventListData);
                     eventlistFragment.setAdapter(eventAdapter);
+                    loadEventsFromFirestore();
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
                 }
