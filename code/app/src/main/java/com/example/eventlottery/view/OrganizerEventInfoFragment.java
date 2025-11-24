@@ -328,12 +328,11 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Fetches waitlisted entrants from Firebase and sends notifications to them.
-     * Reads the waitlist map structure from the event document and extracts user information.
+     * Now fetches full user data including FCM tokens from the users collection.
      *
      * @param message The custom message to send to waitlisted entrants
      */
     private void sendWaitlistNotifications(String message) {
-        // Show loading indicator
         Toast.makeText(requireContext(), "Sending notifications...", Toast.LENGTH_SHORT).show();
 
         // Fetch the event document from Firestore
@@ -342,53 +341,57 @@ public class OrganizerEventInfoFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // Extract waitlist data from the document
                         Map<String, Object> waitlist = (Map<String, Object>) documentSnapshot.get("waitlist");
 
                         if (waitlist != null) {
-                            // Get the waitlistedUsers array from the waitlist map
                             List<Map<String, Object>> waitlistedUsersData =
                                     (List<Map<String, Object>>) waitlist.get("waitlistedUsers");
 
                             if (waitlistedUsersData != null && !waitlistedUsersData.isEmpty()) {
-                                // Convert the map data to User objects
-                                List<User> waitlistedUsers = new ArrayList<>();
+                                // List to collect users with FCM tokens
+                                List<User> usersWithTokens = new ArrayList<>();
+                                int totalUsers = waitlistedUsersData.size();
+                                int[] fetchedCount = {0}; // Counter for async operations
 
+                                // Fetch each user's full data including FCM token
                                 for (Map<String, Object> userData : waitlistedUsersData) {
                                     String userId = (String) userData.get("id");
-                                    String userName = (String) userData.get("name");
-                                    String userEmail = (String) userData.get("email");
 
-                                    if (userId != null && userName != null) {
-                                        User user = new User(userId, userName,
-                                                userEmail != null ? userEmail : "");
-                                        waitlistedUsers.add(user);
+                                    if (userId != null) {
+                                        // Fetch full user document from users collection
+                                        db.collection("users-p4")
+                                                .document(userId)
+                                                .get()
+                                                .addOnSuccessListener(userDoc -> {
+                                                    fetchedCount[0]++;
+
+                                                    if (userDoc.exists()) {
+                                                        User user = userDoc.toObject(User.class);
+                                                        if (user != null && user.canReceiveNotifications()) {
+                                                            usersWithTokens.add(user);
+                                                            Log.d(TAG, "Added user with FCM token: " + user.getName());
+                                                        } else {
+                                                            Log.d(TAG, "User has no FCM token: " + userId);
+                                                        }
+                                                    }
+
+                                                    // When all users are fetched, send notifications
+                                                    if (fetchedCount[0] == totalUsers) {
+                                                        sendNotificationsToUsers(usersWithTokens, message);
+                                                    }
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    fetchedCount[0]++;
+                                                    Log.e(TAG, "Failed to fetch user: " + userId, e);
+
+                                                    // Continue even if one user fetch fails
+                                                    if (fetchedCount[0] == totalUsers) {
+                                                        sendNotificationsToUsers(usersWithTokens, message);
+                                                    }
+                                                });
+                                    } else {
+                                        fetchedCount[0]++;
                                     }
-                                }
-
-                                // Send notifications to all waitlisted users
-                                if (!waitlistedUsers.isEmpty()) {
-                                    NotificationSystem notificationSystem =
-                                            new NotificationSystem(requireContext());
-
-                                    String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
-                                    notificationSystem.notifyWaitlistedEntrants(
-                                            waitlistedUsers,
-                                            eventNameStr,
-                                            eventId,
-                                            message
-                                    );
-
-                                    Toast.makeText(requireContext(),
-                                            "Notifications sent to " + waitlistedUsers.size() + " entrants",
-                                            Toast.LENGTH_LONG).show();
-
-                                    Log.d(TAG, "Successfully sent notifications to " +
-                                            waitlistedUsers.size() + " waitlisted entrants");
-                                } else {
-                                    Toast.makeText(requireContext(),
-                                            "No valid users found on waiting list",
-                                            Toast.LENGTH_SHORT).show();
                                 }
                             } else {
                                 Toast.makeText(requireContext(),
@@ -412,6 +415,34 @@ public class OrganizerEventInfoFragment extends Fragment {
                             "Failed to send notifications: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });
+    }
+
+    /**
+     * Helper method to send notifications to the list of users with FCM tokens
+     */
+    private void sendNotificationsToUsers(List<User> users, String message) {
+        if (users.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "No users with notification tokens found",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+
+        notificationSystem.notifyWaitlistedEntrants(
+                users,
+                eventNameStr,
+                eventId,
+                message
+        );
+
+        Toast.makeText(requireContext(),
+                "Notifications sent to " + users.size() + " entrants",
+                Toast.LENGTH_LONG).show();
+
+        Log.d(TAG, "Successfully sent notifications to " + users.size() + " waitlisted entrants");
     }
 
     /**

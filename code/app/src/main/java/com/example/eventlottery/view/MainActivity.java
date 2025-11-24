@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -24,10 +25,12 @@ import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -84,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
         instance = this;
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Initialize FCM token
+        initializeFCMToken();
 
         // Adjust UI for system insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -507,5 +513,53 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    /**
+     * Requests and saves the FCM token for this device.
+     * Should be called when the app starts or when user logs in
+     * */
+    private void initializeFCMToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        return;
+                    }
+
+                    // Get new FCM registration token
+                    String token = task.getResult();
+
+                    // Save to Firestore
+                    saveFCMTokenToFirestore(token);
+                });
+    }
+
+    /**
+     * Saves the FCM token to the current user's document in Firestore.
+     * */
+    private void saveFCMTokenToFirestore(String token) {
+        String deviceId = Settings.Secure.getString(
+                getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+
+        if (deviceId != null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+            db.collection("users-p4")
+                    .document(deviceId)
+                    .update("fcmToken", token)
+                    .addOnSuccessListener(aVoid ->
+                            Log.d("FCM", "Token saved to Firestore"))
+                    .addOnFailureListener(e -> {
+                        Log.e("FCM", "Failed to save token", e);
+                        // If update fails (user doesn't exist), try to create/set
+                        db.collection("users")
+                                .document(deviceId)
+                                .set(new HashMap<String, Object>() {{
+                                    put("fcmToken", token);
+                                }}, com.google.firebase.firestore.SetOptions.merge());
+                    });
+        }
     }
 }
