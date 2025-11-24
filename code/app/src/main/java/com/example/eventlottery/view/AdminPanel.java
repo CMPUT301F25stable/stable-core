@@ -30,11 +30,16 @@ public class AdminPanel extends AppCompatActivity {
     /** DBConnector instance for retrieving admin details */
     private DBConnector userDatabase;
     /** Eventlist fragment instance for setting adapter, etc */
-    private EventlistFragment eventList;
+    private EventlistFragment eventlistFragment;
+    /** UserList fragment instance */
+    private UserListFragment userListFragment;
     /** Holds event data locally */
     private ArrayList<Event> eventListData;
     /** Adapter for event object */
     private EventAdapter eventAdapter;
+    /** Holds user profile data locally */
+    private ArrayList<User> userList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,11 +62,20 @@ public class AdminPanel extends AppCompatActivity {
         loadAdmin();
 
         // Initialize other activity variables
-        eventList = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView1);
+        eventlistFragment = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView1);
+        userListFragment = (UserListFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView2);
         eventListData = new ArrayList<Event>();
+        userList = new ArrayList<User>();
         db = FirebaseFirestore.getInstance();
+
+        // Load in events & users
+        loadEventsFromFirestore();
+        loadProfilesFromFirestore();
     }
 
+    /**
+     * Loads in the admin's details from firebase.
+     */
     private void loadAdmin() {
         userDatabase.loadUserInfo(deviceId, task -> {
             if (task.isSuccessful()) {
@@ -72,8 +86,7 @@ public class AdminPanel extends AppCompatActivity {
 
                     // Create adapter & load all events from firestore
                     eventAdapter = new EventAdapter(AdminPanel.this, eventListData);
-                    loadEventsFromFirestore();
-                    eventList.setAdapter(eventAdapter);
+                    eventlistFragment.setAdapter(eventAdapter);
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
                 }
@@ -84,8 +97,7 @@ public class AdminPanel extends AppCompatActivity {
     }
 
     /**
-     * Adds valid events to data. A valid event is:
-     * 1. An event not created by the user
+     * Adds every event from firestore into eventListData.
      */
     private void loadEventsFromFirestore() {
         db.collection("event-p4")
@@ -110,5 +122,29 @@ public class AdminPanel extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
+    }
+
+    /**
+     * Adds every profile (but the admin using this) into userList.
+     */
+    private void loadProfilesFromFirestore() {
+        db.collection("users-p4").get()
+                .addOnSuccessListener(query -> {
+                   userList.clear();
+
+                   for (DocumentSnapshot doc : query) {
+                       User user = doc.toObject(User.class);
+                       // If user doesn't exist or is the admin, go to next user
+                       if (user == null) continue;
+                       if (deviceId.equals(user.getId())) continue;
+
+                       userList.add(user);
+
+                   }
+
+                    UserAdapter userAdapter = new UserAdapter(AdminPanel.this, userList);
+                    userListFragment.setAdapter(userAdapter);
+                    userAdapter.notifyDataSetChanged();
+                });
     }
 }
