@@ -51,6 +51,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <Switch
+            android:id="@+id/viewRegistrantsSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="View All Registrants"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:paddingVertical="8dp"
+            android:theme="@style/CustomSwitch" />
+
+        <Switch
+            android:id="@+id/exportListSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Export List"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:paddingVertical="8dp"
+            android:theme="@style/CustomSwitch" />
+
+        <Button
+            android:id="@+id/downloadQRCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Download QR Code"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/white"
+            android:textColor="@color/black" />
+
         <!-- Top Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
