@@ -31,6 +31,7 @@ import okhttp3.Response;
 
 /**
  * Handles sending user notifications for lottery events using FCM API V1.
+ * Works with FCM tokens stored in users-p4 collection by MainActivity.
  */
 public class NotificationSystem {
     private static final String TAG = "NotificationService";
@@ -148,7 +149,8 @@ public class NotificationSystem {
     }
 
     /**
-     * Sends notification to waitlisted entrants.
+     * Sends notification to waitlisted entrants with custom message.
+     * Works with FCM tokens from users-p4 collection.
      */
     public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants");
@@ -171,11 +173,37 @@ public class NotificationSystem {
     }
 
     /**
+     * Sends notification to selected entrants with custom message.
+     * Works with FCM tokens from users-p4 collection.
+     */
+    public void notifySelectedEntrants(List<User> entrants, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending selected notifications to " + entrants.size() + " entrants");
+
+        for (User entrant : entrants) {
+            notifySelectedEntrant(entrant, eventName, eventId, message);
+        }
+    }
+
+    /**
+     * Sends an individual notification to a selected entrant.
+     */
+    private void notifySelectedEntrant(User entrant, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending selected notification to: " + entrant.getName());
+
+        String title = "You've Been Selected! 🎉";
+        String body = message;
+
+        sendFCMNotification(entrant, title, body, "selected", eventName, eventId);
+    }
+
+    /**
      * Core method to send FCM push notifications using V1 API.
      * This now runs on a background thread to avoid NetworkOnMainThreadException.
+     * Uses FCM tokens stored by MainActivity in users-p4 collection.
      */
     private void sendFCMNotification(User user, String title, String body,
                                      String type, String eventName, String eventId) {
+        // Get FCM token stored by MainActivity
         String fcmToken = user.getFcmToken();
 
         if (fcmToken == null || fcmToken.isEmpty()) {
@@ -264,6 +292,7 @@ public class NotificationSystem {
                             // Common error messages
                             if (response.code() == 404) {
                                 Log.e(TAG, "Error: Invalid FCM token or token has been unregistered");
+                                Log.e(TAG, "User may need to re-enable notifications");
                             } else if (response.code() == 401) {
                                 Log.e(TAG, "Error: Invalid access token - check credentials");
                             } else if (response.code() == 403) {
