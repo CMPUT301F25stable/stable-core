@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -14,6 +15,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -32,7 +34,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
-public class AdminPanel extends AppCompatActivity {
+public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     /** Tag for logging debug information. */
     private static final String TAG = "AdminPanel";
     /** The admin using this panel */
@@ -55,6 +57,8 @@ public class AdminPanel extends AppCompatActivity {
     private ArrayList<User> userList;
     /** Holds the most recently selected event's index */
     private int selectedEventIndex;
+    /** The selected user pressed on */
+    private User selectedUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,8 +128,11 @@ public class AdminPanel extends AppCompatActivity {
         });
         // Delete Selected User
         userListFragment.setOnItemClickListener((parent, v, p, id) -> {
-            User selectedUser = (User) parent.getItemAtPosition(p);
-            deleteSelectedUser(selectedUser);
+            selectedUser = (User) parent.getItemAtPosition(p);
+            PopupMenu popupMenu = new PopupMenu(AdminPanel.this, v);
+            popupMenu.setOnMenuItemClickListener(this);
+            popupMenu.inflate(R.menu.menu);
+            popupMenu.show();
         });
     }
 
@@ -275,5 +282,19 @@ public class AdminPanel extends AppCompatActivity {
         } else {
             Log.d(TAG, "Failed deleting user");
         }
+    }
+
+    /**
+     * Option menu for selecting a user
+     * Note: for now only deleting a user is possible
+     * @param menuItem: firestore get data request
+     */
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        if (menuItem.getItemId() == R.id.delete_user) {
+            deleteSelectedUser(selectedUser);
+            return true;
+        }
+        return false;
     }
 }
