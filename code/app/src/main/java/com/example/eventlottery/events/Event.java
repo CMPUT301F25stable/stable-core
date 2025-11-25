@@ -31,8 +31,10 @@ public class Event implements Serializable {
     private String location; // Could also be a HashMap so we can easily grab individual location info (street, city, etc..)
     /** Organizer of the event. */
     private String organizer;
-    /** URL or file path of the event's image. */
+    /** Download path of event image. */
     private String image;
+    /** Storage path of event image */
+    private String storagePath = "";
     /** Start time of the event. */
     private Date startTime;
     /** End time of the event. */
@@ -230,6 +232,16 @@ public class Event implements Serializable {
     /** @param image the new image URL or path */
     public void setImage(String image) {
         this.image = image;
+    }
+
+    /** Getter for storage path */
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    /** Setter for storage path */
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
     }
 
     /** @return the event start time */

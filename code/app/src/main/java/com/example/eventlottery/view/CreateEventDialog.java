@@ -58,6 +58,8 @@ public class CreateEventDialog extends DialogFragment {
     private StorageReference storageReference;
     private ProgressBar progressBar;
     private String eventImg;
+    // Empty string by default
+    private String eventStoragePath = "";
     /**
      * Listener interface for receiving event creation callbacks.
      * Implementations of this interface are notified when a new {@link Event}
@@ -257,7 +259,9 @@ public class CreateEventDialog extends DialogFragment {
                  * 8. Create event, given the inputs *
                  *************************************/
                 Event newEvent = new Event(titleText, descriptionText, locationText, organizerName, eventImg, start, end, new ArrayList<>(), geolocation);
+                // Set waitlistmax & storage path
                 newEvent.setWaitlistMax(maxSize);
+                newEvent.setStoragePath(eventStoragePath);
 
                 // Run organizer panel's listener if something was created
                 if (listener != null) {
@@ -333,11 +337,14 @@ public class CreateEventDialog extends DialogFragment {
             progressBar.setVisibility(View.VISIBLE);
             progressBar.setProgress(0);
 
-            StorageReference reference = storageReference.child("images/" + UUID.randomUUID().toString());
+            // Create unique storage path for image
+            String storagePath = "images/" + UUID.randomUUID().toString();
+            StorageReference reference = storageReference.child(storagePath);
             reference.putFile(filePath)
                     .addOnSuccessListener(task -> {
                         reference.getDownloadUrl().addOnSuccessListener(uri -> {
                             eventImg = uri.toString();
+                            eventStoragePath = storagePath;  // for deleting later
                             progressBar.setVisibility(View.GONE);
                             Toast.makeText(requireContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
                         })

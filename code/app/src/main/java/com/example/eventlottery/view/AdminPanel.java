@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -7,6 +8,10 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -16,8 +21,12 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
+import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageKt;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
@@ -40,6 +49,8 @@ public class AdminPanel extends AppCompatActivity {
     private EventAdapter eventAdapter;
     /** Holds user profile data locally */
     private ArrayList<User> userList;
+    /** Holds the most recently selected event's index */
+    private int selectedEventIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,11 +82,27 @@ public class AdminPanel extends AppCompatActivity {
 
         loadProfilesFromFirestore();
 
+        // Set up AdminEventViewLauncher for deleting an event
+        ActivityResultLauncher<Intent> EventViewResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            // Here, no request code
+                            Intent data = result.getData();
+                            if (data != null && data.getBooleanExtra("Remove Event", false)) {
+                                deleteEventFromFirebase();
+                            }
+                        }
+                    }
+                });
+
         // Set click listener for clicking an event
         eventlistFragment.setOnItemClickListener((parent, view, position, id) -> {
-            // References: https://stackoverflow.com/questions/10407159/how-to-manage-startactivityforresult-on-android
-            int LAUNCH_SECOND_ACTIVITY = 1;
+            // References: https://stackoverflow.com/questions/61455381/how-to-replace-startactivityforresult-with-activity-result-apis
             Intent intent = new Intent(this, AdminEventView.class);
+            selectedEventIndex = position;
 
             // Get event & serialize
             Event event = eventListData.get(position);
@@ -89,7 +116,7 @@ public class AdminPanel extends AppCompatActivity {
             intent.putExtra("location", event.getLocation());
             intent.putExtra("organizer", event.getOrganizer());
             intent.putExtra("image", event.getImage());
-            startActivityForResult(intent, LAUNCH_SECOND_ACTIVITY);
+            EventViewResultLauncher.launch(intent);
         });
     }
 
@@ -146,7 +173,7 @@ public class AdminPanel extends AppCompatActivity {
     }
 
     /**
-     * Adds every profile (but the admin using this) into userList.
+     * Adds every profile into userList.
      */
     private void loadProfilesFromFirestore() {
         db.collection("users-p4").get()
@@ -155,17 +182,58 @@ public class AdminPanel extends AppCompatActivity {
 
                    for (DocumentSnapshot doc : query) {
                        User user = doc.toObject(User.class);
-                       // If user doesn't exist or is the admin, go to next user
+                       // If user doesn't exist, go to next user
                        if (user == null) continue;
-                       if (deviceId.equals(user.getId())) continue;
 
                        userList.add(user);
-
                    }
 
                     UserAdapter userAdapter = new UserAdapter(AdminPanel.this, userList);
                     userListFragment.setAdapter(userAdapter);
                     userAdapter.notifyDataSetChanged();
                 });
+    }
+
+    /**
+     * Helper function, deletes the event from firebase.
+     */
+    private void deleteEventFromFirebase() {
+        // Get event & event id for the event to be deleted
+        Event selectedEvent = eventListData.get(selectedEventIndex);
+        String eventId = selectedEvent.getId();
+
+        // 1. Delete eventId from all users locally & in firebase
+        for (User user : userList) {
+            // Remove eventId from user's CreatedEvents() array (if they made it)
+            if (user.getCreatedEvents().contains(eventId)) {
+                user.getCreatedEvents().remove(eventId);
+                db.collection("users-p4").document(user.getId()).set(user);
+            }
+
+            // Remove eventId from user's Waitlist (if they joined it)
+            if (user.getWaitlistedEvents().contains(eventId)) {
+                user.getWaitlistedEvents().remove(eventId);
+                db.collection("users-p4").document(user.getId()).set(user);
+            }
+        }
+
+        // 2. Delete the image uploaded to firebase
+        // Get storage path & set up storage reference
+        String storagePath = selectedEvent.getStoragePath();
+        FirebaseStorage storage = StorageKt.getStorage(Firebase.INSTANCE);
+        StorageReference storageReference = storage.getReference();
+
+
+        if (storagePath != null && !storagePath.isEmpty()) {
+            StorageReference imageReference = storageReference.child(storagePath);
+            imageReference.delete();
+        }
+
+        // 3. Delete event from "event-p4" in firebase
+        db.collection("event-p4").document(eventId).delete();
+
+        // 4. Remove locally (to stop displaying)
+        eventListData.remove(selectedEventIndex);
+        eventAdapter.notifyDataSetChanged();
     }
 }

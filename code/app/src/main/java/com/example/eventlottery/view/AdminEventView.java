@@ -1,5 +1,7 @@
 package com.example.eventlottery.view;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -88,7 +90,12 @@ public class AdminEventView extends AppCompatActivity {
              */
             @Override
             public void onClick(View v) {
-
+                // References: https://stackoverflow.com/questions/61455381/how-to-replace-startactivityforresult-with-activity-result-apis
+                Boolean removeEvent = true;
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("Remove Event", removeEvent);
+                setResult(Activity.RESULT_OK, returnIntent);
+                finish();
             }
         });
     }
