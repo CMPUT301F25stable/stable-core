@@ -2,6 +2,7 @@ package com.example.eventlottery.view;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -22,6 +23,7 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.FinalizedList;
 import com.example.eventlottery.model.EventDatabase;
+import com.example.eventlottery.model.QRCode;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -59,6 +61,9 @@ public class OrganizerPanel extends AppCompatActivity {
 
     /** The button used to view the final list. */
     private Button viewFinalList;
+
+    /** The button used to view an event's QR code. */
+    private Button viewQRCode;
 
     /** The button used to view where entrants have joined */
     private Button map;
@@ -108,6 +113,7 @@ public class OrganizerPanel extends AppCompatActivity {
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
         viewFinalList = findViewById(R.id.view_finalized_list_button);
+        viewQRCode = findViewById(R.id.viewQRCode);
         map = findViewById(R.id.mapButton);
         setClickListeners();
 
@@ -349,6 +355,20 @@ public class OrganizerPanel extends AppCompatActivity {
                 finalListDialog.show(getSupportFragmentManager(), "FinalListDialog");
             } else {
                 Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewQRCode.setOnClickListener(v -> {
+            if (selectedEventIndex != -1) {
+                selectedEvent = data.get(selectedEventIndex);
+                String eventId = selectedEvent.getId();
+                String eventName = selectedEvent.getName();
+
+                Bitmap qrCode = QRCode.generate(eventId);
+                if (qrCode != null) {
+                    QRDialog qrDialog = QRDialog.newInstance(eventId, eventName, qrCode);
+                    qrDialog.show(getSupportFragmentManager(), "QRDialog");
+                }
             }
         });
     }
