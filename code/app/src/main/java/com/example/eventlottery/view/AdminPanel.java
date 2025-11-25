@@ -6,6 +6,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -15,12 +16,15 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
 public class AdminPanel extends AppCompatActivity {
+    /** Tag for logging debug information. */
+    private static final String TAG = "AdminPanel";
     /** The admin using this panel */
     private User admin;
     /** Device Id (identifier for user) */
@@ -69,6 +73,12 @@ public class AdminPanel extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         loadProfilesFromFirestore();
+
+        // Delete Selected User
+        userListFragment.setOnItemClickListener((parent, v, p, id) -> {
+            User selectedUser = (User) parent.getItemAtPosition(p);
+            deleteSelectedUser(selectedUser);
+        });
     }
 
     /**
@@ -145,5 +155,36 @@ public class AdminPanel extends AppCompatActivity {
                     userListFragment.setAdapter(userAdapter);
                     userAdapter.notifyDataSetChanged();
                 });
+    }
+
+    /**
+     * Deletes the selected User
+     * @param user: the user to be deleted
+     */
+    private void deleteSelectedUser(User user) {
+        UserAdapter userAdapter = new UserAdapter(AdminPanel.this, userList);
+        userListFragment.setAdapter(userAdapter);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(AdminPanel.this);
+        builder.setTitle("This Will Delete the account of " + user.getName())
+                .setMessage("Are You Sure?")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Yes", (dialogInterface, i) -> {
+                    userDatabase.deleteUserAcc(user.getId(), AdminPanel.this::deleteUser);
+                    userAdapter.deleteUser(user);
+                })
+                .show();
+    }
+
+    /**
+     * Callback method called after Firestore completes a delete user request
+     * @param task: firestore get data request
+     */
+    private void deleteUser(Task<Void> task) {
+        if (task.isSuccessful()) {
+            Toast.makeText(AdminPanel.this, "Deleted Account", Toast.LENGTH_SHORT).show();
+        } else {
+            Log.d(TAG, "Failed deleting user");
+        }
     }
 }
