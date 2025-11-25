@@ -38,6 +38,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -272,9 +273,26 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         // If geolocation is on, remove that data
         if (geolocation) {
-            // Only store if longitude & latitude were actually added
-            if (userLocation.containsKey("longitude") && userLocation.containsKey("latitude")) {
-                documentReference.update("userLocations", FieldValue.arrayRemove(userLocation));
+            if (userLocation != null) {
+                // Load in userLocations from firebase & check if user is in it
+                // Note: Done this way because an exact match in longitude & latitude is unlikely (so FieldValue.arrayRemove doesn't work)
+                documentReference.get().addOnSuccessListener(snapshot -> {
+                    // Get all userLocations from event & return if null
+                    ArrayList<Map<String, Object>> userLocations = (ArrayList<Map<String, Object>>) snapshot.get("userLocations");
+                    if (userLocations == null)
+                        return;
+
+                    // Make a new array that will have every user location but the user leaving
+                    ArrayList<Map<String, Object>> newUserLocations = new ArrayList<>();
+                    for (Map<String, Object> userLocation : userLocations) {
+                        if (!currentUser.getId().equals(userLocation.get("userId"))) {
+                            newUserLocations.add(userLocation);
+                        }
+                    }
+
+                    // Update in firestore
+                    documentReference.update("userLocations", newUserLocations);
+                });
             }
         }
 

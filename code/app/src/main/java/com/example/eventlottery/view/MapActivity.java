@@ -53,7 +53,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         // Check if any location data was even passed in
+        // Null case
         if (latitudes == null || longitudes == null || names == null) {
+            Toast.makeText(this, "No entrants have joined your event", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Empty list case
+        if (latitudes.isEmpty() || longitudes.isEmpty() || names.isEmpty()) {
             Toast.makeText(this, "No entrants have joined your event", Toast.LENGTH_SHORT).show();
             return;
         }
