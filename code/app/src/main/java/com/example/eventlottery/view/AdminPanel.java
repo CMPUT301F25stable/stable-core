@@ -31,6 +31,7 @@ import com.google.firebase.storage.StorageKt;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class AdminPanel extends AppCompatActivity {
     /** Tag for logging debug information. */
@@ -193,7 +194,9 @@ public class AdminPanel extends AppCompatActivity {
                        User user = doc.toObject(User.class);
                        // If user doesn't exist, go to next user
                        if (user == null) continue;
-
+                       // Get waitlisted events (For some reason firebase isn't deserializing it properly so I'm setting it manually - John)
+                       List<String> waitlistedEvents = (List<String>) doc.get("waitlistedEvents");
+                       user.setWaitlistedEventIds(waitlistedEvents);
                        userList.add(user);
                    }
 
