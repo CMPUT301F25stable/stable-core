@@ -520,9 +520,6 @@ public class OrganizerEventInfoFragment extends Fragment {
         }
     }
 
-    /**
-     * Helper method to send notifications to waitlisted users with FCM tokens.
-     */
     private void sendNotificationsToWaitlistedUsers(List<User> users, String message) {
         if (users.isEmpty()) {
             Toast.makeText(requireContext(),
@@ -534,6 +531,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         NotificationSystem notificationSystem = new NotificationSystem(requireContext());
         String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
 
+        // Use the NotificationSystem instead of calling Cloud Function directly
         notificationSystem.notifyWaitlistedEntrants(
                 users,
                 eventNameStr,
@@ -547,6 +545,7 @@ public class OrganizerEventInfoFragment extends Fragment {
 
         Log.d(TAG, "Successfully sent notifications to " + users.size() + " waitlisted entrants");
     }
+
 
     /**
      * Helper method to send notifications to selected users with FCM tokens.
