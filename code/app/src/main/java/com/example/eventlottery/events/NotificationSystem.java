@@ -241,9 +241,11 @@ public class NotificationSystem {
                 }
                 data.put("userName", user.getName());
 
-                // Android-specific config for high priority
+                // Android-specific config
+                // Note: "priority" belongs at the android level, NOT in android.notification
                 androidNotification.put("sound", "default");
-                androidNotification.put("priority", "high");
+                androidNotification.put("channel_id", CHANNEL_ID);
+
                 android.put("priority", "high");
                 android.put("notification", androidNotification);
 
@@ -297,6 +299,8 @@ public class NotificationSystem {
                                 Log.e(TAG, "Error: Invalid access token - check credentials");
                             } else if (response.code() == 403) {
                                 Log.e(TAG, "Error: Service account doesn't have permission");
+                            } else if (response.code() == 400) {
+                                Log.e(TAG, "Error: Invalid message format - check JSON structure");
                             }
                         }
                     }
