@@ -48,6 +48,12 @@ public class OrganizerEventInfoFragment extends Fragment {
     private static final String ARG_WAITLIST_COUNT = "waitlist_count";
     private static final String ARG_SELECTED_COUNT = "selected_count";
 
+    private enum EntrantType {
+        WAITLIST,
+        SELECTED,
+        CANCELLED
+    }
+
     // UI elements
     private TextView eventName;
     private TextView waitingCountText;
@@ -156,21 +162,33 @@ public class OrganizerEventInfoFragment extends Fragment {
         // Click listener for waiting list card - notifies all waitlisted entrants
         waitingListCard.setOnClickListener(v -> {
             if (waitlistCount > 0) {
-                showNotificationDialog();
+                showNotificationDialog(EntrantType.WAITLIST);
             } else {
                 Toast.makeText(requireContext(),
                         "No entrants on waiting list",
                         Toast.LENGTH_SHORT).show();
             }
         });
-        // TODO: Add click listeners for selected and cancelled cards
+
+        // Click listener for selected list card
+        selectedListCard.setOnClickListener(v -> {
+            if (selectedCount > 0) {
+                showNotificationDialog(EntrantType.SELECTED);
+            } else {
+                Toast.makeText(requireContext(),
+                        "No entrants selected or notified",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
      * Shows a Material 3 styled dialog with quick suggestions allowing the organizer
-     * to compose and send a notification to all waitlisted entrants.
+     * to compose and send a notification to entrants.
+     *
+     * @param entrantType The type of entrants to notify (WAITLIST or SELECTED)
      */
-    private void showNotificationDialog() {
+    private void showNotificationDialog(EntrantType entrantType) {
         // Inflate custom dialog layout
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_send_notification, null);
@@ -186,9 +204,10 @@ public class OrganizerEventInfoFragment extends Fragment {
         Chip suggestionChip2 = dialogView.findViewById(R.id.suggestionChip2);
         Chip suggestionChip3 = dialogView.findViewById(R.id.suggestionChip3);
 
-        // Set the recipient count with proper grammar
-        recipientCount.setText(waitlistCount + " " +
-                (waitlistCount == 1 ? "recipient" : "recipients"));
+        // Determine count and recipient text based on entrant type
+        int count = (entrantType == EntrantType.WAITLIST) ? waitlistCount : selectedCount;
+        String recipientText = count + " " + (count == 1 ? "recipient" : "recipients");
+        recipientCount.setText(recipientText);
 
         // Create and configure the dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
@@ -201,14 +220,25 @@ public class OrganizerEventInfoFragment extends Fragment {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
-        // Quick suggestion templates
+        // Quick suggestion templates - customize based on entrant type
         Map<Chip, String> suggestionTemplates = new HashMap<>();
-        suggestionTemplates.put(suggestionChip1,
-                "Thank you for joining the waitlist for " + getArguments().getString(ARG_EVENT_NAME) + "! We'll notify you of any updates.");
-        suggestionTemplates.put(suggestionChip2,
-                "Important update regarding " + getArguments().getString(ARG_EVENT_NAME) + ": ");
-        suggestionTemplates.put(suggestionChip3,
-                "Reminder: The event " + getArguments().getString(ARG_EVENT_NAME) + " is coming up soon!");
+        String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+
+        if (entrantType == EntrantType.WAITLIST) {
+            suggestionTemplates.put(suggestionChip1,
+                    "Thank you for joining the waitlist for " + eventNameStr + "! We'll notify you of any updates.");
+            suggestionTemplates.put(suggestionChip2,
+                    "Important update regarding " + eventNameStr + ": ");
+            suggestionTemplates.put(suggestionChip3,
+                    "Reminder: The event " + eventNameStr + " is coming up soon!");
+        } else { // SELECTED
+            suggestionTemplates.put(suggestionChip1,
+                    "Congratulations! You've been selected for " + eventNameStr + ". Please confirm your attendance.");
+            suggestionTemplates.put(suggestionChip2,
+                    "Important information for selected participants of " + eventNameStr + ": ");
+            suggestionTemplates.put(suggestionChip3,
+                    "Reminder: Don't forget to confirm your spot for " + eventNameStr + "!");
+        }
 
         // Set up quick suggestion chip click listeners
         for (Map.Entry<Chip, String> entry : suggestionTemplates.entrySet()) {
@@ -243,7 +273,7 @@ public class OrganizerEventInfoFragment extends Fragment {
                 sendButton.setEnabled(hasText);
                 sendButton.setAlpha(hasText ? 1f : 0.5f);
 
-                // Animate send button when enabled (only when transitioning from empty to non-empty)
+                // Animate send button when enabled
                 if (hasText && before == 0 && count > 0) {
                     sendButton.animate()
                             .scaleX(1.05f)
@@ -277,7 +307,13 @@ public class OrganizerEventInfoFragment extends Fragment {
                 sendButton.setIcon(null);
 
                 dialog.dismiss();
-                sendWaitlistNotifications(message);
+
+                // Call appropriate notification method based on entrant type
+                if (entrantType == EntrantType.WAITLIST) {
+                    sendWaitlistNotifications(message);
+                } else { // SELECTED
+                    sendSelectedNotifications(message);
+                }
             } else {
                 // Shake animation for error
                 shakeView(messageInput);
@@ -325,19 +361,8 @@ public class OrganizerEventInfoFragment extends Fragment {
     }
 
     /**
-     * Adds a shake animation to a view (used for error feedback)
-     * @param view The view to animate
-     */
-    private void shakeView(View view) {
-        ObjectAnimator animator = ObjectAnimator.ofFloat(view, "translationX",
-                0f, 25f, -25f, 25f, -25f, 15f, -15f, 6f, -6f, 0f);
-        animator.setDuration(500);
-        animator.start();
-    }
-
-    /**
      * Fetches waitlisted entrants from Firebase and sends notifications to them.
-     * Now fetches full user data including FCM tokens from the users collection.
+     * Retrieves FCM tokens from the users-p4 collection.
      *
      * @param message The custom message to send to waitlisted entrants
      */
@@ -357,53 +382,7 @@ public class OrganizerEventInfoFragment extends Fragment {
                                     (List<Map<String, Object>>) waitlist.get("waitlistedUsers");
 
                             if (waitlistedUsersData != null && !waitlistedUsersData.isEmpty()) {
-                                // List to collect users with FCM tokens
-                                List<User> usersWithTokens = new ArrayList<>();
-                                int totalUsers = waitlistedUsersData.size();
-                                int[] fetchedCount = {0}; // Counter for async operations
-
-                                // Fetch each user's full data including FCM token
-                                for (Map<String, Object> userData : waitlistedUsersData) {
-                                    String userId = (String) userData.get("id");
-
-                                    Log.d(TAG, "Attempting to fetch user document: users-p4/" + userId);
-
-                                    if (userId != null) {
-                                        // Fetch full user document from users collection
-                                        db.collection("users-p4")
-                                                .document(userId)
-                                                .get()
-                                                .addOnSuccessListener(userDoc -> {
-                                                    fetchedCount[0]++;
-
-                                                    if (userDoc.exists()) {
-                                                        User user = userDoc.toObject(User.class);
-                                                        if (user != null && user.canReceiveNotifications()) {
-                                                            usersWithTokens.add(user);
-                                                            Log.d(TAG, "Added user with FCM token: " + user.getName());
-                                                        } else {
-                                                            Log.d(TAG, "User has no FCM token: " + userId);
-                                                        }
-                                                    }
-
-                                                    // When all users are fetched, send notifications
-                                                    if (fetchedCount[0] == totalUsers) {
-                                                        sendNotificationsToUsers(usersWithTokens, message);
-                                                    }
-                                                })
-                                                .addOnFailureListener(e -> {
-                                                    fetchedCount[0]++;
-                                                    Log.e(TAG, "Failed to fetch user: " + userId, e);
-
-                                                    // Continue even if one user fetch fails
-                                                    if (fetchedCount[0] == totalUsers) {
-                                                        sendNotificationsToUsers(usersWithTokens, message);
-                                                    }
-                                                });
-                                    } else {
-                                        fetchedCount[0]++;
-                                    }
-                                }
+                                fetchUsersAndSendNotifications(waitlistedUsersData, message, "waitlist");
                             } else {
                                 Toast.makeText(requireContext(),
                                         "No entrants on waiting list",
@@ -429,9 +408,122 @@ public class OrganizerEventInfoFragment extends Fragment {
     }
 
     /**
-     * Helper method to send notifications to the list of users with FCM tokens
+     * Fetches selected entrants from Firebase and sends notifications to them.
+     * Retrieves FCM tokens from the users-p4 collection.
+     * Handles selectedIds as an array of user ID strings.
+     *
+     * @param message The custom message to send to selected entrants
      */
-    private void sendNotificationsToUsers(List<User> users, String message) {
+    private void sendSelectedNotifications(String message) {
+        Toast.makeText(requireContext(), "Sending notifications...", Toast.LENGTH_SHORT).show();
+
+        // Fetch the event document from Firestore
+        db.collection("event-p4")
+                .document(eventId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Get selected user IDs from the selectedIds array
+                        List<String> selectedUserIds = (List<String>) documentSnapshot.get("selectedIds");
+
+                        if (selectedUserIds != null && !selectedUserIds.isEmpty()) {
+                            // Convert List<String> to List<Map<String, Object>> format
+                            List<Map<String, Object>> selectedUsersData = new ArrayList<>();
+                            for (String userId : selectedUserIds) {
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("id", userId);
+                                selectedUsersData.add(userData);
+                            }
+
+                            fetchUsersAndSendNotifications(selectedUsersData, message, "selected");
+                        } else {
+                            Toast.makeText(requireContext(),
+                                    "No selected entrants found",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "Event not found",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching selected users data", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to send notifications: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    /**
+     * Common method to fetch user documents and send notifications.
+     * Works with users-p4 collection and checks for FCM tokens.
+     *
+     * @param usersData List of user data maps containing user IDs
+     * @param message The notification message to send
+     * @param type The type of notification ("waitlist" or "selected")
+     */
+    private void fetchUsersAndSendNotifications(List<Map<String, Object>> usersData, String message, String type) {
+        List<User> usersWithTokens = new ArrayList<>();
+        int totalUsers = usersData.size();
+        int[] fetchedCount = {0};
+
+        // Fetch each user's full data including FCM token from users-p4
+        for (Map<String, Object> userData : usersData) {
+            String userId = (String) userData.get("id");
+
+            Log.d(TAG, "Attempting to fetch user document: users-p4/" + userId);
+
+            if (userId != null) {
+                // Fetch full user document from users-p4 collection
+                db.collection("users-p4")
+                        .document(userId)
+                        .get()
+                        .addOnSuccessListener(userDoc -> {
+                            fetchedCount[0]++;
+
+                            if (userDoc.exists()) {
+                                User user = userDoc.toObject(User.class);
+                                if (user != null && user.getFcmToken() != null && !user.getFcmToken().isEmpty()) {
+                                    usersWithTokens.add(user);
+                                    Log.d(TAG, "Added user with FCM token: " + user.getName());
+                                } else {
+                                    Log.d(TAG, "User has no FCM token: " + userId);
+                                }
+                            }
+
+                            // When all users are fetched, send notifications
+                            if (fetchedCount[0] == totalUsers) {
+                                if (type.equals("waitlist")) {
+                                    sendNotificationsToWaitlistedUsers(usersWithTokens, message);
+                                } else {
+                                    sendNotificationsToSelectedUsers(usersWithTokens, message);
+                                }
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            fetchedCount[0]++;
+                            Log.e(TAG, "Failed to fetch user: " + userId, e);
+
+                            // Continue even if one user fetch fails
+                            if (fetchedCount[0] == totalUsers) {
+                                if (type.equals("waitlist")) {
+                                    sendNotificationsToWaitlistedUsers(usersWithTokens, message);
+                                } else {
+                                    sendNotificationsToSelectedUsers(usersWithTokens, message);
+                                }
+                            }
+                        });
+            } else {
+                fetchedCount[0]++;
+            }
+        }
+    }
+
+    /**
+     * Helper method to send notifications to waitlisted users with FCM tokens.
+     */
+    private void sendNotificationsToWaitlistedUsers(List<User> users, String message) {
         if (users.isEmpty()) {
             Toast.makeText(requireContext(),
                     "No users with notification tokens found",
@@ -450,10 +542,39 @@ public class OrganizerEventInfoFragment extends Fragment {
         );
 
         Toast.makeText(requireContext(),
-                "Notifications sent to " + users.size() + " entrants",
+                "Notifications sent to " + users.size() + " waitlisted entrants",
                 Toast.LENGTH_LONG).show();
 
         Log.d(TAG, "Successfully sent notifications to " + users.size() + " waitlisted entrants");
+    }
+
+    /**
+     * Helper method to send notifications to selected users with FCM tokens.
+     */
+    private void sendNotificationsToSelectedUsers(List<User> users, String message) {
+        if (users.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "No users with notification tokens found",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+
+        // Use the selected entrants notification method
+        notificationSystem.notifySelectedEntrants(
+                users,
+                eventNameStr,
+                eventId,
+                message
+        );
+
+        Toast.makeText(requireContext(),
+                "Notifications sent to " + users.size() + " selected entrants",
+                Toast.LENGTH_LONG).show();
+
+        Log.d(TAG, "Successfully sent notifications to " + users.size() + " selected entrants");
     }
 
     /**
@@ -472,5 +593,16 @@ public class OrganizerEventInfoFragment extends Fragment {
         if (waitingCountText != null) {
             waitingCountText.setText(String.valueOf(waitlist));
         }
+    }
+
+    /**
+     * Adds a shake animation to a view (used for error feedback)
+     * @param view The view to animate
+     */
+    private void shakeView(View view) {
+        ObjectAnimator animator = ObjectAnimator.ofFloat(view, "translationX",
+                0f, 25f, -25f, 25f, -25f, 15f, -15f, 6f, -6f, 0f);
+        animator.setDuration(500);
+        animator.start();
     }
 }
