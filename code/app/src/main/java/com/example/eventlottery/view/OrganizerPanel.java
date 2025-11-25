@@ -84,6 +84,14 @@ public class OrganizerPanel extends AppCompatActivity {
     /** The list of events owned or created by the organizer. */
     private ArrayList<Event> data = new ArrayList<>();
 
+    /** The button used to view where entrants have joined */
+    private Button chosenEntrantsBtn;
+
+    private Button cancelledEntrantsBtn;
+
+
+
+
     /**
      * Called when the activity is created. Initializes the layout, retrieves organizer data,
      * and sets up button listeners and the event list adapter.
@@ -103,13 +111,22 @@ public class OrganizerPanel extends AppCompatActivity {
         });
 
         // Initialize UI components and event listeners
+        chosenEntrantsBtn = findViewById(R.id.viewChosenEntrantsButton);
         eventList = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.eventListFragment);
         viewWaitlist = findViewById(R.id.viewWaitlistButton);
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
         viewFinalList = findViewById(R.id.view_finalized_list_button);
         map = findViewById(R.id.mapButton);
+        chosenEntrantsBtn = findViewById(R.id.viewChosenEntrantsButton);
+        cancelledEntrantsBtn = findViewById(R.id.viewCancelledEntrantsButton);
         setClickListeners();
+
+
+        // Hide buttons until an event is selected
+        chosenEntrantsBtn.setVisibility(View.GONE);
+        cancelledEntrantsBtn.setVisibility(View.GONE);
+
 
         // Initialize databases and organizer info
         userID = Settings.Secure.getString(
@@ -129,6 +146,7 @@ public class OrganizerPanel extends AppCompatActivity {
                     showEventList();
                 }
                 else {
+
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
                 }
@@ -151,6 +169,9 @@ public class OrganizerPanel extends AppCompatActivity {
                  */
             }
         });
+
+
+
     }
 
     /**
@@ -199,6 +220,8 @@ public class OrganizerPanel extends AppCompatActivity {
 
             int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
             int selectedCount = selectedEvent.getSelectedIds().size();
+            chosenEntrantsBtn.setVisibility(View.VISIBLE);
+            cancelledEntrantsBtn.setVisibility(View.VISIBLE);
 
             // Show the fragment container (which dims the background)
             //findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
@@ -353,6 +376,40 @@ public class OrganizerPanel extends AppCompatActivity {
                 Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
             }
         });
+
+        chosenEntrantsBtn.setOnClickListener(v -> {
+            if (selectedEventIndex == -1) {
+                Toast.makeText(this, "Please click an event first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Event event = data.get(selectedEventIndex);
+
+            Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
+            intent.putExtra("eventName", event.getName());
+            intent.putExtra("type", "chosen");
+            intent.putExtra("users", event.getWaitlist().getWaitlistedUsers()); // CHANGE TO GET CHOSEN ENTRANTS
+
+            startActivity(intent);
+        });
+
+        cancelledEntrantsBtn.setOnClickListener(v -> {
+            if (selectedEventIndex == -1) {
+                Toast.makeText(this, "Please click an event first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Event event = data.get(selectedEventIndex);
+
+            Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
+            intent.putExtra("eventName", event.getName());
+            intent.putExtra("type", "cancelled");
+            intent.putExtra("users", event.getWaitlist().getWaitlistedUsers()); // CHANGE TO GET CANCELLED ENTRANTS
+
+
+            startActivity(intent);
+        });
+
     }
 
     /**
