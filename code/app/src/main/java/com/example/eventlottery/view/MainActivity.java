@@ -1,16 +1,23 @@
 package com.example.eventlottery.view;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -22,6 +29,8 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.NotificationSystem;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -73,6 +82,18 @@ public class MainActivity extends AppCompatActivity {
     /** Static reference to the MainActivity instance for global access. */
     public static MainActivity instance;
     private DBConnector connector;
+    private ActivityResultLauncher<String> resultLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // Permission Granted
+                    // Get Device token from firebase
+                    getDeviceToken();
+                }
+                else {
+                    // Permission Denied
+                }
+            }
+    );
 
     /**
      * Lifecycle method called when the activity is created.
@@ -87,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         instance = this;
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        requestPermission();
 
         // Initialize FCM token
         initializeFCMToken();
@@ -128,16 +151,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Test notification system
-        User testUser = new User("u123", "Alice", "alice@gmail.com");
-        NotificationSystem notifier = new NotificationSystem(this);
-        notifier.notifyLotteryLoser(testUser, "Tyler the Creator Concert Lottery");
+        //User testUser = new User("u123", "Alice", "alice@gmail.com");
+        //NotificationSystem notifier = new NotificationSystem(this);
+        //notifier.notifyLotteryLoser(testUser, "Tyler the Creator Concert Lottery");
 
         // Initialize RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Populate sample event data
-        populateSampleEvents();
+        //populateSampleEvents();
 
         // TESTING: Simulate user joining some events
         // Comment this out if you do not want to populate the events
@@ -568,5 +591,43 @@ public class MainActivity extends AppCompatActivity {
                                 }}, com.google.firebase.firestore.SetOptions.merge());
                     });
         }
+    }
+
+    public void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED) {
+                //Permission is granted
+                getDeviceToken();
+            }
+            else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // You can explain user that why do you need permission by showing Toast Message
+            }
+            else {
+                // Request for Permission
+                resultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+        else {
+            // Get Device Token from Firebase
+            getDeviceToken();
+        }
+    }
+
+    public void getDeviceToken() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful()) {
+                    Log.e("FirebaseLogs", "Fetching Token Failed" + task.getException());
+                    return;
+                }
+
+                // Get Device Token
+                String token = task.getResult();
+                Log.v("FireBaseLogs", "Device Token: " + token);
+            }
+
+        });
     }
 }
