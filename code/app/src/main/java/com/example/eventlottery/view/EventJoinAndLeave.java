@@ -243,7 +243,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         // If geolocation is on, store that data
         if (geolocation) {
-            if (userLocation != null) {
+            // Only store if longitude & latitude were actually added
+            if (userLocation.containsKey("longitude") && userLocation.containsKey("latitude")) {
                 documentReference.update("userLocations", FieldValue.arrayUnion(userLocation));
             }
         }
@@ -271,7 +272,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
         // If geolocation is on, remove that data
         if (geolocation) {
-            if (userLocation != null) {
+            // Only store if longitude & latitude were actually added
+            if (userLocation.containsKey("longitude") && userLocation.containsKey("latitude")) {
                 documentReference.update("userLocations", FieldValue.arrayRemove(userLocation));
             }
         }

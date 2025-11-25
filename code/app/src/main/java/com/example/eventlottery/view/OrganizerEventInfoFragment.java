@@ -46,15 +46,19 @@ public class OrganizerEventInfoFragment extends Fragment {
     private static final String ARG_EVENT_ID = "event_id";
     private static final String ARG_EVENT_NAME = "event_name";
     private static final String ARG_WAITLIST_COUNT = "waitlist_count";
+    private static final String ARG_SELECTED_COUNT = "selected_count";
 
     // UI elements
     private TextView eventName;
     private TextView waitingCountText;
+    private TextView selectedCountText;
     private CardView waitingListCard;
+    private CardView selectedListCard;
 
     // Data fields
     private String eventId;
     private int waitlistCount;
+    private int selectedCount;
 
     // Firebase
     private FirebaseFirestore db;
@@ -66,7 +70,7 @@ public class OrganizerEventInfoFragment extends Fragment {
      * @param eventName The name of the event
      * @param waitlistCount The number of users on the waitlist
      */
-    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount) {
+    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount, int selectedCount) {
         OrganizerEventInfoFragment fragment = new OrganizerEventInfoFragment();
 
         // Create a Bundle to store arguments - this ensures data survives configuration changes
@@ -74,6 +78,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         args.putString(ARG_EVENT_ID, eventId);
         args.putString(ARG_EVENT_NAME, eventName);
         args.putInt(ARG_WAITLIST_COUNT, waitlistCount);
+        args.putInt(ARG_SELECTED_COUNT, selectedCount);
         fragment.setArguments(args);
         return fragment;
     }
@@ -91,6 +96,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             eventId = getArguments().getString(ARG_EVENT_ID);
             String name = getArguments().getString(ARG_EVENT_NAME);
             waitlistCount = getArguments().getInt(ARG_WAITLIST_COUNT, 0);
+            selectedCount = getArguments().getInt(ARG_SELECTED_COUNT, 0);
         }
     }
 
@@ -115,9 +121,11 @@ public class OrganizerEventInfoFragment extends Fragment {
         // Initialize UI elements by finding them in the fragment's view hierarchy
         eventName = view.findViewById(R.id.headerText);
         waitingCountText = view.findViewById(R.id.waitingCount);
+        selectedCountText = view.findViewById(R.id.selectedCount);
 
         // Get references to the clickable cards
         waitingListCard = view.findViewById(R.id.waitingListCard);
+        selectedListCard = view.findViewById(R.id.selectedCard);
         // TODO: add SelectedCard and cancelledCard when I add the firebase implementation of those first
 
         // Close Button
@@ -131,6 +139,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         if (getArguments() != null) {
             eventName.setText(getArguments().getString(ARG_EVENT_NAME));
             waitingCountText.setText(String.valueOf(waitlistCount));
+            selectedCountText.setText(String.valueOf(selectedCount));
             //TODO: Add select and cancel cards as well
         }
 
@@ -356,6 +365,8 @@ public class OrganizerEventInfoFragment extends Fragment {
                                 // Fetch each user's full data including FCM token
                                 for (Map<String, Object> userData : waitlistedUsersData) {
                                     String userId = (String) userData.get("id");
+
+                                    Log.d(TAG, "Attempting to fetch user document: users-p4/" + userId);
 
                                     if (userId != null) {
                                         // Fetch full user document from users collection

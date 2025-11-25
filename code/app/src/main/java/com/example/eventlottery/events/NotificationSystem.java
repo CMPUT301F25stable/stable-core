@@ -2,152 +2,133 @@ package com.example.eventlottery.events;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-import androidx.core.app.NotificationCompat;
-import com.example.eventlottery.R;
-import com.example.eventlottery.users.User;
-import com.example.eventlottery.view.MainActivity;
 
+import com.example.eventlottery.users.User;
+import com.google.auth.oauth2.GoogleCredentials;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
- * Handles sending user notifications for lottery events in the EventLottery app.
- * <p>
- * This class is responsible for notifying users when they are selected (winners)
- * or not selected (losers) for a particular event. It creates and manages
- * the notification channel and builds notifications with appropriate content and actions.
- * more notifications may be added later
- * </p>
+ * Handles sending user notifications for lottery events using FCM API V1.
  */
 public class NotificationSystem {
-    /** Tag used for logging messages related to the notification service. */
     private static final String TAG = "NotificationService";
-    /** Unique identifier for the notification channel used for lottery winner notifications. */
     private static final String CHANNEL_ID = "lottery_winner_notifications";
-    /** User-visible name for the notification channel that displays lottery winner notifications. */
     private static final String CHANNEL_NAME = "Lottery Winner Notifications";
 
+    // TODO: Replace with your actual Firebase project ID
+    private static final String PROJECT_ID = "cmput-301-stable-21008";
+    private static final String FCM_V1_URL = "https://fcm.googleapis.com/v1/projects/" + PROJECT_ID + "/messages:send";
+
+    // Service account JSON file name in assets folder
+    private static final String SERVICE_ACCOUNT_FILE = "service-account.json";
+
     private Context context;
-    /**
-     * Constructs a new {@code NotificationSystem} with the provided application context.
-     * Automatically creates a notification channel if it does not already exist.
-     *
-     * @param context the application context used for sending notifications
-     */
+    private OkHttpClient httpClient;
+    private GoogleCredentials googleCredentials;
+    private ExecutorService executorService;
+    private Handler mainHandler;
+
     public NotificationSystem(Context context) {
         this.context = context;
         createNotificationChannel();
+
+        // Initialize HTTP client
+        httpClient = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
+
+        // Initialize executor for background tasks
+        executorService = Executors.newSingleThreadExecutor();
+        mainHandler = new Handler(Looper.getMainLooper());
+
+        // Initialize Google Credentials for OAuth2
+        initializeCredentials();
+    }
+
+    /**
+     * Initializes Google Credentials from the service account JSON file.
+     */
+    private void initializeCredentials() {
+        try {
+            InputStream serviceAccount = context.getAssets().open(SERVICE_ACCOUNT_FILE);
+            googleCredentials = GoogleCredentials
+                    .fromStream(serviceAccount)
+                    .createScoped(Arrays.asList("https://www.googleapis.com/auth/firebase.messaging"));
+
+            Log.d(TAG, "✓ Google Credentials initialized successfully");
+        } catch (IOException e) {
+            Log.e(TAG, "✗ Failed to initialize Google Credentials", e);
+            Log.e(TAG, "Make sure " + SERVICE_ACCOUNT_FILE + " is in the assets folder");
+        }
+    }
+
+    /**
+     * Gets a fresh OAuth2 access token (runs on background thread).
+     */
+    private String getAccessToken() throws IOException {
+        if (googleCredentials == null) {
+            Log.e(TAG, "Credentials not initialized");
+            return null;
+        }
+
+        googleCredentials.refreshIfExpired();
+        String token = googleCredentials.getAccessToken().getTokenValue();
+        Log.d(TAG, "✓ Access token obtained");
+        return token;
     }
 
     /**
      * Sends a "winner" notification to a user when they are selected for an event.
-     * The notification congratulates the user and opens the app when tapped.
-     * @param winner    the {@link User} who has been selected
-     * @param eventName the name of the event the user was selected for
      */
     public void notifyLotteryWinner(User winner, String eventName) {
         Log.d(TAG, "Sending notification to winner: " + winner.getName());
 
-        // Create intent to open app when notification is clicked
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.putExtra("winner_notification", true);
-        intent.putExtra("event_name", eventName);
+        String title = "Congratulations!";
+        String body = "You've been selected for " + eventName + "!";
 
-        // Create pending intent to open activity when notification is clicked and update current activity
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                generateNotificationId(winner.getId()),
-                intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification) // TODO make notification svg
-                .setContentTitle("Congratulations!")
-                .setContentText("You've been selected for " + eventName + "!")
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("Congratulations " + winner.getName() + "! You have been selected for  " + eventName + ". Tap to view details."))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 500, 250, 500});
-
-        // Send notification
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        // prints in logcat if the notification is sent successfully
-        if (notificationManager != null) {
-            int notificationId = generateNotificationId(winner.getId());
-            notificationManager.notify(notificationId, builder.build());
-            Log.d(TAG, "Notification sent successfully to " + winner.getName());
-        }
+        sendFCMNotification(winner, title, body, "winner", eventName, null);
     }
 
     /**
-     * Sends a "not selected" notification to a user when they are not chosen for an event.
-     * The notification thanks the user for participating and encourages future engagement.
-     *
-     * @param user      the {@link User} who was not selected
-     * @param eventName the name of the event the user entered
+     * Sends a "not selected" notification to a user.
      */
     public void notifyLotteryLoser(User user, String eventName) {
         Log.d(TAG, "Sending notification to loser: " + user.getName());
 
-        // Create intent to open app when notification is clicked
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.putExtra("loser_notification", true);
-        intent.putExtra("event_name", eventName);
+        String title = "Thank you for entering!";
+        String body = "You were not selected for " + eventName + " this time.";
 
-        // PendingIntent setup
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                generateNotificationId(user.getId() + "_lose"), // Change in id to avoid same ID problems
-                intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        // Build "not selected" notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("Thank you for entering!")
-                .setContentText("You were not selected for " + eventName + " this time.")
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("Hi " + user.getName() + ", unfortunately you were not selected for "
-                                + eventName + " this time. We appreciate your interest — keep an eye out for future opportunities!"))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 250, 100, 250});
-
-        // Send the notification
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (notificationManager != null) {
-            int notificationId = generateNotificationId(user.getId() + "_lose");
-            notificationManager.notify(notificationId, builder.build());
-            Log.d(TAG, "Loser notification sent successfully to " + user.getName());
-        }
+        sendFCMNotification(user, title, body, "loser", eventName, null);
     }
 
     /**
-     * US 02.05.01: Sends invitation notification to chosen entrants to sign up for an event.
-     * This is triggered by an organizer to invite specific users to join their event.
-     *
-     * @param entrants  the list of {@link User}s who are invited
-     * @param eventName the name of the event they're invited to
-     * @param eventId   the unique identifier for the event
-     * @param message   optional custom message from the organizer (can be null)
+     * Sends invitation notification to chosen entrants.
      */
     public void notifyInvitedEntrants(List<User> entrants, String eventName, String eventId, String message) {
-        Log.d(TAG, "Sending invitation notifications to " + entrants.size() + " entrants for event: " + eventName);
+        Log.d(TAG, "Sending invitation notifications to " + entrants.size() + " entrants");
 
         for (User entrant : entrants) {
             notifyInvitedEntrant(entrant, eventName, eventId, message);
@@ -155,72 +136,155 @@ public class NotificationSystem {
     }
 
     /**
-     * Sends an individual invitation notification to sign up for an event.
-     * @param entrant   the {@link User} being invited
-     * @param eventName the name of the event
-     * @param eventId   the event identifier
-     * @param message   optional custom message from organizer
+     * Sends an individual invitation notification.
      */
     public void notifyInvitedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending invitation notification to: " + entrant.getName());
 
-        // Create intent to open event details when notification is clicked
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.putExtra("invitation_notification", true);
-        intent.putExtra("event_id", eventId);
-        intent.putExtra("event_name", eventName);
+        String title = "You're Invited! 🎉";
+        String body = "You're invited to sign up for " + eventName + "!";
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                generateNotificationId(entrant.getId() + "_invite_" + eventId),
-                intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
+        sendFCMNotification(entrant, title, body, "invitation", eventName, eventId);
+    }
 
-        // Build notification content
-        String contentText = "You're invited to sign up for " + eventName + "!";
-        String bigText;
+    /**
+     * Sends notification to waitlisted entrants.
+     */
+    public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants");
 
-        if (message != null && !message.isEmpty()) {
-            // Include custom organizer message
-            bigText = "Hi " + entrant.getName() + "! You've been invited to sign up for "
-                    + eventName + ".\n\nMessage from organizer: " + message
-                    + "\n\nTap to view details and sign up!";
-        } else {
-            // Default message
-            bigText = "Hi " + entrant.getName() + "! You've been specially chosen to sign up for "
-                    + eventName + ". Don't miss this opportunity! Tap to view details and sign up.";
-        }
-
-        // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("You're Invited! 🎉")
-                .setContentText(contentText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 300, 200, 300});
-
-        // Send notification
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (notificationManager != null) {
-            int notificationId = generateNotificationId(entrant.getId() + "_invite_" + eventId);
-            notificationManager.notify(notificationId, builder.build());
-            Log.d(TAG, "Invitation notification sent successfully to " + entrant.getName());
+        for (User entrant : entrants) {
+            notifyWaitlistedEntrant(entrant, eventName, eventId, message);
         }
     }
+
     /**
-     * Creates a notification channel for lottery notifications.
-     * The channel is configured with vibration and high importance
-     * so that notifications appear prominently to users.
+     * Sends an individual notification to a waitlisted entrant.
+     */
+    private void notifyWaitlistedEntrant(User entrant, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending waitlist notification to: " + entrant.getName());
+
+        String title = "Waiting List Update 📢";
+        String body = message;
+
+        sendFCMNotification(entrant, title, body, "waitlist", eventName, eventId);
+    }
+
+    /**
+     * Core method to send FCM push notifications using V1 API.
+     * This now runs on a background thread to avoid NetworkOnMainThreadException.
+     */
+    private void sendFCMNotification(User user, String title, String body,
+                                     String type, String eventName, String eventId) {
+        String fcmToken = user.getFcmToken();
+
+        if (fcmToken == null || fcmToken.isEmpty()) {
+            Log.w(TAG, "User " + user.getName() + " has no FCM token");
+            return;
+        }
+
+        // Run network operation on background thread
+        executorService.execute(() -> {
+            try {
+                // Get OAuth2 access token (this makes network calls)
+                String accessToken = getAccessToken();
+                if (accessToken == null) {
+                    Log.e(TAG, "Cannot send notification: no access token");
+                    return;
+                }
+
+                // Build FCM V1 message JSON structure
+                JSONObject message = new JSONObject();
+                JSONObject messageContent = new JSONObject();
+                JSONObject notification = new JSONObject();
+                JSONObject data = new JSONObject();
+                JSONObject android = new JSONObject();
+                JSONObject androidNotification = new JSONObject();
+
+                // Notification payload
+                notification.put("title", title);
+                notification.put("body", body);
+
+                // Data payload
+                data.put("type", type);
+                data.put("eventName", eventName);
+                if (eventId != null) {
+                    data.put("eventId", eventId);
+                }
+                data.put("userName", user.getName());
+
+                // Android-specific config for high priority
+                androidNotification.put("sound", "default");
+                androidNotification.put("priority", "high");
+                android.put("priority", "high");
+                android.put("notification", androidNotification);
+
+                // Assemble message
+                messageContent.put("token", fcmToken);
+                messageContent.put("notification", notification);
+                messageContent.put("data", data);
+                messageContent.put("android", android);
+
+                message.put("message", messageContent);
+
+                Log.d(TAG, "FCM Message JSON: " + message.toString());
+
+                // Create HTTP request
+                RequestBody requestBody = RequestBody.create(
+                        message.toString(),
+                        MediaType.parse("application/json")
+                );
+
+                Request request = new Request.Builder()
+                        .url(FCM_V1_URL)
+                        .addHeader("Authorization", "Bearer " + accessToken)
+                        .addHeader("Content-Type", "application/json")
+                        .post(requestBody)
+                        .build();
+
+                // Send the request (OkHttp already handles this asynchronously)
+                httpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        Log.e(TAG, "✗ Failed to send FCM notification to " + user.getName(), e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String responseBody = response.body() != null ? response.body().string() : "";
+
+                        if (response.isSuccessful()) {
+                            Log.d(TAG, "✓ FCM notification sent successfully to " + user.getName());
+                            Log.d(TAG, "Response: " + responseBody);
+                        } else {
+                            Log.e(TAG, "✗ FCM notification failed for " + user.getName());
+                            Log.e(TAG, "Response code: " + response.code());
+                            Log.e(TAG, "Response: " + responseBody);
+
+                            // Common error messages
+                            if (response.code() == 404) {
+                                Log.e(TAG, "Error: Invalid FCM token or token has been unregistered");
+                            } else if (response.code() == 401) {
+                                Log.e(TAG, "Error: Invalid access token - check credentials");
+                            } else if (response.code() == 403) {
+                                Log.e(TAG, "Error: Service account doesn't have permission");
+                            }
+                        }
+                    }
+                });
+
+            } catch (JSONException e) {
+                Log.e(TAG, "✗ Error creating FCM message JSON", e);
+            } catch (IOException e) {
+                Log.e(TAG, "✗ Error getting access token", e);
+            }
+        });
+    }
+
+    /**
+     * Creates notification channel for Android 8.0+
      */
     private void createNotificationChannel() {
-        // creates a high priority notification channel
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
@@ -232,7 +296,7 @@ public class NotificationSystem {
 
         NotificationManager notificationManager =
                 context.getSystemService(NotificationManager.class);
-        // prints in logcat if the creation of notification channel is successful
+
         if (notificationManager != null) {
             notificationManager.createNotificationChannel(channel);
             Log.d(TAG, "Notification channel created");
@@ -240,84 +304,18 @@ public class NotificationSystem {
     }
 
     /**
+     * Cleanup method - call this when done with NotificationSystem
+     */
+    public void shutdown() {
+        if (executorService != null) {
+            executorService.shutdown();
+        }
+    }
+
+    /**
      * Generates a unique notification ID based on the user's ID.
-     * This ensures each user's notifications do not overlap.
-     * @param userId the ID of the user
-     * @return an integer hash code representing the notification ID
      */
     private int generateNotificationId(String userId) {
         return userId.hashCode();
-    }
-
-    // Add these methods to your existing NotificationSystem class
-
-    /**
-     * US 02.05.01: Sends notification to waitlisted entrants.
-     * This allows organizers to send custom messages to all users on the waiting list.
-     *
-     * @param entrants  the list of {@link User}s on the waiting list
-     * @param eventName the name of the event
-     * @param eventId   the unique identifier for the event
-     * @param message   custom message from the organizer
-     */
-    public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
-        Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants for event: " + eventName);
-
-        for (User entrant : entrants) {
-            notifyWaitlistedEntrant(entrant, eventName, eventId, message);
-        }
-    }
-
-    /**
-     * Sends an individual notification to a waitlisted entrant.
-     * The notification informs the user about updates regarding their waitlist status.
-     *
-     * @param entrant   the {@link User} on the waiting list
-     * @param eventName the name of the event
-     * @param eventId   the event identifier
-     * @param message   custom message from organizer
-     */
-    private void notifyWaitlistedEntrant(User entrant, String eventName, String eventId, String message) {
-        Log.d(TAG, "Sending waitlist notification to: " + entrant.getName());
-
-        // Create intent to open event details when notification is clicked
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        intent.putExtra("waitlist_notification", true);
-        intent.putExtra("event_id", eventId);
-        intent.putExtra("event_name", eventName);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                context,
-                generateNotificationId(entrant.getId() + "_waitlist_" + eventId),
-                intent,
-                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        // Build notification content with organizer's custom message
-        String contentText = "Update about " + eventName;
-        String bigText = "Hi " + entrant.getName() + "!\n\n" + message +
-                "\n\nEvent: " + eventName;
-
-        // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("Waiting List Update 📢")
-                .setContentText(contentText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .setVibrate(new long[]{0, 250, 100, 250});
-
-        // Send notification
-        NotificationManager notificationManager =
-                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        if (notificationManager != null) {
-            int notificationId = generateNotificationId(entrant.getId() + "_waitlist_" + eventId);
-            notificationManager.notify(notificationId, builder.build());
-            Log.d(TAG, "Waitlist notification sent successfully to " + entrant.getName());
-        }
     }
 }
