@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -69,6 +70,27 @@ public class AdminPanel extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         loadProfilesFromFirestore();
+
+        // Set click listener for clicking an event
+        eventlistFragment.setOnItemClickListener((parent, view, position, id) -> {
+            // References: https://stackoverflow.com/questions/10407159/how-to-manage-startactivityforresult-on-android
+            int LAUNCH_SECOND_ACTIVITY = 1;
+            Intent intent = new Intent(this, AdminEventView.class);
+
+            // Get event & serialize
+            Event event = eventListData.get(position);
+            intent.putExtra("id", event.getId());
+            intent.putExtra("name", event.getName());
+            intent.putExtra("description", event.getDescription());
+            intent.putExtra("dateStart", event.getFormattedStartDate());
+            intent.putExtra("timeStart", event.getFormattedStartTime());
+            intent.putExtra("dateEnd", event.getFormattedEndDate());
+            intent.putExtra("timeEnd", event.getFormattedEndTime());
+            intent.putExtra("location", event.getLocation());
+            intent.putExtra("organizer", event.getOrganizer());
+            intent.putExtra("image", event.getImage());
+            startActivityForResult(intent, LAUNCH_SECOND_ACTIVITY);
+        });
     }
 
     /**

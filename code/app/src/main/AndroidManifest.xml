@@ -26,6 +26,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EventLottery">
         <activity
+            android:name=".view.AdminEventView"
+            android:exported="false" />
+        <activity
             android:name=".view.AdminPanel"
             android:exported="false" />
 
