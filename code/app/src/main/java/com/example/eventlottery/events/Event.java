@@ -51,7 +51,8 @@ public class Event implements Serializable {
     private java.util.List<String> filterTags = new java.util.ArrayList<>();
     private FinalizedList finalizedList;
     /** List of users who have been selected as winners. */
-    private final List<User> chosenEntrants = new ArrayList<>();
+    private List<User> chosenEntrants = new ArrayList<>();
+    private List<String> selectedIds = new ArrayList<>();
     /** Lottery system used for selecting winners. */
     private transient LotterySystem lotteryEngine;
     /** Determines if geolocation is on (true) or not (false) */
@@ -99,6 +100,8 @@ public class Event implements Serializable {
         this.waitlist = new Waitlist();  // ensure it's non-null to stop crash
         this.filterTags = new java.util.ArrayList<>();
         this.userLocations = new ArrayList<>();
+        this.chosenEntrants = new ArrayList<>();
+        this.selectedIds = new ArrayList<>();
     }
 
     public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags, boolean geolocation) { // For new events (not yet in database)
@@ -114,6 +117,8 @@ public class Event implements Serializable {
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         this.geolocation = geolocation;
         this.userLocations = new ArrayList<>();
+        this.chosenEntrants = new ArrayList<>();
+        this.selectedIds = new ArrayList<>();
         formatDates();
     }
 
@@ -131,6 +136,8 @@ public class Event implements Serializable {
         this.filterTags = filterTags != null ? filterTags : new ArrayList<>();
         this.geolocation = false;
         this.userLocations = new ArrayList<>();
+        this.chosenEntrants = new ArrayList<>();
+        this.selectedIds = new ArrayList<>();
         formatDates();
     }
 
@@ -413,4 +420,13 @@ public class Event implements Serializable {
     public List<User> getChosenEntrants() {
         return new ArrayList<>(chosenEntrants);
     }
+
+    public List<String> getSelectedIds() {
+        return new ArrayList<>(selectedIds);
+    }
+
+    public void setSelectedIds(List<String> selectedIds) {
+        this.selectedIds = selectedIds;
+    }
+
 }
