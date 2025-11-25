@@ -147,7 +147,8 @@ public class EventDatabase {
                 "formattedEndTime", formattedEndTime,
                 "formattedStartDate", formattedStartDate,
                 "formattedEndDate", formattedEndDate,
-                "geolocation", geolocation
+                "geolocation", geolocation,
+                "selectedIds", event.getSelectedIds()
         );
     }
 

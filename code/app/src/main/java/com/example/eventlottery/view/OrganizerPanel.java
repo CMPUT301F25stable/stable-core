@@ -198,6 +198,7 @@ public class OrganizerPanel extends AppCompatActivity {
             selectedEvent = data.get(position);
 
             int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
+            int selectedCount = selectedEvent.getSelectedIds().size();
 
             // Show the fragment container (which dims the background)
             //findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
@@ -206,7 +207,8 @@ public class OrganizerPanel extends AppCompatActivity {
             OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
                     selectedEvent.getId(),
                     selectedEvent.getName(),
-                    waitlistCount
+                    waitlistCount,
+                    selectedCount
             );
 
             getSupportFragmentManager().beginTransaction()
