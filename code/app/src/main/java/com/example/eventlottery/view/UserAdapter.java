@@ -62,4 +62,13 @@ public class UserAdapter extends ArrayAdapter<User> {
         userIdText.setText(user.getId());
         return convertView;
     }
+
+    /**
+     * Deletes a user from user
+     * @param user the user to be removed from user
+     */
+    public void deleteUser(User user) {
+        userList.remove(user);
+        notifyDataSetChanged();
+    }
 }
