@@ -161,7 +161,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
     }
 
     /**
-     * Deletes User
+     * Callback method called after Firestore completes a delete user request
      * @param task: firestore get data request
      */
     public void deleteUser(Task<Void> task) {

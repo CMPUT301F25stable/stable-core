@@ -1,16 +1,23 @@
 package com.example.eventlottery.view;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -22,6 +29,8 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.NotificationSystem;
 import com.example.eventlottery.users.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -74,6 +83,21 @@ public class MainActivity extends AppCompatActivity {
     public static MainActivity instance;
     private DBConnector connector;
 
+    /** Launcher for requesting notification permission.
+     * Source: https://www.youtube.com/watch?v=r5DeECeorAo */
+    private ActivityResultLauncher<String> resultLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    // Permission Granted
+                    // Get Device token from firebase
+                    getDeviceToken();
+                }
+                else {
+                    // Permission Denied
+                }
+            }
+    );
+
     /**
      * Lifecycle method called when the activity is created.
      * Initializes UI elements, sets up RecyclerView and SearchView,
@@ -88,8 +112,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // Initialize FCM token
-        initializeFCMToken();
+        requestPermission();
 
         // Adjust UI for system insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -128,26 +151,13 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Test notification system
-        User testUser = new User("u123", "Alice", "alice@gmail.com");
-        NotificationSystem notifier = new NotificationSystem(this);
-        notifier.notifyLotteryLoser(testUser, "Tyler the Creator Concert Lottery");
+        //User testUser = new User("u123", "Alice", "alice@gmail.com");
+        //NotificationSystem notifier = new NotificationSystem(this);
+        //notifier.notifyLotteryLoser(testUser, "Tyler the Creator Concert Lottery");
 
         // Initialize RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        // Populate sample event data
-        populateSampleEvents();
-
-        // TESTING: Simulate user joining some events
-        // Comment this out if you do not want to populate the events
-        //currentUser.markJoined("evt-demon-slayer-2025-11-15");
-        //currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
-        //currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
-        //currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
-        //currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
-        //saveUser(currentUser);
-        // TESTING END
 
         // Initialize the adapter
         adapter = new MyAdapter(data, (item, position) -> {
@@ -362,36 +372,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Returns the event corresponding to the given event ID.
-     * @param eventId The unique ID of the event
-     * @return The Event object with the matching ID, or null if not found
-     */
-    /* TODO: Function is broken. Wasn't being used so I just commented it out for a quick fix - John
-    public Event getEventById(String eventId) {
-        for (Event event : data) {
-            boolean passesTags = true;
-            boolean passesDates = true;
-
-            if (hasTagFilter) {
-                List<String> eventTags = event.getFilterTags();
-
-                passesTags = (eventTags != null) && !java.util.Collections.disjoint(eventTags, tags);
-            }
-
-            if (hasDateFilter) {
-                passesDates = occursOnAnySelectedDate(event, datesMidnight);
-            }
-
-            if (passesTags && passesDates) {
-                filtered.add(event);
-            }
-        }
-
-        adapter.setFilteredList(filtered);
-    }
-     */
-
-    /**
      * Returns true if the event happens on ANY of the selected days.
      * Each selected day is a 24-hour window [midnight..11:59:59.999].
      */
@@ -434,114 +414,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Saves the current user.
-     * <p>
-     * Currently stores the user in memory; intended to be replaced with
-     * Firebase or other database persistence in future updates.
-     * </p>
-     * @param user The User object to save
-     */
-    public void saveUser(User user) {
-        this.currentUser = user;
-    }
-
-    /**
-     * Populates sample events for demonstration and testing purposes.
-     */
-    private void populateSampleEvents() {
-        Date start1 = dateOf(2025, Calendar.NOVEMBER, 15, 19, 30);
-        Date end1 = dateOf(2025, Calendar.NOVEMBER, 15, 21, 30);
-        data.add(new Event(
-                "evt-demon-slayer-2025-11-15",
-                "Demon Slayer: Infinity Castle – The Final Battle Begins",
-                "Enter the Infinity Castle — the ever-shifting fortress where Tanjiro Kamado and the Hashira face their greatest challenge yet.",
-                "Edmonton Cineplex Westmount",
-                "Anime Alberta",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/anime.webp", start1, end1));
-
-        Date start2 = dateOf(2025, Calendar.DECEMBER, 2, 18, 0);
-        Date end2 = dateOf(2025, Calendar.DECEMBER, 2, 20, 0);
-        data.add(new Event(
-                "evt-city-league-hockey-night-2025-12-02",
-                "City League Hockey Night",
-                "Weekly rec league double-header.",
-                "Terwillegar Rec Centre",
-                "YEG Sports",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/hockey.webp", start2, end2));
-
-        Date start3 = dateOf(2025, Calendar.DECEMBER, 12, 17, 0);
-        Date end3 = dateOf(2025, Calendar.DECEMBER, 12, 19, 0);
-        data.add(new Event(
-                "evt-winter-dance-showcase-2025-12-12",
-                "Winter Dance Showcase",
-                "Contemporary + hip-hop student performances.",
-                "U of A Timms Centre",
-                "Dance Society",
-                "https://storage.googleapis.com/cmput-301-stable-21008.firebasestorage.app/dance.jpg", start3, end3));
-    }
-
-    /**
-     * Simulates user participation in events for testing purposes.
-     */
-    private void simulateUserEventParticipation() {
-        currentUser.markJoined("evt-demon-slayer-2025-11-15");
-        currentUser.getRegisteredEvents().put("evt-demon-slayer-2025-11-15", "Accepted");
-        currentUser.markJoined("evt-city-league-hockey-night-2025-12-02");
-        currentUser.getRegisteredEvents().put("evt-city-league-hockey-night-2025-12-02", "Notified");
-        currentUser.getJoinedEventIds().add("evt-winter-dance-showcase-2025-12-12");
-        saveUser(currentUser);
-
-        // TESTING END
-
-        adapter = new MyAdapter(data, (item, position) -> {
-            Intent intent = new Intent(MainActivity.this, EventJoinAndLeave.class);
-            intent.putExtra("id", item.getId());
-            intent.putExtra("name", item.getName());
-            intent.putExtra("description", item.getDescription());
-            intent.putExtra("dateStart", item.getFormattedStartDate());
-            intent.putExtra("timeStart", item.getFormattedStartTime());
-            intent.putExtra("dateEnd", item.getFormattedEndDate());
-            intent.putExtra("timeEnd", item.getFormattedEndTime());
-            intent.putExtra("location", item.getLocation());
-            intent.putExtra("organizer", item.getOrganizer());
-            intent.putExtra("image", item.getImage());
-            intent.putExtra("waitlistMax", item.getWaitlistMax());
-            startActivity(intent);
-        });
-
-        // recyclerView.setAdapter(adapter);
-
-        searchView = findViewById(R.id.searchView);
-        searchView.clearFocus();
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override public boolean onQueryTextSubmit(String query) { return false; }
-            @Override public boolean onQueryTextChange(String newText) {
-                filterList(newText);
-                return true;
-            }
-        });
-    }
-
-    /**
-     * Requests and saves the FCM token for this device.
-     * Should be called when the app starts or when user logs in
-     * */
-    private void initializeFCMToken() {
-        FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        return;
-                    }
-
-                    // Get new FCM registration token
-                    String token = task.getResult();
-
-                    // Save to Firestore
-                    saveFCMTokenToFirestore(token);
-                });
-    }
-
-    /**
      * Saves the FCM token to the current user's document in Firestore.
      * */
     private void saveFCMTokenToFirestore(String token) {
@@ -568,5 +440,59 @@ public class MainActivity extends AppCompatActivity {
                                 }}, com.google.firebase.firestore.SetOptions.merge());
                     });
         }
+    }
+
+
+    /**
+     * Check to see if the user has notifications enabled
+     * If not, request permission
+     * If yes, get device token
+     * Source: https://www.youtube.com/watch?v=r5DeECeorAo
+     * */
+    public void requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED) {
+                //Permission is granted
+                getDeviceToken();
+            }
+            else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // You can explain user that why do you need permission by showing Toast Message
+            }
+            else {
+                // Request for Permission
+                resultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+        else {
+            // Get Device Token from Firebase
+            getDeviceToken();
+        }
+    }
+
+    /**
+     * Get the token from Firebase
+     * If successful, save to Firestore
+     * If not, try again
+     * Source: https://www.youtube.com/watch?v=r5DeECeorAo
+     * */
+    public void getDeviceToken() {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(new OnCompleteListener<String>() {
+            @Override
+            public void onComplete(@NonNull Task<String> task) {
+                if (!task.isSuccessful()) {
+                    Log.e("FirebaseLogs", "Fetching Token Failed" + task.getException());
+                    return;
+                }
+
+                // Get Device Token
+                String token = task.getResult();
+                Log.v("FireBaseLogs", "Device Token: " + token);
+
+                // Save the token to Firestore
+                saveFCMTokenToFirestore(token);
+            }
+
+        });
     }
 }
