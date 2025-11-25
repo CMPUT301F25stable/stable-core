@@ -1,8 +1,10 @@
 package com.example.eventlottery.view;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -13,6 +15,8 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -27,8 +31,12 @@ import com.example.eventlottery.model.QRCode;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The {@code OrganizerPanel} class represents the main interface for organizers.
@@ -62,8 +70,8 @@ public class OrganizerPanel extends AppCompatActivity {
     /** The button used to view the final list. */
     private Button viewFinalList;
 
-    /** The button used to view an event's QR code. */
-    private Button viewQRCode;
+    /** The button used to download an event's QR code. */
+    private Button downloadQRCode;
 
     /** The button used to view where entrants have joined */
     private Button map;
@@ -73,6 +81,8 @@ public class OrganizerPanel extends AppCompatActivity {
 
     /** The {@link Event} currently selected by the organizer. */
     private Event selectedEvent;
+
+    private QRCode selectedEventQR;
 
     /** The adapter used to bind event data to the {@link ListView}. */
     private EventAdapter adapter;
@@ -113,7 +123,7 @@ public class OrganizerPanel extends AppCompatActivity {
         editEvent = findViewById(R.id.editEventButton);
         createEvent = findViewById(R.id.createEventButton);
         viewFinalList = findViewById(R.id.view_finalized_list_button);
-        viewQRCode = findViewById(R.id.viewQRCode);
+        downloadQRCode = findViewById(R.id.downloadQRCode);
         map = findViewById(R.id.mapButton);
         setClickListeners();
 
@@ -360,16 +370,34 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
-        viewQRCode.setOnClickListener(v -> {
+        downloadQRCode.setOnClickListener(v -> {
             if (selectedEventIndex != -1) {
                 selectedEvent = data.get(selectedEventIndex);
                 String eventId = selectedEvent.getId();
                 String eventName = selectedEvent.getName();
+                boolean success = false;
 
-                Bitmap qrCode = QRCode.generate(eventId);
-                if (qrCode != null) {
-                    QRDialog qrDialog = QRDialog.newInstance(eventId, eventName, qrCode);
-                    qrDialog.show(getSupportFragmentManager(), "QRDialog");
+                if (selectedEventQR == null) {
+                    selectedEventQR = new QRCode(eventId);
+                    selectedEventQR.generateQRCode();
+                }
+
+                if (!Objects.equals(selectedEventQR.getEventId(), eventId)) {
+                    selectedEventQR = new QRCode(eventId);
+                    success = selectedEventQR.generateQRCode();
+                } else {
+                    success = true;
+                }
+
+                // Reference: https://developer.android.com/training/data-storage/shared/documents-files#create-file
+                if (success) {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/png");
+                    intent.putExtra(Intent.EXTRA_TITLE, eventName.concat(" QR Code.png"));
+                    downloadLauncher.launch(intent);
+                } else {
+                    Toast.makeText(this, "Failed to download the event QR Code. Please try again.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -385,5 +413,37 @@ public class OrganizerPanel extends AppCompatActivity {
 
         // Pop the back stack to return to the event list
         getSupportFragmentManager().popBackStack();
+    }
+
+    /* Reference: https://developer.android.com/training/data-storage/shared/documents-files#perform-operations */
+    ActivityResultLauncher<Intent> downloadLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        if (result.getResultCode() == Activity.RESULT_OK) {
+            Intent data = result.getData();
+            if (data != null) {
+                if (data.getData() != null) {
+                    downloadQRCode(data.getData());
+                }
+            }
+        }
+    });
+
+    /* Reference: https://stackoverflow.com/a/3013625 */
+    private void downloadQRCode(Uri uri) {
+        Bitmap qrCode = selectedEventQR.getQrCode();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        executor.execute(() -> {
+            try {
+                OutputStream outputStream = getContentResolver().openOutputStream(uri);
+
+                if (outputStream != null) {
+                    qrCode.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                    outputStream.close();
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        executor.close();
     }
 }

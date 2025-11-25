@@ -72,10 +72,10 @@
             android:theme="@style/CustomSwitch" />
 
         <Button
-            android:id="@+id/viewQRCode"
+            android:id="@+id/downloadQRCode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="View QR Code"
+            android:text="Download QR Code"
             android:textSize="14sp"
             android:textStyle="bold"
             android:backgroundTint="@color/white"
