@@ -44,7 +44,7 @@ public class User implements Serializable {
     private boolean creationBan = false;
     private boolean isAdmin;
     /** A boolean for if a user has notifications turn on or off */
-    private boolean notifications;
+    private boolean notifications = true;
 
     /** Default empty constructor required by Firestore. */
     public User() {}
@@ -87,6 +87,7 @@ public class User implements Serializable {
         this.waitlistedEvents = new ArrayList<>();
         this.registeredEvents = new HashMap<>();
         this.createdEvents = new ArrayList<>();
+        this.notifications = true;
     }
 
 
