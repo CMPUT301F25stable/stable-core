@@ -113,7 +113,7 @@ public class InfoActivity extends AppCompatActivity {
             return;
         }
 
-        //cleanupTestData(); // Clean up data function
+        cleanupTestData(); // Clean up data function
 
         // Retrieve user from Firestore FIRST
         db.collection("users-p4").document(userId)
@@ -300,11 +300,22 @@ public class InfoActivity extends AppCompatActivity {
                         return;
                     }
 
+                    // Track the cancelled entrant
+                    Log.d("InfoActivity", "Adding user to cancelled entrants list");
+                    db.collection("event-p4").document(eventId)
+                            .update("cancelledEntrants", com.google.firebase.firestore.FieldValue.arrayUnion(userId))
+                            .addOnSuccessListener(aVoid2 -> {
+                                Log.d("InfoActivity", "User added to cancelled list");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.w("InfoActivity", "Failed to add to cancelled list");
+                            });
+
                     // User WAS a winner - need to find replacement from waitlist
                     android.util.Log.d("InfoActivity", "User was a winner, searching for replacement...");
 
                     // Step 2: Retrieve event document to access lottery system data
-                    db.collection("event").document(eventId)
+                    db.collection("event-p4").document(eventId)
                             .get()
                             .addOnSuccessListener(eventDoc -> {
                                 if (!eventDoc.exists()) {
@@ -364,7 +375,7 @@ public class InfoActivity extends AppCompatActivity {
                                 Map<String, Object> eventUpdates = new HashMap<>();
                                 eventUpdates.put("waitlist.waitlistedUsers", waitlistedUsers);
 
-                                db.collection("event").document(eventId)
+                                db.collection("event-p4").document(eventId)
                                         .update(eventUpdates)
                                         .addOnSuccessListener(aVoid2 -> {
                                             android.util.Log.d("InfoActivity", "✅ Waitlist updated successfully");
@@ -373,13 +384,13 @@ public class InfoActivity extends AppCompatActivity {
                                             Map<String, Object> replacementUpdates = new HashMap<>();
                                             replacementUpdates.put("registeredEvents." + eventId, "Notified");
 
-                                            db.collection("users").document(replacementUserId)
+                                            db.collection("users-p4").document(replacementUserId)
                                                     .update(replacementUpdates)
                                                     .addOnSuccessListener(aVoid3 -> {
                                                         android.util.Log.d("InfoActivity", "✅ Replacement user notified (now a winner)");
 
                                                         // Step 6: Remove event from replacement's waitlistedEvents array
-                                                        db.collection("users").document(replacementUserId)
+                                                        db.collection("users-p4").document(replacementUserId)
                                                                 .update("waitlistedEvents",
                                                                         com.google.firebase.firestore.FieldValue.arrayRemove(eventId))
                                                                 .addOnSuccessListener(aVoid4 -> {
@@ -591,7 +602,7 @@ public class InfoActivity extends AppCompatActivity {
      * Automatically sets up test data when activity loads
      */
     private void setupTestData() {
-        final String eventId = "4b89c209-33e7-4d2f-8b5f-2b3b0a569784"; // Your Demon Slayer event
+        final String eventId = "d52b3c5a-203e-455c-b075-f495f4cb03fb";
 
         if (currentUser == null) {
             android.util.Log.e("TestSetup", "Current user is null, skipping test setup");
@@ -606,7 +617,7 @@ public class InfoActivity extends AppCompatActivity {
         Map<String, Object> makeYouWinner = new HashMap<>();
         makeYouWinner.put("registeredEvents." + eventId, "Notified");
 
-        db.collection("users").document(yourUserId)
+        db.collection("users-p4").document(yourUserId)
                 .update(makeYouWinner)
                 .addOnSuccessListener(aVoid -> {
                     android.util.Log.d("TestSetup", "✅ You are now a winner!");
@@ -652,7 +663,7 @@ public class InfoActivity extends AppCompatActivity {
         // Empty registered events map
         userData.put("registeredEvents", new HashMap<String, String>());
 
-        db.collection("users").document(userId)
+        db.collection("users-p4").document(userId)
                 .set(userData)
                 .addOnSuccessListener(aVoid -> {
                     android.util.Log.d("TestSetup", "✅ Created user: " + name);
@@ -687,7 +698,7 @@ public class InfoActivity extends AppCompatActivity {
         Map<String, Object> waitlistUpdate = new HashMap<>();
         waitlistUpdate.put("waitlist.waitlistedUsers", waitlistUsers);
 
-        db.collection("event").document(eventId)
+        db.collection("event-p4").document(eventId)
                 .update(waitlistUpdate)
                 .addOnSuccessListener(aVoid -> {
                     android.util.Log.d("TestSetup", "✅ TEST DATA READY! You can now test decline.");
@@ -708,16 +719,16 @@ public class InfoActivity extends AppCompatActivity {
      * To use: Temporarily call cleanupTestData() in onCreate() instead of setupTestData()
      */
     private void cleanupTestData() {
-        final String eventId = "4b89c209-33e7-4d2f-8b5f-2b3b0a569784";
+        final String eventId = "d52b3c5a-203e-455c-b075-f495f4cb03fb";
 
         android.util.Log.d("TestSetup", "Cleaning up test data...");
 
         // Remove test users from Firebase
-        db.collection("users").document("testUser1").delete()
+        db.collection("users-p4").document("testUser1").delete()
                 .addOnSuccessListener(aVoid -> android.util.Log.d("TestSetup", "Deleted testUser1"))
                 .addOnFailureListener(e -> android.util.Log.e("TestSetup", "Failed to delete testUser1"));
 
-        db.collection("users").document("testUser2").delete()
+        db.collection("users-p4").document("testUser2").delete()
                 .addOnSuccessListener(aVoid -> android.util.Log.d("TestSetup", "Deleted testUser2"))
                 .addOnFailureListener(e -> android.util.Log.e("TestSetup", "Failed to delete testUser2"));
 
@@ -725,7 +736,7 @@ public class InfoActivity extends AppCompatActivity {
         Map<String, Object> clearWaitlist = new HashMap<>();
         clearWaitlist.put("waitlist.waitlistedUsers", new ArrayList<>());
 
-        db.collection("event").document(eventId)
+        db.collection("event-p4").document(eventId)
                 .update(clearWaitlist)
                 .addOnSuccessListener(aVoid -> {
                     android.util.Log.d("TestSetup", "✅ Test data cleaned up!");

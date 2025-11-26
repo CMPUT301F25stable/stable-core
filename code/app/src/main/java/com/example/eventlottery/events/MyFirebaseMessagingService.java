@@ -96,7 +96,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                             .setPriority(NotificationCompat.PRIORITY_HIGH)
                             .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                            .setSound(defaultSoundUri)  // ADD THIS LINE
+                            .setSound(defaultSoundUri)
                             .setVibrate(new long[]{0, 500, 250, 500})
                             .setContentIntent(pendingIntent);
 

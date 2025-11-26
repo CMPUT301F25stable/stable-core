@@ -37,8 +37,6 @@ public class NotificationSystem {
     private static final String TAG = "NotificationService";
     private static final String CHANNEL_ID = "lottery_winner_notifications";
     private static final String CHANNEL_NAME = "Lottery Winner Notifications";
-
-    // TODO: Replace with your actual Firebase project ID
     private static final String PROJECT_ID = "cmput-301-stable-21008";
     private static final String FCM_V1_URL = "https://fcm.googleapis.com/v1/projects/" + PROJECT_ID + "/messages:send";
 
@@ -211,6 +209,12 @@ public class NotificationSystem {
             return;
         }
 
+        // Check to see if notifications are disabled, if so, do not send
+        if (!user.getNotifications()) {
+            Log.d(TAG, "User " + user.getName() + " has notifications disabled");
+            return;
+        }
+
         // Run network operation on background thread
         executorService.execute(() -> {
             try {
@@ -334,6 +338,32 @@ public class NotificationSystem {
             notificationManager.createNotificationChannel(channel);
             Log.d(TAG, "Notification channel created");
         }
+    }
+
+    /**
+     * Sends notification to cancelled entrants with custom message.
+     * Works with FCM tokens from users-p4 collection.
+     * Add this method to your NotificationSystem class.
+     */
+    public void notifyCancelledEntrants(List<User> entrants, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending cancelled notifications to " + entrants.size() + " entrants");
+
+        for (User entrant : entrants) {
+            notifyCancelledEntrant(entrant, eventName, eventId, message);
+        }
+    }
+
+    /**
+     * Sends an individual notification to a cancelled entrant.
+     * Add this method to your NotificationSystem class.
+     */
+    private void notifyCancelledEntrant(User entrant, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending cancelled notification to: " + entrant.getName());
+
+        String title = "Event Update 📌";
+        String body = message;
+
+        sendFCMNotification(entrant, title, body, "cancelled", eventName, eventId);
     }
 
     /**

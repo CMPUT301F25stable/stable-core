@@ -243,6 +243,7 @@ public class OrganizerPanel extends AppCompatActivity {
 
             int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
             int selectedCount = selectedEvent.getSelectedIds().size();
+            int cancelledCount = selectedEvent.getCancelledEntrants().size();
             chosenEntrantsBtn.setVisibility(View.VISIBLE);
             cancelledEntrantsBtn.setVisibility(View.VISIBLE);
 
@@ -254,7 +255,8 @@ public class OrganizerPanel extends AppCompatActivity {
                     selectedEvent.getId(),
                     selectedEvent.getName(),
                     waitlistCount,
-                    selectedCount
+                    selectedCount,
+                    cancelledCount
             );
 
             getSupportFragmentManager().beginTransaction()
