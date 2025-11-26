@@ -26,7 +26,9 @@ import com.example.eventlottery.users.User;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,8 +39,8 @@ import javax.annotation.Nullable;
 
 
 /**
- * Fragment that displays detailed information about a specific event for organizers.
  * Shows counts and allows notifications for waiting list, selected, and cancelled entrants.
+ * @author Jensen Lee
  */
 public class OrganizerEventInfoFragment extends Fragment {
     // constant variables
@@ -72,6 +74,7 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     // Firebase
     private FirebaseFirestore db;
+    private ListenerRegistration eventListener;
 
     /**
      * Method to create a new instance of this fragment with event data
@@ -158,6 +161,74 @@ public class OrganizerEventInfoFragment extends Fragment {
 
         // Set up click listeners for user interactions
         setClickListeners();
+
+        // Set up real-time listener for count updates
+        setupRealtimeListener();
+    }
+
+    /**
+     * Sets up a real-time listener for event data changes
+     */
+    private void setupRealtimeListener() {
+        if (eventId == null) return;
+
+        eventListener = db.collection("event-p4")
+                .document(eventId)
+                .addSnapshotListener((documentSnapshot, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error listening to event updates", error);
+                        return;
+                    }
+
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        updateCountsFromSnapshot(documentSnapshot);
+                    }
+                });
+    }
+
+    /**
+     * Updates counts from a Firestore document snapshot
+     */
+    private void updateCountsFromSnapshot(DocumentSnapshot snapshot) {
+        // Get waitlist count
+        Map<String, Object> waitlist = (Map<String, Object>) snapshot.get("waitlist");
+        if (waitlist != null) {
+            List<Map<String, Object>> waitlistedUsers =
+                    (List<Map<String, Object>>) waitlist.get("waitlistedUsers");
+            waitlistCount = (waitlistedUsers != null) ? waitlistedUsers.size() : 0;
+        } else {
+            waitlistCount = 0;
+        }
+
+        // Get selected count
+        List<String> selectedIds = (List<String>) snapshot.get("selectedIds");
+        selectedCount = (selectedIds != null) ? selectedIds.size() : 0;
+
+        // Get cancelled count
+        List<String> cancelledEntrants = (List<String>) snapshot.get("cancelledEntrants");
+        cancelledCount = (cancelledEntrants != null) ? cancelledEntrants.size() : 0;
+
+        // Update UI
+        if (waitingCountText != null) {
+            waitingCountText.setText(String.valueOf(waitlistCount));
+        }
+        if (selectedCountText != null) {
+            selectedCountText.setText(String.valueOf(selectedCount));
+        }
+        if (cancelledCountText != null) {
+            cancelledCountText.setText(String.valueOf(cancelledCount));
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        // Remove the Firestore listener when the view is destroyed
+        if (eventListener != null) {
+            eventListener.remove();
+            eventListener = null;
+        }
     }
 
     /**
@@ -610,6 +681,8 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Helper method to send notifications to waitlisted users with FCM tokens.
+     * @param users The list of users to send notifications to
+     * @param message The notification message to send
      */
     private void sendNotificationsToWaitlistedUsers(List<User> users, String message) {
         if (users.isEmpty()) {
@@ -640,6 +713,8 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Helper method to send notifications to selected users with FCM tokens.
+     * @param users The list of users to send notifications to
+     * @param message The notification message to send
      */
     private void sendNotificationsToSelectedUsers(List<User> users, String message) {
         if (users.isEmpty()) {
@@ -669,6 +744,8 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Helper method to send notifications to cancelled users with FCM tokens.
+     * @param users The list of users to send notifications to
+     * @param message The notification message to send
      */
     private void sendNotificationsToCancelledUsers(List<User> users, String message) {
         if (users.isEmpty()) {
@@ -694,24 +771,6 @@ public class OrganizerEventInfoFragment extends Fragment {
                 Toast.LENGTH_LONG).show();
 
         Log.d(TAG, "Successfully sent notifications to " + users.size() + " cancelled entrants");
-    }
-
-    /**
-     * Updates the counts displayed in the fragment for all three entrant categories.
-     * This method can be called after the fragment is created to refresh the displayed
-     * numbers without recreating the entire fragment.
-     *
-     * @param waitlist Number of users currently on the waiting list
-     */
-    public void updateCounts(int waitlist) {
-        // Update the stored count values
-        this.waitlistCount = waitlist;
-
-        // Update the UI only if the views have been created
-        // This null check prevents crashes if called before onViewCreated()
-        if (waitingCountText != null) {
-            waitingCountText.setText(String.valueOf(waitlist));
-        }
     }
 
     /**

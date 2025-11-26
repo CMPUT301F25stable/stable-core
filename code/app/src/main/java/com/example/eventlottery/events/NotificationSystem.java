@@ -34,7 +34,11 @@ import okhttp3.Response;
  * Works with FCM tokens stored in users-p4 collection by MainActivity.
  */
 public class NotificationSystem {
+
+    /** TAG: Used for debugging */
     private static final String TAG = "NotificationService";
+
+    /** Other Strings */
     private static final String CHANNEL_ID = "lottery_winner_notifications";
     private static final String CHANNEL_NAME = "Lottery Winner Notifications";
     private static final String PROJECT_ID = "cmput-301-stable-21008";
@@ -43,12 +47,18 @@ public class NotificationSystem {
     // Service account JSON file name in assets folder
     private static final String SERVICE_ACCOUNT_FILE = "service-account.json";
 
+
+    // Other
     private Context context;
     private OkHttpClient httpClient;
     private GoogleCredentials googleCredentials;
     private ExecutorService executorService;
     private Handler mainHandler;
 
+    /**
+     * Constructor for NotificationSystem.
+     * @param context The application context.
+     * */
     public NotificationSystem(Context context) {
         this.context = context;
         createNotificationChannel();
@@ -149,6 +159,10 @@ public class NotificationSystem {
     /**
      * Sends notification to waitlisted entrants with custom message.
      * Works with FCM tokens from users-p4 collection.
+     * @param entrants List of users to send notifications to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants");
@@ -160,6 +174,11 @@ public class NotificationSystem {
 
     /**
      * Sends an individual notification to a waitlisted entrant.
+     * Works with FCM tokens from users-p4 collection.
+     * @param entrant User to send notification to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     private void notifyWaitlistedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending waitlist notification to: " + entrant.getName());
@@ -173,6 +192,10 @@ public class NotificationSystem {
     /**
      * Sends notification to selected entrants with custom message.
      * Works with FCM tokens from users-p4 collection.
+     * @param entrants List of users to send notifications to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     public void notifySelectedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending selected notifications to " + entrants.size() + " entrants");
@@ -184,6 +207,11 @@ public class NotificationSystem {
 
     /**
      * Sends an individual notification to a selected entrant.
+     * Works with FCM tokens from users-p4 collection.
+     * @param entrant User to send notification to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     private void notifySelectedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending selected notification to: " + entrant.getName());
@@ -198,6 +226,12 @@ public class NotificationSystem {
      * Core method to send FCM push notifications using V1 API.
      * This now runs on a background thread to avoid NetworkOnMainThreadException.
      * Uses FCM tokens stored by MainActivity in users-p4 collection.
+     * @param user User to send notification to.
+     * @param title Title of the notification.
+     * @param body Body of the notification.
+     * @param type Type of notification (e.g., selected, waitlist, invitation).
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
      */
     private void sendFCMNotification(User user, String title, String body,
                                      String type, String eventName, String eventId) {
@@ -245,8 +279,6 @@ public class NotificationSystem {
                 }
                 data.put("userName", user.getName());
 
-                // Android-specific config
-                // Note: "priority" belongs at the android level, NOT in android.notification
                 androidNotification.put("sound", "default");
                 androidNotification.put("channel_id", CHANNEL_ID);
 
@@ -280,7 +312,7 @@ public class NotificationSystem {
                 httpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        Log.e(TAG, "✗ Failed to send FCM notification to " + user.getName(), e);
+                        Log.e(TAG, "Failed to send FCM notification to " + user.getName(), e);
                     }
 
                     @Override
@@ -288,23 +320,17 @@ public class NotificationSystem {
                         String responseBody = response.body() != null ? response.body().string() : "";
 
                         if (response.isSuccessful()) {
-                            Log.d(TAG, "✓ FCM notification sent successfully to " + user.getName());
+                            Log.d(TAG, "FCM notification sent successfully to " + user.getName());
                             Log.d(TAG, "Response: " + responseBody);
                         } else {
-                            Log.e(TAG, "✗ FCM notification failed for " + user.getName());
+                            Log.e(TAG, "FCM notification failed for " + user.getName());
                             Log.e(TAG, "Response code: " + response.code());
                             Log.e(TAG, "Response: " + responseBody);
 
                             // Common error messages
-                            if (response.code() == 404) {
+                            if (response.code() <= 404 || response.code() >= 400) {
                                 Log.e(TAG, "Error: Invalid FCM token or token has been unregistered");
                                 Log.e(TAG, "User may need to re-enable notifications");
-                            } else if (response.code() == 401) {
-                                Log.e(TAG, "Error: Invalid access token - check credentials");
-                            } else if (response.code() == 403) {
-                                Log.e(TAG, "Error: Service account doesn't have permission");
-                            } else if (response.code() == 400) {
-                                Log.e(TAG, "Error: Invalid message format - check JSON structure");
                             }
                         }
                     }
@@ -344,6 +370,10 @@ public class NotificationSystem {
      * Sends notification to cancelled entrants with custom message.
      * Works with FCM tokens from users-p4 collection.
      * Add this method to your NotificationSystem class.
+     * @param entrants List of users to send notifications to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     public void notifyCancelledEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending cancelled notifications to " + entrants.size() + " entrants");
@@ -356,6 +386,10 @@ public class NotificationSystem {
     /**
      * Sends an individual notification to a cancelled entrant.
      * Add this method to your NotificationSystem class.
+     * @param entrant User to send notification to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     private void notifyCancelledEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending cancelled notification to: " + entrant.getName());

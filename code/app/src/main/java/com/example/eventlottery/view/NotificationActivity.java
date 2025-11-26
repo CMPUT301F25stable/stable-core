@@ -13,6 +13,10 @@ import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * The class to turn on and off from admin and notifications for users
+ * @author Jensen Lee
+ * */
 public class NotificationActivity extends AppCompatActivity {
 
     // Variables
@@ -26,7 +30,12 @@ public class NotificationActivity extends AppCompatActivity {
     private Switch notificationSwitch;
     private FirebaseFirestore db;
 
-
+    /**
+     * Lifecycle method called when the activity is created.
+     * Initializes Firestore, DBConnector, and UI elements
+     * Setups the click listeners
+     * @param savedInstanceState Bundle containing saved instance state, if any.
+     * */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +106,7 @@ public class NotificationActivity extends AppCompatActivity {
 
     /**
      * Update the notification preference in Firestore
+     * @param isEnabled True if notifications are enabled, false otherwise
      * */
     private void updateNotificationPreferenceInFirestore(boolean isEnabled) {
         if (userId == null || userId.isEmpty()) {
