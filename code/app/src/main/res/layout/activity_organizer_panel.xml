@@ -47,7 +47,7 @@
         android:paddingBottom="8dp"
         android:background="#252525"
         android:elevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/fragmentContainerView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -165,36 +165,55 @@
                 android:stateListAnimator="@null" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/viewChosenEntrantsButton"
+        <!-- Chosen and Cancelled Entrants Buttons Side by Side -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="80dp"
-            android:layout_marginBottom="12dp"
-            android:text="Chosen Entrants"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:backgroundTint="#3A3A3A"
-            android:textColor="#FFFFFF"
-            android:elevation="3dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
 
-            android:stateListAnimator="@null" />
+            <Button
+                android:id="@+id/viewChosenEntrantsButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="Chosen Entrants"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3A3A3A"
+                android:textColor="#FFFFFF"
+                android:elevation="3dp"
+                android:stateListAnimator="@null" />
 
-
-        <Button
-            android:id="@+id/viewCancelledEntrantsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="80dp"
-            android:layout_marginBottom="12dp"
-            android:text="Cancelled Entrants"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:backgroundTint="#3A3A3A"
-            android:textColor="#FFFFFF"
-            android:elevation="3dp"
-            android:stateListAnimator="@null" />
+            <Button
+                android:id="@+id/viewCancelledEntrantsButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Cancelled Entrants"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3A3A3A"
+                android:textColor="#FFFFFF"
+                android:elevation="3dp"
+                android:stateListAnimator="@null" />
+        </LinearLayout>
 
     </LinearLayout>
+
+    <!-- Bottom Taskbar -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainerView"
+        android:name="com.example.eventlottery.view.TaskbarFragment"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout="@layout/fragment_home_taskbar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

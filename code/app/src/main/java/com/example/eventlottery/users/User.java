@@ -43,6 +43,8 @@ public class User implements Serializable {
     /** Indicates if the user is banned from creating events. (US 03.07.01) */
     private boolean creationBan = false;
     private boolean isAdmin;
+    /** A boolean for if a user has notifications turn on or off */
+    private boolean notifications;
 
     /** Default empty constructor required by Firestore. */
     public User() {}
@@ -67,6 +69,7 @@ public class User implements Serializable {
         this.registeredEvents = new HashMap<>();
         this.createdEvents = new ArrayList<>();
         this.isAdmin = false;
+        this.notifications = true;
     }
 
     /**
@@ -160,6 +163,20 @@ public class User implements Serializable {
     /** Setter for isAdmin() */
     public void setAdmin(boolean admin) {
         isAdmin = admin;
+    }
+
+    /**
+     * Getter for notifications
+     * */
+    public boolean getNotifications() {
+        return notifications;
+    }
+
+    /**
+     * Setter for notifications
+     * */
+    public void setNotifications(boolean notifications) {
+        this.notifications = notifications;
     }
 
     // in User.java
