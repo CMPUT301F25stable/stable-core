@@ -60,6 +60,8 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private int selectedEventIndex;
     /** The selected user pressed on */
     private User selectedUser;
+    /** Adapter for user object */
+    private UserAdapter userAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +90,8 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         eventListData = new ArrayList<Event>();
         userList = new ArrayList<User>();
         db = FirebaseFirestore.getInstance();
+        userAdapter = new UserAdapter(AdminPanel.this, userList);
+        userListFragment.setAdapter(userAdapter);
 
         loadProfilesFromFirestore();
 
@@ -193,22 +197,22 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
      * Adds every profile into userList.
      */
     private void loadProfilesFromFirestore() {
-        db.collection("users-p4").get()
-                .addOnSuccessListener(query -> {
-                   userList.clear();
+        db.collection("users-p4")
+                .addSnapshotListener((query, error) -> {
+                    if (error != null) {
+                        return;
+                    }
+                    userList.clear();
 
-                   for (DocumentSnapshot doc : query) {
-                       User user = doc.toObject(User.class);
-                       // If user doesn't exist, go to next user
-                       if (user == null) continue;
-                       // Get waitlisted events (For some reason firebase isn't deserializing it properly so I'm setting it manually - John)
-                       List<String> waitlistedEvents = (List<String>) doc.get("waitlistedEvents");
-                       user.setWaitlistedEventIds(waitlistedEvents);
-                       userList.add(user);
-                   }
-
-                    UserAdapter userAdapter = new UserAdapter(AdminPanel.this, userList);
-                    userListFragment.setAdapter(userAdapter);
+                    for (DocumentSnapshot doc : query) {
+                        User user = doc.toObject(User.class);
+                        // If user doesn't exist, go to next user
+                        if (user == null) continue;
+                        // Get waitlisted events (For some reason firebase isn't deserializing it properly so I'm setting it manually - John)
+                        List<String> waitlistedEvents = (List<String>) doc.get("waitlistedEvents");
+                        user.setWaitlistedEventIds(waitlistedEvents);
+                        userList.add(user);
+                    }
                     userAdapter.notifyDataSetChanged();
                 });
     }
@@ -257,16 +261,12 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
      * @param user: the user to be deleted
      */
     private void deleteSelectedUser(User user) {
-        UserAdapter userAdapter = new UserAdapter(AdminPanel.this, userList);
-        userListFragment.setAdapter(userAdapter);
-
         AlertDialog.Builder builder = new AlertDialog.Builder(AdminPanel.this);
         builder.setTitle("This Will Delete the account of " + user.getName())
                 .setMessage("Are You Sure?")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", (dialogInterface, i) -> {
                     userDatabase.deleteUserAcc(user.getId(), AdminPanel.this::deleteUser);
-                    userAdapter.deleteUser(user);
                 })
                 .show();
     }
