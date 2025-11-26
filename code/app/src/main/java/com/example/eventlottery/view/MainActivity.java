@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             intent.putExtra("registrationEnd", item.getEndTime());      // Unformatted end date.
             intent.putExtra("registrationStart", item.getStartTime());  // Unformatted start date.
             intent.putExtra("geolocation", item.getGeolocation());
+            intent.putExtra("waitlistMax", item.getWaitlistMax());
             startActivity(intent);
         });
 
