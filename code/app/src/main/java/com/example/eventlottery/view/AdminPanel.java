@@ -162,13 +162,16 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     }
 
     /**
-     * Adds every event from firestore into eventListData.
+     * Adds every event from firestore into eventListData. Loads again if any event was changed
      */
     private void loadEventsFromFirestore() {
         db.collection("event-p4")
                 .orderBy("startTime")
-                .get()
-                .addOnSuccessListener(query -> {
+                .addSnapshotListener((query, error) -> {
+                    if (error != null) {
+                        return;
+                    }
+
                     eventListData.clear();
 
                     for (DocumentSnapshot doc : query) {
@@ -183,10 +186,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                     }
 
                     eventAdapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                });
     }
 
     /**
@@ -250,10 +250,6 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
 
         // 3. Delete event from "event-p4" in firebase
         db.collection("event-p4").document(eventId).delete();
-
-        // 4. Remove locally (to stop displaying)
-        eventListData.remove(selectedEventIndex);
-        eventAdapter.notifyDataSetChanged();
     }
       
     /*
