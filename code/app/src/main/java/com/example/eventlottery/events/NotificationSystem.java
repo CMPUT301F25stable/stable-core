@@ -209,6 +209,12 @@ public class NotificationSystem {
             return;
         }
 
+        // Check to see if notifications are disabled, if so, do not send
+        if (!user.getNotifications()) {
+            Log.d(TAG, "User " + user.getName() + " has notifications disabled");
+            return;
+        }
+
         // Run network operation on background thread
         executorService.execute(() -> {
             try {
