@@ -372,7 +372,7 @@ public class OrganizerPanel extends AppCompatActivity {
 
                 createDialog.setOnEventCreatedListener(event -> {
                     organizer.createEvent(event.getId());
-                    organizerEventDatabase.insert(event);
+                    organizerEventDatabase.insert(data, adapter, event);
                     userDatabase.updateOrganizerCreatedEvents(organizer);
                 });
 

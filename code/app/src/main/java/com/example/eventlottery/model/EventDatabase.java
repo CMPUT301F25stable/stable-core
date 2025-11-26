@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Provides an interface for interacting with the Firestore database
@@ -71,12 +72,40 @@ public class EventDatabase {
 
     /**
      * Inserts an event into the database.
-     * Note: This is basically identical to lab 5 code.
+     * Adds a snapshot listener to the given event, so it receives real-time updates.
      * @param event The event to insert.
      */
-    public void insert(Event event) {
+    public void insert(ArrayList<Event> data, EventAdapter adapter, Event event) {
+        // Set in firestore
         DocumentReference docRef = eventsRef.document(event.getId());
-        docRef.set(event);
+        docRef.set(event)
+                .addOnSuccessListener(aVoid -> {
+                    // The snapshot for every newly inserted event
+                    docRef.addSnapshotListener((snapshot, error) -> {
+                        // Check if null or snapshot doesn't exist
+                        if (error != null) return;
+                        if (snapshot == null || !snapshot.exists()) return;
+
+                        // Check null case
+                        Event eventWithUpdates = snapshot.toObject(Event.class);
+                        if (eventWithUpdates == null) return;
+
+                        // Check if event already exists in local list (replace it if so)
+                        boolean exists = false;
+                        for (int i = 0; i < data.size(); i++) {
+                            if (data.get(i).getId().equals(eventWithUpdates.getId())) {
+                                data.set(i, eventWithUpdates);
+                                exists = true;
+                            }
+                        }
+
+                        // If it isn't, add it
+                        if (!exists) {
+                            data.add(eventWithUpdates);
+                        }
+                        adapter.notifyDataSetChanged();
+                    });
+                });
     }
 
     /**
@@ -97,7 +126,7 @@ public class EventDatabase {
             return;
         }
 
-        db.collection("event-p4")
+        eventsRef
                 .addSnapshotListener((query, error) -> {
                     // Check if there's an error
                     if (error != null) {
