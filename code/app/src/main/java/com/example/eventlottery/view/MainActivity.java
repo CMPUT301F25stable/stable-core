@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.fragmentContainerView, taskbar)
-                            .commit();
+                            .commitAllowingStateLoss();
                 }
             }
             else {
@@ -317,8 +317,15 @@ public class MainActivity extends AppCompatActivity {
     private void loadEventsFromFirestore() {
         db.collection("event-p4")
                 .orderBy("startTime")
-                .get()
-                .addOnSuccessListener(query -> {
+                .addSnapshotListener((query, error) -> {
+                    // Return if there is an error
+                    if (error != null) {
+                        return;
+                    }
+
+                    // Return if no query found
+                    if (query == null) return;
+
                     data.clear();
 
                     for (DocumentSnapshot doc : query) {
@@ -353,10 +360,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         adapter.setFilteredList(new ArrayList<>(data));
                     }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                });
     }
 
     private void applyFilters(List<String> tags, Set<Long> datesMidnight) {

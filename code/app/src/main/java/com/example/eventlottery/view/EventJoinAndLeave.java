@@ -370,11 +370,15 @@ public class EventJoinAndLeave extends AppCompatActivity {
      */
     @SuppressLint("MissingPermission")
     private void getLastLocation() {
-        // Check if permissions are enabled
-        if (!checkPermissions()) {
+        boolean precise = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarse  = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        // Check if permissions are enabled for either precise or coarse location
+        if (!precise && !coarse) {
             requestPermissions();
             return;
         }
+
 
         // Check if location is enabled
         if (!isLocationEnabled()) {
@@ -396,17 +400,6 @@ public class EventJoinAndLeave extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    /**
-     * Checks if the permissions for geolocation are enabled or not.
-     * @return true if they are, false otherwise
-     * Reference: https://www.geeksforgeeks.org/android/how-to-get-user-location-in-android/
-     */
-    private boolean checkPermissions() {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED;
     }
 
     /**
