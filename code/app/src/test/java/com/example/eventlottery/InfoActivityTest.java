@@ -11,13 +11,16 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 
 import static org.junit.Assert.*;
 
 /**
  * Unit tests for InfoActivity
- * Tests business logic for date formatting and status management
+ * Tests business logic for date formatting, status management, and waitlist replacement
  *
  * @author Jensen Lee
  */
@@ -166,9 +169,9 @@ public class InfoActivityTest {
     public void testUserEventStatus_NotRegistered() {
         String status = testUser.getStatusForEvent("nonexistent");
         assertNotNull("Should return a status even for non-existent event", status);
+        assertEquals("Should return 'Not Registered' for non-existent event",
+                "Not Registered", status);
     }
-
-
 
     /**
      * Tests that Event object contains all required non-null fields
@@ -298,6 +301,272 @@ public class InfoActivityTest {
                 1, testUser.getRegisteredEvents().size());
         assertEquals("Status should be updated",
                 "Accepted", testUser.getStatusForEvent("event123"));
+    }
+
+    /**
+     * Tests determining if a user was a winner based on their status
+     * Winners have "Notified" or "Accepted" status
+     */
+    @Test
+    public void testIsWinner_NotifiedStatus() {
+        testUser.getRegisteredEvents().put("event123", "Notified");
+        String status = testUser.getRegisteredEvents().get("event123");
+        boolean isWinner = "Notified".equals(status) || "Accepted".equals(status);
+
+        assertTrue("User with Notified status should be a winner", isWinner);
+    }
+
+    /**
+     * Tests determining if a user was a winner with Accepted status
+     */
+    @Test
+    public void testIsWinner_AcceptedStatus() {
+        testUser.getRegisteredEvents().put("event123", "Accepted");
+        String status = testUser.getRegisteredEvents().get("event123");
+        boolean isWinner = "Notified".equals(status) || "Accepted".equals(status);
+
+        assertTrue("User with Accepted status should be a winner", isWinner);
+    }
+
+    /**
+     * Tests that user with Declined status is not a winner
+     */
+    @Test
+    public void testIsWinner_DeclinedStatus() {
+        testUser.getRegisteredEvents().put("event123", "Declined");
+        String status = testUser.getRegisteredEvents().get("event123");
+        boolean isWinner = "Notified".equals(status) || "Accepted".equals(status);
+
+        assertFalse("User with Declined status should not be a winner", isWinner);
+    }
+
+    /**
+     * Tests that user with no status is not a winner
+     */
+    @Test
+    public void testIsWinner_NoStatus() {
+        String status = testUser.getRegisteredEvents().get("event123");
+        boolean isWinner = "Notified".equals(status) || "Accepted".equals(status);
+
+        assertFalse("User with no status should not be a winner", isWinner);
+    }
+
+    /**
+     * Tests extracting waitlisted users from event document structure
+     * Verifies the nested waitlist.waitlistedUsers structure can be parsed
+     */
+    @Test
+    public void testExtractWaitlistedUsers_FromEventDocument() {
+        // Simulate event document structure
+        Map<String, Object> waitlistMap = new HashMap<>();
+        ArrayList<Map<String, Object>> waitlistedUsers = new ArrayList<>();
+
+        Map<String, Object> user1 = new HashMap<>();
+        user1.put("id", "user1");
+        user1.put("name", "Alice");
+        waitlistedUsers.add(user1);
+
+        Map<String, Object> user2 = new HashMap<>();
+        user2.put("id", "user2");
+        user2.put("name", "Bob");
+        waitlistedUsers.add(user2);
+
+        waitlistMap.put("waitlistedUsers", waitlistedUsers);
+
+        // Extract users
+        ArrayList<Map<String, Object>> extracted =
+                (ArrayList<Map<String, Object>>) waitlistMap.get("waitlistedUsers");
+
+        assertNotNull("Waitlisted users should not be null", extracted);
+        assertEquals("Should have 2 waitlisted users", 2, extracted.size());
+        assertEquals("First user ID should be user1", "user1", extracted.get(0).get("id"));
+        assertEquals("Second user ID should be user2", "user2", extracted.get(1).get("id"));
+    }
+
+    /**
+     * Tests extracting waitlisted users when waitlist is null
+     */
+    @Test
+    public void testExtractWaitlistedUsers_NullWaitlist() {
+        Map<String, Object> waitlistMap = null;
+
+        ArrayList<Map<String, Object>> extracted = null;
+        if (waitlistMap != null) {
+            extracted = (ArrayList<Map<String, Object>>) waitlistMap.get("waitlistedUsers");
+        }
+
+        assertNull("Extracted users should be null when waitlist is null", extracted);
+    }
+
+    /**
+     * Tests selecting random user from waitlist
+     * Verifies random selection returns a valid user from the list
+     */
+    @Test
+    public void testRandomWaitlistSelection() {
+        ArrayList<Map<String, Object>> waitlistedUsers = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            Map<String, Object> user = new HashMap<>();
+            user.put("id", "user" + i);
+            user.put("name", "User " + i);
+            waitlistedUsers.add(user);
+        }
+
+        Random random = new Random(42); // Use seed for reproducible test
+        int randomIndex = random.nextInt(waitlistedUsers.size());
+        Map<String, Object> selectedUser = waitlistedUsers.get(randomIndex);
+
+        assertTrue("Random index should be valid", randomIndex >= 0 && randomIndex < 5);
+        assertNotNull("Selected user should not be null", selectedUser);
+        assertNotNull("Selected user should have an ID", selectedUser.get("id"));
+    }
+
+    /**
+     * Tests removing user from waitlist after selection
+     * Verifies list size decreases and correct user is removed
+     */
+    @Test
+    public void testRemoveUserFromWaitlist() {
+        ArrayList<Map<String, Object>> waitlistedUsers = new ArrayList<>();
+
+        Map<String, Object> user1 = new HashMap<>();
+        user1.put("id", "user1");
+        user1.put("name", "Alice");
+        waitlistedUsers.add(user1);
+
+        Map<String, Object> user2 = new HashMap<>();
+        user2.put("id", "user2");
+        user2.put("name", "Bob");
+        waitlistedUsers.add(user2);
+
+        assertEquals("Should start with 2 users", 2, waitlistedUsers.size());
+
+        // Remove first user (index 0)
+        Map<String, Object> removed = waitlistedUsers.remove(0);
+
+        assertEquals("Should have 1 user after removal", 1, waitlistedUsers.size());
+        assertEquals("Removed user should be Alice", "Alice", removed.get("name"));
+        assertEquals("Remaining user should be Bob", "Bob", waitlistedUsers.get(0).get("name"));
+    }
+
+    /**
+     * Tests complete decline and replacement workflow logic
+     * Simulates the process of a winner declining and being replaced
+     */
+    @Test
+    public void testDeclineAndReplacement_CompleteWorkflow() {
+        // Setup: User is a winner
+        testUser.getRegisteredEvents().put("event123", "Notified");
+        String initialStatus = testUser.getRegisteredEvents().get("event123");
+        boolean wasWinner = "Notified".equals(initialStatus) || "Accepted".equals(initialStatus);
+        assertTrue("User should start as a winner", wasWinner);
+
+        // Setup: Waitlist has users
+        ArrayList<Map<String, Object>> waitlistedUsers = new ArrayList<>();
+        Map<String, Object> replacement = new HashMap<>();
+        replacement.put("id", "replacement1");
+        replacement.put("name", "Replacement User");
+        waitlistedUsers.add(replacement);
+
+        assertFalse("Waitlist should not be empty", waitlistedUsers.isEmpty());
+
+        // Step 1: User declines
+        testUser.getRegisteredEvents().put("event123", "Declined");
+        assertEquals("Status should be Declined", "Declined",
+                testUser.getStatusForEvent("event123"));
+
+        // Step 2: Select replacement from waitlist
+        int randomIndex = 0; // For testing, just take first
+        Map<String, Object> selectedReplacement = waitlistedUsers.get(randomIndex);
+        String replacementId = (String) selectedReplacement.get("id");
+
+        assertNotNull("Replacement should be selected", selectedReplacement);
+        assertEquals("Should select correct replacement", "replacement1", replacementId);
+
+        // Step 3: Remove from waitlist
+        waitlistedUsers.remove(randomIndex);
+        assertTrue("Waitlist should be empty after removal", waitlistedUsers.isEmpty());
+    }
+
+    /**
+     * Tests that empty waitlist prevents replacement
+     * Verifies decline works even when no replacement is available
+     */
+    @Test
+    public void testDeclineWithEmptyWaitlist() {
+        testUser.getRegisteredEvents().put("event123", "Notified");
+
+        ArrayList<Map<String, Object>> waitlistedUsers = new ArrayList<>();
+        assertTrue("Waitlist should be empty", waitlistedUsers.isEmpty());
+
+        // User declines
+        testUser.getRegisteredEvents().put("event123", "Declined");
+
+        assertEquals("Status should be Declined even with empty waitlist",
+                "Declined", testUser.getStatusForEvent("event123"));
+    }
+
+    /**
+     * Tests creating user info map for finalizedUsers
+     * Verifies the structure matches what's expected in Firestore
+     */
+    @Test
+    public void testCreateUserInfoMap() {
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", testUser.getId());
+        userInfo.put("name", testUser.getName());
+        userInfo.put("emailAddress", testUser.getEmailAddress());
+        userInfo.put("phoneNumber", testUser.getPhoneNumber());
+
+        assertEquals("Should have correct ID", "user123", userInfo.get("id"));
+        assertEquals("Should have correct name", "Test User", userInfo.get("name"));
+        assertEquals("Should have correct email", "test@example.com", userInfo.get("emailAddress"));
+        assertEquals("Should have correct phone", "780-123-4567", userInfo.get("phoneNumber"));
+        assertEquals("Should have 4 fields", 4, userInfo.size());
+    }
+
+    /**
+     * Tests that accept invitation updates status correctly
+     * Verifies acceptInvitation method works as expected
+     */
+    @Test
+    public void testAcceptInvitation() {
+        testUser.getRegisteredEvents().put("event123", "Notified");
+        testUser.acceptInvitation("event123");
+
+        assertEquals("Status should be Accepted after accepting",
+                "Accepted", testUser.getStatusForEvent("event123"));
+    }
+
+    /**
+     * Tests that decline invitation updates status correctly
+     * Verifies declineInvitation method works as expected
+     */
+    @Test
+    public void testDeclineInvitation() {
+        testUser.getRegisteredEvents().put("event123", "Notified");
+        testUser.declineInvitation("event123");
+
+        assertEquals("Status should be Declined after declining",
+                "Declined", testUser.getStatusForEvent("event123"));
+    }
+
+    /**
+     * Tests that accept/decline only works for registered events
+     * Verifies methods don't create new entries for non-existent events
+     */
+    @Test
+    public void testAcceptDecline_OnlyWorksForRegisteredEvents() {
+        int initialSize = testUser.getRegisteredEvents().size();
+
+        testUser.acceptInvitation("nonexistent");
+        assertEquals("Should not add new event when accepting non-existent",
+                initialSize, testUser.getRegisteredEvents().size());
+
+        testUser.declineInvitation("nonexistent");
+        assertEquals("Should not add new event when declining non-existent",
+                initialSize, testUser.getRegisteredEvents().size());
     }
 
     /**
