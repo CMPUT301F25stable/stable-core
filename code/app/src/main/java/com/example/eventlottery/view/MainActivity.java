@@ -148,6 +148,26 @@ public class MainActivity extends AppCompatActivity {
                             .commit();
                 }
             }
+            else {
+                // User does not exist - create a new user
+                Log.d("MainActivity", "User doesn't exist, creating new user");
+                currentUser = new User();
+                currentUser.setId(DEVICE_ID);
+                // Set other default user properties as needed
+
+                // Save the user to Firestore
+                db.collection("users-p4")
+                        .document(DEVICE_ID)
+                        .set(currentUser)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("MainActivity", "New user created successfully");
+                            loadEventsFromFirestore();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("MainActivity", "Failed to create user", e);
+                        });
+
+            }
         });
 
         // Test notification system
@@ -433,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
                     .addOnFailureListener(e -> {
                         Log.e("FCM", "Failed to save token", e);
                         // If update fails (user doesn't exist), try to create/set
-                        db.collection("users")
+                        db.collection("users-p4")
                                 .document(deviceId)
                                 .set(new HashMap<String, Object>() {{
                                     put("fcmToken", token);
