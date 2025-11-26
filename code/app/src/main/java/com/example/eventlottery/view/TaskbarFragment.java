@@ -149,6 +149,9 @@ public class TaskbarFragment extends Fragment {
                                 intent.putExtra("timeStart", eventToDisplay.getFormattedStartTime());
                                 intent.putExtra("dateEnd", eventToDisplay.getFormattedEndDate());
                                 intent.putExtra("timeEnd", eventToDisplay.getFormattedEndTime());
+                                intent.putExtra("registrationEnd", eventToDisplay.getEndTime());      // Unformatted end date.
+                                intent.putExtra("registrationStart", eventToDisplay.getStartTime());  // Unformatted start date.
+                                intent.putExtra("geolocation", eventToDisplay.getGeolocation());
                                 intent.putExtra("location", eventToDisplay.getLocation());
                                 intent.putExtra("organizer", eventToDisplay.getOrganizer());
                                 intent.putExtra("image", eventToDisplay.getImage());
