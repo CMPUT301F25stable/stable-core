@@ -61,6 +61,8 @@ public class Event implements Serializable {
     private boolean geolocation;
     /** An array of all user locations for an event. The map stores the user ID, latitude, & longitude. */
     private ArrayList<Map<String, Object>> userLocations;
+    /** List of user IDs who were notified but declined the invitation*/
+    private List<String> cancelledEntrants = new ArrayList<>();
 
     /**
      * Generates a new universally unique identifier (UUID) for an event.
@@ -104,6 +106,7 @@ public class Event implements Serializable {
         this.userLocations = new ArrayList<>();
         this.chosenEntrants = new ArrayList<>();
         this.selectedIds = new ArrayList<>();
+        this.cancelledEntrants = new ArrayList<>();
     }
 
     public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags, boolean geolocation) { // For new events (not yet in database)
@@ -121,6 +124,7 @@ public class Event implements Serializable {
         this.userLocations = new ArrayList<>();
         this.chosenEntrants = new ArrayList<>();
         this.selectedIds = new ArrayList<>();
+        this.cancelledEntrants = new ArrayList<>();
         formatDates();
     }
 
@@ -140,6 +144,7 @@ public class Event implements Serializable {
         this.userLocations = new ArrayList<>();
         this.chosenEntrants = new ArrayList<>();
         this.selectedIds = new ArrayList<>();
+        this.cancelledEntrants = new ArrayList<>();
         formatDates();
     }
 
@@ -441,4 +446,32 @@ public class Event implements Serializable {
         this.selectedIds = selectedIds;
     }
 
+    /**
+     * Gets the list of user IDS who declined after being accepted
+     * @return List of cancelled entrant IDS
+     * */
+    public List<String> getCancelledEntrants() {
+        return new ArrayList<>(cancelledEntrants);
+    }
+
+    /**
+     * Sets the list of cancelled entrants
+     * @param cancelledEntrants List of user IDs who declined
+     * */
+    public void setCancelledEntrants(List<String> cancelledEntrants) {
+        this.cancelledEntrants = cancelledEntrants != null ?
+                new ArrayList<>(cancelledEntrants) : new ArrayList<>();
+    }
+
+    /**
+     * Adds a user ID to the cancelled entrants list
+     * */
+    public void addCancelledEntrant(String userId) {
+        if (this.cancelledEntrants == null) {
+            this.cancelledEntrants = new ArrayList<>();
+        }
+        if (!this.cancelledEntrants.contains(userId)) {
+            this.cancelledEntrants.add(userId);
+        }
+    }
 }

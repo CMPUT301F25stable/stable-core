@@ -47,6 +47,7 @@ public class OrganizerEventInfoFragment extends Fragment {
     private static final String ARG_EVENT_NAME = "event_name";
     private static final String ARG_WAITLIST_COUNT = "waitlist_count";
     private static final String ARG_SELECTED_COUNT = "selected_count";
+    private static final String ARG_CANCELLED_COUNT = "cancelled_count";
 
     private enum EntrantType {
         WAITLIST,
@@ -58,13 +59,16 @@ public class OrganizerEventInfoFragment extends Fragment {
     private TextView eventName;
     private TextView waitingCountText;
     private TextView selectedCountText;
+    private TextView cancelledCountText;
     private CardView waitingListCard;
     private CardView selectedListCard;
+    private CardView cancelledListCard;
 
     // Data fields
     private String eventId;
     private int waitlistCount;
     private int selectedCount;
+    private int cancelledCount;
 
     // Firebase
     private FirebaseFirestore db;
@@ -76,7 +80,7 @@ public class OrganizerEventInfoFragment extends Fragment {
      * @param eventName The name of the event
      * @param waitlistCount The number of users on the waitlist
      */
-    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount, int selectedCount) {
+    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount, int selectedCount, int cancelledCount) {
         OrganizerEventInfoFragment fragment = new OrganizerEventInfoFragment();
 
         // Create a Bundle to store arguments - this ensures data survives configuration changes
@@ -85,6 +89,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         args.putString(ARG_EVENT_NAME, eventName);
         args.putInt(ARG_WAITLIST_COUNT, waitlistCount);
         args.putInt(ARG_SELECTED_COUNT, selectedCount);
+        args.putInt(ARG_CANCELLED_COUNT, cancelledCount);
         fragment.setArguments(args);
         return fragment;
     }
@@ -103,6 +108,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             String name = getArguments().getString(ARG_EVENT_NAME);
             waitlistCount = getArguments().getInt(ARG_WAITLIST_COUNT, 0);
             selectedCount = getArguments().getInt(ARG_SELECTED_COUNT, 0);
+            cancelledCount = getArguments().getInt(ARG_CANCELLED_COUNT, 0);
         }
     }
 
@@ -128,11 +134,12 @@ public class OrganizerEventInfoFragment extends Fragment {
         eventName = view.findViewById(R.id.headerText);
         waitingCountText = view.findViewById(R.id.waitingCount);
         selectedCountText = view.findViewById(R.id.selectedCount);
+        cancelledCountText = view.findViewById(R.id.cancelledCount);
 
         // Get references to the clickable cards
         waitingListCard = view.findViewById(R.id.waitingListCard);
         selectedListCard = view.findViewById(R.id.selectedCard);
-        // TODO: add SelectedCard and cancelledCard when I add the firebase implementation of those first
+        cancelledListCard = view.findViewById(R.id.cancelledCard);
 
         // Close Button
         ImageButton closeButton = view.findViewById(R.id.closeButton);
@@ -146,7 +153,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             eventName.setText(getArguments().getString(ARG_EVENT_NAME));
             waitingCountText.setText(String.valueOf(waitlistCount));
             selectedCountText.setText(String.valueOf(selectedCount));
-            //TODO: Add select and cancel cards as well
+            cancelledCountText.setText(String.valueOf(cancelledCount));
         }
 
         // Set up click listeners for user interactions
@@ -180,13 +187,25 @@ public class OrganizerEventInfoFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Click listener for cancelled list card
+        cancelledListCard.setOnClickListener(v -> {
+            if (cancelledCount > 0) {
+                showNotificationDialog(EntrantType.CANCELLED);
+            }
+            else {
+                Toast.makeText(requireContext(),
+                        "No entrants has cancelled",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
      * Shows a Material 3 styled dialog with quick suggestions allowing the organizer
      * to compose and send a notification to entrants.
      *
-     * @param entrantType The type of entrants to notify (WAITLIST or SELECTED)
+     * @param entrantType The type of entrants to notify (WAITLIST, SELECTED, or CANCELLED)
      */
     private void showNotificationDialog(EntrantType entrantType) {
         // Inflate custom dialog layout
@@ -205,7 +224,15 @@ public class OrganizerEventInfoFragment extends Fragment {
         Chip suggestionChip3 = dialogView.findViewById(R.id.suggestionChip3);
 
         // Determine count and recipient text based on entrant type
-        int count = (entrantType == EntrantType.WAITLIST) ? waitlistCount : selectedCount;
+        int count;
+        if (entrantType == EntrantType.WAITLIST) {
+            count = waitlistCount;
+        } else if (entrantType == EntrantType.SELECTED) {
+            count = selectedCount;
+        } else {
+            count = cancelledCount;
+        }
+
         String recipientText = count + " " + (count == 1 ? "recipient" : "recipients");
         recipientCount.setText(recipientText);
 
@@ -231,13 +258,20 @@ public class OrganizerEventInfoFragment extends Fragment {
                     "Important update regarding " + eventNameStr + ": ");
             suggestionTemplates.put(suggestionChip3,
                     "Reminder: The event " + eventNameStr + " is coming up soon!");
-        } else { // SELECTED
+        } else if (entrantType == EntrantType.SELECTED) {
             suggestionTemplates.put(suggestionChip1,
                     "Congratulations! You've been selected for " + eventNameStr + ". Please confirm your attendance.");
             suggestionTemplates.put(suggestionChip2,
                     "Important information for selected participants of " + eventNameStr + ": ");
             suggestionTemplates.put(suggestionChip3,
                     "Reminder: Don't forget to confirm your spot for " + eventNameStr + "!");
+        } else { // CANCELLED
+            suggestionTemplates.put(suggestionChip1,
+                    "We noticed you cancelled your spot for " + eventNameStr + ". You're welcome to join again!");
+            suggestionTemplates.put(suggestionChip2,
+                    "Update regarding " + eventNameStr + ": New spots have become available.");
+            suggestionTemplates.put(suggestionChip3,
+                    "Thank you for your interest in " + eventNameStr + ". We hope to see you at future events!");
         }
 
         // Set up quick suggestion chip click listeners
@@ -311,8 +345,10 @@ public class OrganizerEventInfoFragment extends Fragment {
                 // Call appropriate notification method based on entrant type
                 if (entrantType == EntrantType.WAITLIST) {
                     sendWaitlistNotifications(message);
-                } else { // SELECTED
+                } else if (entrantType == EntrantType.SELECTED) {
                     sendSelectedNotifications(message);
+                } else { // CANCELLED
+                    sendCancelledNotifications(message);
                 }
             } else {
                 // Shake animation for error
@@ -456,12 +492,60 @@ public class OrganizerEventInfoFragment extends Fragment {
     }
 
     /**
+     * Fetches cancelled entrants from Firebase and sends notifications to them.
+     * Retrieves FCM tokens from the users-p4 collection.
+     * Handles cancelledEntrants as an array of user ID strings.
+     *
+     * @param message The custom message to send to cancelled entrants
+     */
+    private void sendCancelledNotifications(String message) {
+        Toast.makeText(requireContext(), "Sending notifications...", Toast.LENGTH_SHORT).show();
+
+        // Fetch the event document from Firestore
+        db.collection("event-p4")
+                .document(eventId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Get cancelled user IDs from the cancelledIds array
+                        List<String> cancelledUserIds = (List<String>) documentSnapshot.get("cancelledEntrants");
+
+                        if (cancelledUserIds != null && !cancelledUserIds.isEmpty()) {
+                            // Convert List<String> to List<Map<String, Object>> format
+                            List<Map<String, Object>> cancelledUsersData = new ArrayList<>();
+                            for (String userId : cancelledUserIds) {
+                                Map<String, Object> userData = new HashMap<>();
+                                userData.put("id", userId);
+                                cancelledUsersData.add(userData);
+                            }
+
+                            fetchUsersAndSendNotifications(cancelledUsersData, message, "cancelled");
+                        } else {
+                            Toast.makeText(requireContext(),
+                                    "No cancelled entrants found",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "Event not found",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching cancelled users data", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to send notifications: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    /**
      * Common method to fetch user documents and send notifications.
      * Works with users-p4 collection and checks for FCM tokens.
      *
      * @param usersData List of user data maps containing user IDs
      * @param message The notification message to send
-     * @param type The type of notification ("waitlist" or "selected")
+     * @param type The type of notification ("waitlist", "selected", or "cancelled")
      */
     private void fetchUsersAndSendNotifications(List<Map<String, Object>> usersData, String message, String type) {
         List<User> usersWithTokens = new ArrayList<>();
@@ -496,8 +580,10 @@ public class OrganizerEventInfoFragment extends Fragment {
                             if (fetchedCount[0] == totalUsers) {
                                 if (type.equals("waitlist")) {
                                     sendNotificationsToWaitlistedUsers(usersWithTokens, message);
-                                } else {
+                                } else if (type.equals("selected")) {
                                     sendNotificationsToSelectedUsers(usersWithTokens, message);
+                                } else { // cancelled
+                                    sendNotificationsToCancelledUsers(usersWithTokens, message);
                                 }
                             }
                         })
@@ -509,8 +595,10 @@ public class OrganizerEventInfoFragment extends Fragment {
                             if (fetchedCount[0] == totalUsers) {
                                 if (type.equals("waitlist")) {
                                     sendNotificationsToWaitlistedUsers(usersWithTokens, message);
-                                } else {
+                                } else if (type.equals("selected")) {
                                     sendNotificationsToSelectedUsers(usersWithTokens, message);
+                                } else { // cancelled
+                                    sendNotificationsToCancelledUsers(usersWithTokens, message);
                                 }
                             }
                         });
@@ -520,6 +608,9 @@ public class OrganizerEventInfoFragment extends Fragment {
         }
     }
 
+    /**
+     * Helper method to send notifications to waitlisted users with FCM tokens.
+     */
     private void sendNotificationsToWaitlistedUsers(List<User> users, String message) {
         if (users.isEmpty()) {
             Toast.makeText(requireContext(),
@@ -574,6 +665,35 @@ public class OrganizerEventInfoFragment extends Fragment {
                 Toast.LENGTH_LONG).show();
 
         Log.d(TAG, "Successfully sent notifications to " + users.size() + " selected entrants");
+    }
+
+    /**
+     * Helper method to send notifications to cancelled users with FCM tokens.
+     */
+    private void sendNotificationsToCancelledUsers(List<User> users, String message) {
+        if (users.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "No users with notification tokens found",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+
+        // Use the cancelled entrants notification method
+        notificationSystem.notifyCancelledEntrants(
+                users,
+                eventNameStr,
+                eventId,
+                message
+        );
+
+        Toast.makeText(requireContext(),
+                "Notifications sent to " + users.size() + " cancelled entrants",
+                Toast.LENGTH_LONG).show();
+
+        Log.d(TAG, "Successfully sent notifications to " + users.size() + " cancelled entrants");
     }
 
     /**
