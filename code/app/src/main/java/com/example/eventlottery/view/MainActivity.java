@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.fragmentContainerView, taskbar)
-                            .commit();
+                            .commitAllowingStateLoss();
                 }
             }
             else {

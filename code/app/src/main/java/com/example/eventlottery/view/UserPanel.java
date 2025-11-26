@@ -107,7 +107,7 @@ public class UserPanel extends AppCompatActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragmentContainerView, fragment)
-                    .commit();
+                    .commitAllowingStateLoss();
 
             // Get Events
             if (MainActivity.instance != null) {

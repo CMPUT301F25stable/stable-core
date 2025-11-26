@@ -83,6 +83,12 @@ public class NotificationActivity extends AppCompatActivity {
                             // Deafult to on
                             notificationSwitch.setChecked(true);
                         }
+                        // Replace taskbar with admin taskbar if user is an admin
+                        TaskbarFragment taskbar = TaskbarFragment.newInstance(currentUser);
+                        getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragmentContainerView, taskbar)
+                                .commitAllowingStateLoss();
                     }
                     else {
                         // Deafult to on if user doesn't exist

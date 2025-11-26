@@ -97,20 +97,26 @@ public class EventDatabase {
             return;
         }
 
-        // Iterate through every eventID & add it from firestore, to the list.
-        DocumentReference eventRef;
-        for (String eventID : eventIDs) {
-            // Get reference to the event
-            eventRef = eventsRef.document(eventID);
-            eventRef.get().addOnSuccessListener(snapshot -> {
-                // If successfully gotten, & it exists, add to 'data'
-                if (snapshot.exists()) {
-                    Event event = snapshot.toObject(Event.class);
-                    data.add(event);
-                    adapter.notifyDataSetChanged();
-                }
-            });
-        }
+        db.collection("event-p4")
+                .addSnapshotListener((query, error) -> {
+                    // Check if there's an error
+                    if (error != null) {
+                        return;
+                    }
+
+                    // Clear array & add events that belong to Organizer
+                    data.clear();
+
+                    for (DocumentSnapshot doc : query) {
+                        Event event = doc.toObject(Event.class);
+                        if (event == null) continue;
+
+                        if (eventIDs.contains(event.getId())) {
+                            data.add(event);
+                            adapter.notifyDataSetChanged();
+                        }
+                    }
+                });
     }
 
 

@@ -208,6 +208,13 @@ public class OrganizerPanel extends AppCompatActivity {
                     adapter = new EventAdapter(OrganizerPanel.this, data);
                     organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
                     eventList.setAdapter(adapter);
+
+                    // Replace taskbar with admin taskbar if user is an admin
+                    TaskbarFragment taskbar = TaskbarFragment.newInstance(organizer);
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragmentContainerView, taskbar)
+                            .commitAllowingStateLoss();
                 } else {
                     Log.d("OrganizerPanel", "No organizer found");
                 }
@@ -362,11 +369,9 @@ public class OrganizerPanel extends AppCompatActivity {
                 createDialog.setOrganizerName(organizer.getName());
 
                 createDialog.setOnEventCreatedListener(event -> {
-                    data.add(event);
                     organizer.createEvent(event.getId());
                     organizerEventDatabase.insert(event);
                     userDatabase.updateOrganizerCreatedEvents(organizer);
-                    adapter.notifyDataSetChanged();
                 });
 
                 createDialog.show(getSupportFragmentManager(), "CreateEventDialog");
