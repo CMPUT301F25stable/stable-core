@@ -118,6 +118,16 @@ public class TaskbarFragment extends Fragment {
         });
 
         /**
+         * Sets event listener for notification button
+         * */
+        View notificationIcon = view.findViewById(R.id.notificationIcon);
+        notificationIcon.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), NotificationActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(intent);
+        });
+
+        /**
          * Set event listener for admin panel, if it exists (only shown it as an admin)
          */
         View adminIcon = view.findViewById(R.id.adminPanelIcon);

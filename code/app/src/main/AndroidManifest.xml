@@ -67,6 +67,8 @@
         <activity
             android:name=".view.MapActivity"
             android:exported="false" />
+        <activity android:name=".view.NotificationActivity"
+            android:exported="false" />
         <activity
             android:name=".view.SplashScreen"
             android:exported="true">
