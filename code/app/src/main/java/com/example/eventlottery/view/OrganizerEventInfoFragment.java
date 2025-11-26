@@ -39,8 +39,8 @@ import javax.annotation.Nullable;
 
 
 /**
- * Fragment that displays detailed information about a specific event for organizers.
  * Shows counts and allows notifications for waiting list, selected, and cancelled entrants.
+ * @author Jensen Lee
  */
 public class OrganizerEventInfoFragment extends Fragment {
     // constant variables

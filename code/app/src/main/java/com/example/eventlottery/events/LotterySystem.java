@@ -87,35 +87,6 @@ public class LotterySystem {
     }
 
     /**
-     * Handles a case where a previously selected winner declines their spot.
-     * Removes the declined user from the winners list and randomly selects
-     * a replacement from the waitlist.
-     * <p>
-     * (User Story 01.05.01 - Replace declined user with new one from waitlist)
-     *
-     * @param declinedUser the {@code User} who declined their winning spot
-     * @return the replacement {@code User} selected from the waitlist,
-     *         or {@code null} if no replacement is available
-     */
-    public User handleDecline(User declinedUser) {
-        if (winners.contains(declinedUser)) {
-            winners.remove(declinedUser);
-        }
-
-        // Select the next user from waitlist
-        ArrayList<User> waitlistedUsers = waitlist.getWaitlistedUsers();
-        User replacement = randomSelection(winners, waitlistedUsers);
-
-        // If replacement is valid, add the new winner, and remove the replacement from the waitlist
-        if (replacement != null) {
-            winners.add(replacement);
-            waitlistedUsers.remove(replacement);
-            return replacement;
-        }
-        return null;
-    }
-
-    /**
      * Returns the list of currently selected winners.
      * @return an {@code ArrayList} of {@code User} objects representing the winners
      */

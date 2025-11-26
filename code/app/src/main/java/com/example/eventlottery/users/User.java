@@ -174,6 +174,7 @@ public class User implements Serializable {
 
     /**
      * Setter for notifications
+     * @param notifications boolean for notifications
      * */
     public void setNotifications(boolean notifications) {
         this.notifications = notifications;

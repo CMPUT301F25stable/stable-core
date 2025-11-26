@@ -36,17 +36,28 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * USER STORY 01.02.03
  * Create the user panel where the user can accept, decline invitation, and see all there events
+ * User can also click to go edit their profile
+ * Shows all events (waitlisted and registered) in the UI
+ * Shows their name in the UI
  * @author Jensen Lee
  * */
 public class UserPanel extends AppCompatActivity {
 
+    // User object
     private User currentUser;
+
+    // UI & Firebase
     private LinearLayout eventListContainer;
     private ArrayList<Event> allEvents;
     private FirebaseFirestore db;
 
+    /**
+     * Lifecycle method called when the activity is created
+     * Initialize the UI, firebase, and load the user data
+     * @param savedInstanceState The saved state of the activity
+     *
+     * */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -483,6 +494,8 @@ public class UserPanel extends AppCompatActivity {
 
     /**
      * Opens InfoActivity with event details from Firebase
+     * @param event Given an Event object
+     * @param status Given a string of the status of the registered event
      */
     private void openInfoActivity(Event event, String status) {
         Intent intent = new Intent(UserPanel.this, InfoActivity.class);
