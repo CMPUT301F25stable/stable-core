@@ -17,11 +17,20 @@ import com.google.firebase.messaging.RemoteMessage;
 /**
  * Service to handle incoming FCM messages.
  * Displays notifications even when the app is in the foreground.
+ * @author Jensen Lee
  */
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
+
+    // Tag used for debugging
     private static final String TAG = "FCMService";
+
+    // Notification channel ID
     private static final String CHANNEL_ID = "lottery_winner_notifications";
 
+    /**
+     * Called when a new FCM message is received.
+     * @param remoteMessage The incoming FCM message.
+     * */
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         Log.d(TAG, "✓ Message received from: " + remoteMessage.getFrom());
@@ -55,6 +64,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
+    /**
+     * Called when a new FCM registration token is generated.
+     * @param token The new FCM registration token.
+     * */
     @Override
     public void onNewToken(String token) {
         Log.d(TAG, "✓ New FCM token generated: " + token);
@@ -64,6 +77,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     /**
      * Displays a notification in the system tray.
      * This allows notifications to appear even when the app is open.
+     * @param title The notification title.
+     * @param body The notification body.
      */
     private void showNotification(String title, String body) {
         Log.d(TAG, "showNotification() - Title: " + title + ", Body: " + body);

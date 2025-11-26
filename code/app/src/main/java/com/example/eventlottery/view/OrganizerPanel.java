@@ -166,23 +166,6 @@ public class OrganizerPanel extends AppCompatActivity {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
                 }
-
-                /*
-                // If fragment is showing, pop it and restore the list view
-                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                    getSupportFragmentManager().popBackStack();
-                    findViewById(R.id.fragment_container).setVisibility(View.GONE);
-
-                    // Show the main content again
-                    findViewById(R.id.searchBar).setVisibility(View.VISIBLE);
-                    findViewById(R.id.eventList).setVisibility(View.VISIBLE);
-                    findViewById(R.id.linearLayout5).setVisibility(View.VISIBLE);
-                } else {
-                    // Let the system handle the back press
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                }
-                 */
             }
         });
 

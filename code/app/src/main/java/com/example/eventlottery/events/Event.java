@@ -465,6 +465,7 @@ public class Event implements Serializable {
 
     /**
      * Adds a user ID to the cancelled entrants list
+     * @param userId ID of user who declined
      * */
     public void addCancelledEntrant(String userId) {
         if (this.cancelledEntrants == null) {

@@ -13,7 +13,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
-import com.example.eventlottery.events.EventGenerator;
 import com.google.firebase.FirebaseApp;
 
 /**
@@ -31,7 +30,6 @@ public class SplashScreen extends AppCompatActivity {
 
     /** Database connector instance for adding or managing users. */
     DBConnector dbConnector;
-    EventGenerator generator;
 
     /**
      * Called when the activity is first created.

@@ -75,13 +75,13 @@ public class InfoActivity extends AppCompatActivity {
     /** String representing the current registration status of the user for this event. */
     private String currentStatus;
 
+    /** Firestore instance used for database operations. */
     private FirebaseFirestore db;
   
     /**
      * Called when the activity is created.
      * Initializes UI elements, retrieves intent data, constructs User and Event objects,
      * and sets up event button listeners.
-     *
      * @param savedInstanceState The saved instance state bundle.
      */
     @Override
@@ -229,7 +229,7 @@ public class InfoActivity extends AppCompatActivity {
                     // Adds to finalizedUsers
                     updateJoinFinalizedUsers(eventId, currentUser);
 
-                    Toast.makeText(this, "✅ You accepted the invitation!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "You accepted the invitation!", Toast.LENGTH_SHORT).show();
 
                     // Tell the caller something changed and finish
                     Intent out = new Intent(this, UserPanel.class);
@@ -295,7 +295,7 @@ public class InfoActivity extends AppCompatActivity {
                     // If user was NOT a winner, no need to do lottery replacement
                     if (!wasWinner) {
                         android.util.Log.d("InfoActivity", "User was not a winner, no replacement needed");
-                        Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
                         finishActivityWithResult(eventId, "Declined");
                         return;
                     }
@@ -319,7 +319,7 @@ public class InfoActivity extends AppCompatActivity {
                             .get()
                             .addOnSuccessListener(eventDoc -> {
                                 if (!eventDoc.exists()) {
-                                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
                                     finishActivityWithResult(eventId, "Declined");
                                     return;
                                 }
@@ -328,7 +328,7 @@ public class InfoActivity extends AppCompatActivity {
                                 Map<String, Object> waitlistMap = (Map<String, Object>) eventDoc.get("waitlist");
                                 if (waitlistMap == null) {
                                     android.util.Log.d("InfoActivity", "No waitlist found in event");
-                                    Toast.makeText(this, "❌ You declined the invitation.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
                                     finishActivityWithResult(eventId, "Declined");
                                     return;
                                 }
@@ -346,7 +346,7 @@ public class InfoActivity extends AppCompatActivity {
                                 if (waitlistedUsers.isEmpty()) {
                                     // No replacement available - winner declined but no one to replace them
                                     android.util.Log.d("InfoActivity", "Waitlist is empty, no replacement available");
-                                    Toast.makeText(this, "❌ You declined. No replacement available.", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, "You declined. No replacement available.", Toast.LENGTH_SHORT).show();
                                     finishActivityWithResult(eventId, "Declined");
                                     return;
                                 }
@@ -378,7 +378,7 @@ public class InfoActivity extends AppCompatActivity {
                                 db.collection("event-p4").document(eventId)
                                         .update(eventUpdates)
                                         .addOnSuccessListener(aVoid2 -> {
-                                            android.util.Log.d("InfoActivity", "✅ Waitlist updated successfully");
+                                            android.util.Log.d("InfoActivity", "Waitlist updated successfully");
 
                                             // Step 5: Update replacement user's status to "Notified" (making them a winner)
                                             Map<String, Object> replacementUpdates = new HashMap<>();
@@ -387,16 +387,16 @@ public class InfoActivity extends AppCompatActivity {
                                             db.collection("users-p4").document(replacementUserId)
                                                     .update(replacementUpdates)
                                                     .addOnSuccessListener(aVoid3 -> {
-                                                        android.util.Log.d("InfoActivity", "✅ Replacement user notified (now a winner)");
+                                                        android.util.Log.d("InfoActivity", "Replacement user notified (now a winner)");
 
                                                         // Step 6: Remove event from replacement's waitlistedEvents array
                                                         db.collection("users-p4").document(replacementUserId)
                                                                 .update("waitlistedEvents",
                                                                         com.google.firebase.firestore.FieldValue.arrayRemove(eventId))
                                                                 .addOnSuccessListener(aVoid4 -> {
-                                                                    android.util.Log.d("InfoActivity", "✅ Removed event from replacement's waitlist");
+                                                                    android.util.Log.d("InfoActivity", "Removed event from replacement's waitlist");
                                                                     Toast.makeText(this,
-                                                                            "❌ You declined. " + replacementUserName + " selected from waitlist!",
+                                                                            "You declined. " + replacementUserName + " selected from waitlist!",
                                                                             Toast.LENGTH_SHORT).show();
                                                                     finishActivityWithResult(eventId, "Declined");
                                                                 })
@@ -404,13 +404,13 @@ public class InfoActivity extends AppCompatActivity {
                                                                     // Still successful, just couldn't update array
                                                                     android.util.Log.w("InfoActivity", "Couldn't remove from waitlistedEvents: " + e.getMessage());
                                                                     Toast.makeText(this,
-                                                                            "❌ You declined. Replacement selected from waitlist.",
+                                                                            "You declined. Replacement selected from waitlist.",
                                                                             Toast.LENGTH_SHORT).show();
                                                                     finishActivityWithResult(eventId, "Declined");
                                                                 });
                                                     })
                                                     .addOnFailureListener(e -> {
-                                                        android.util.Log.e("InfoActivity", "❌ Failed to notify replacement: " + e.getMessage());
+                                                        android.util.Log.e("InfoActivity", "Failed to notify replacement: " + e.getMessage());
                                                         Toast.makeText(this,
                                                                 "Failed to notify replacement: " + e.getMessage(),
                                                                 Toast.LENGTH_SHORT).show();
@@ -418,7 +418,7 @@ public class InfoActivity extends AppCompatActivity {
                                                     });
                                         })
                                         .addOnFailureListener(e -> {
-                                            android.util.Log.e("InfoActivity", "❌ Failed to update waitlist: " + e.getMessage());
+                                            android.util.Log.e("InfoActivity", "Failed to update waitlist: " + e.getMessage());
                                             Toast.makeText(this,
                                                     "Failed to update waitlist: " + e.getMessage(),
                                                     Toast.LENGTH_SHORT).show();
@@ -426,7 +426,7 @@ public class InfoActivity extends AppCompatActivity {
                                         });
                             })
                             .addOnFailureListener(e -> {
-                                android.util.Log.e("InfoActivity", "❌ Failed to retrieve event: " + e.getMessage());
+                                android.util.Log.e("InfoActivity", "Failed to retrieve event: " + e.getMessage());
                                 Toast.makeText(this,
                                         "Failed to retrieve event: " + e.getMessage(),
                                         Toast.LENGTH_SHORT).show();
@@ -434,7 +434,7 @@ public class InfoActivity extends AppCompatActivity {
                             });
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("InfoActivity", "❌ Failed to save decline: " + e.getMessage());
+                    android.util.Log.e("InfoActivity", "Failed to save decline: " + e.getMessage());
                     Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     reEnableButtons();
                 });

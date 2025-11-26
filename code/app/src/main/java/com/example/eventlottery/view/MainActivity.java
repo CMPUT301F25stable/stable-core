@@ -439,6 +439,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Saves the FCM token to the current user's document in Firestore.
+     * @param token The FCM token to save.
      * */
     private void saveFCMTokenToFirestore(String token) {
         String deviceId = Settings.Secure.getString(
