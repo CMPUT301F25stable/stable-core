@@ -3,12 +3,15 @@ package com.example.eventlottery.view;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,25 +21,40 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.events.NotificationSystem;
+import com.example.eventlottery.users.User;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
- * A dialog fragment that allows organizers to edit existing {@link Event} details.
+ * A dialog fragment that allows organizers to edit existing {@link Event} details
+ * and run lottery drawings.
  */
 public class EditEventDialog extends DialogFragment {
+    private static final String TAG = "EditEventDialog";
+
     private Event event;
     private OnEventUpdatedListener listener;
+    private FirebaseFirestore db;
+    private LinearLayout lotteryInputLayout;
+    private EditText lotterySizeInput;
+    private TextView waitlistInfoText;
+    private Button runLotteryButton;
+    private LinearLayout lotteryStatusLayout;
+    private TextView lotteryResultText;
 
-    /**
-     * Essentially a constructor for EditEventDialog. Pass in the event here, & its retrieved
-     * later once the dialog is actually created
-     * @param event The event we want to edit.
-     * @return A new instance of {@link EditEventDialog} with the event attached.
-     */
+    private int currentWaitlistCount = 0;
+
     public static EditEventDialog newInstance(Event event) {
         EditEventDialog dialog = new EditEventDialog();
         Bundle args = new Bundle();
@@ -45,21 +63,13 @@ public class EditEventDialog extends DialogFragment {
         return dialog;
     }
 
-    /**
-     * Listener interface for notifying when an event is updated.
-     */
     public interface OnEventUpdatedListener {
         void onEventUpdated(Event updatedEvent);
     }
 
-    /**
-     * Sets the listener for this dialog.
-     * @param listener The listener.
-     */
     public void setOnEventUpdatedListener(OnEventUpdatedListener listener) {
         this.listener = listener;
     }
-
 
     /**
      * Creates and returns the dialog for editing an event.
@@ -77,6 +87,8 @@ public class EditEventDialog extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+
+        db = FirebaseFirestore.getInstance();
         // Get event we want to edit
         if (getArguments() != null) {
             event = (Event) getArguments().getSerializable("event");
@@ -95,20 +107,25 @@ public class EditEventDialog extends DialogFragment {
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
         Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
 
-        // Set click listeners for the TimePickerDialog
+        lotteryInputLayout = dialogView.findViewById(R.id.lotteryInputLayout);
+        lotterySizeInput = dialogView.findViewById(R.id.lotterySizeInput);
+        waitlistInfoText = dialogView.findViewById(R.id.waitlistInfoText);
+        runLotteryButton = dialogView.findViewById(R.id.runLotteryButton);
+        lotteryStatusLayout = dialogView.findViewById(R.id.lotteryStatusLayout);
+        lotteryResultText = dialogView.findViewById(R.id.lotteryResultText);
+
         startDate.setOnClickListener(v -> openDatePicker(startDate));
         endDate.setOnClickListener(v -> openDatePicker(endDate));
 
-        /****************************************************
-         * 1. Update text fields to be what it currently is *
-         ****************************************************/
-        // Display current text for title, description, & location
-        String currentTitle = event.getName();
-        String currentDescription = event.getDescription();
-        String currentLocation = event.getLocation();
-        title.setText(currentTitle);
-        description.setText(currentDescription);
-        location.setText(currentLocation);
+        if (runLotteryButton != null) {
+            runLotteryButton.setOnClickListener(v -> showLotteryConfirmationDialog());
+        }
+
+        loadWaitlistCount();
+
+        title.setText(event.getName());
+        description.setText(event.getDescription());
+        location.setText(event.getLocation());
 
         // Display current waitlistMax if not default (Integer.MAX_VALUE)
         // I did it this way because I don't think we want the integer max to show. - John
@@ -119,21 +136,14 @@ public class EditEventDialog extends DialogFragment {
 
         // Display current start & end date
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-        Date currentStartDate = event.getStartTime();
-        Date currentEndDate = event.getEndTime();
-        String currentStartDateString = isoFormat.format(currentStartDate);
-        String currentEndDateString = isoFormat.format(currentEndDate);
-        startDate.setText(currentStartDateString);
-        endDate.setText(currentEndDateString);
+        startDate.setText(isoFormat.format(event.getStartTime()));
+        endDate.setText(isoFormat.format(event.getEndTime()));
 
-        // Display proper geolocation status
-        boolean currentGeolocation = event.getGeolocation();
-        geolocationSwitch.setChecked(currentGeolocation);
+        geolocationSwitch.setChecked(event.getGeolocation());
 
         /*********************************
          * 2. Build and show AlertDialog *
          *********************************/
-
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Event Parameters");
         builder.setView(dialogView);
@@ -177,11 +187,7 @@ public class EditEventDialog extends DialogFragment {
                  * 6. Get waitlist max input *
                  *****************************/
                 String waitlistMaxText = waitlistMax.getText().toString();
-
-                // Assume no waitlist limit unless there is valid text input
                 int maxSize = Integer.MAX_VALUE;
-
-                // Get valid integer if there's any input. Check if input was valid
                 if (!waitlistMaxText.isEmpty()) {
                     try {
                         maxSize = Integer.parseInt(waitlistMaxText);
@@ -206,8 +212,7 @@ public class EditEventDialog extends DialogFragment {
 
                 // Initialize date formatter & variables for storing start & end date
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-                Date start;
-                Date end;
+                Date start, end;
 
                 // Check if either start or end date is empty
                 if (startDateText.isEmpty() || endDateText.isEmpty()) {
@@ -244,12 +249,7 @@ public class EditEventDialog extends DialogFragment {
                 /****************************
                  * 8. Get geolocation input *
                  ****************************/
-                boolean geolocation;
-                if (geolocationSwitch.isChecked()) {
-                    geolocation = true;
-                } else {
-                    geolocation = false;
-                }
+                boolean geolocation = geolocationSwitch.isChecked();
 
                 /***********************************************************
                  * 9. Update event locally & run OrganizerPanel's listener *
@@ -262,18 +262,174 @@ public class EditEventDialog extends DialogFragment {
                 event.setStartTime(start);
                 event.setEndTime(end);
                 event.setGeolocation(geolocation);
+
                 if (listener != null) {
                     listener.onEventUpdated(event);
                 }
 
-                // Dialog only dismisses if all inputs are valid
                 dialog.dismiss();
             });
         });
 
+        Log.d(TAG, "Dialog created successfully");
         return dialog;
     }
 
+    // Checks the amount of users in the waitlist
+    private void loadWaitlistCount() {
+        if (event == null || event.getId() == null) return;
+
+        db.collection("event-p4")
+                .document(event.getId())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        Map<String, Object> waitlist = (Map<String, Object>) doc.get("waitlist");
+                        if (waitlist != null) {
+                            List<Map<String, Object>> waitlistedUsers =
+                                    (List<Map<String, Object>>) waitlist.get("waitlistedUsers");
+                            currentWaitlistCount = waitlistedUsers != null ? waitlistedUsers.size() : 0;
+
+                            waitlistInfoText.setText("Current waitlist: " + currentWaitlistCount + " entrants");
+
+                            Boolean lotteryDrawn = doc.getBoolean("lotteryDrawn");
+                            if (lotteryDrawn != null && lotteryDrawn) {
+                                showLotteryCompletedStatus(doc);
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Failed to load waitlist count", e));
+    }
+
+    private void showLotteryCompletedStatus(DocumentSnapshot doc) {
+        List<String> selectedIds = (List<String>) doc.get("selectedIds");
+        Long lotteryDrawnAt = doc.getLong("lotteryDrawnAt");
+
+        // Switches after lottery is completed
+        if (selectedIds != null && lotteryDrawnAt != null) {
+            int winnersCount = selectedIds.size();
+            Date date = new Date(lotteryDrawnAt);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+
+            lotteryResultText.setText(winnersCount + " entrants selected on " + dateFormat.format(date));
+            lotteryStatusLayout.setVisibility(View.VISIBLE);
+            runLotteryButton.setEnabled(false);
+            runLotteryButton.setText("Lottery Already Run");
+        }
+    }
+
+    private void showLotteryConfirmationDialog() {
+        String lotterySizeStr = lotterySizeInput.getText().toString().trim();
+
+        // checks if nothing was entered
+        if (lotterySizeStr.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter number of entrants to select", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // checks if int was entered
+        int lotterySize;
+        try {
+            lotterySize = Integer.parseInt(lotterySizeStr);
+        } catch (NumberFormatException e) {
+            Toast.makeText(requireContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Makes sure at least one lottery winner is selected
+        if (lotterySize <= 0) {
+            Toast.makeText(requireContext(), "Number must be greater than 0", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Checks that organizer didn't select a size bigger than the waitlist
+        if (lotterySize > currentWaitlistCount) {
+            Toast.makeText(requireContext(), "Cannot select " + lotterySize + " from " + currentWaitlistCount + " on waitlist", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Run Lottery Drawing?")
+                .setMessage("This will randomly select " + lotterySize + " entrants from " + currentWaitlistCount + " on the waitlist.\n\nSelected entrants will be notified and moved to the selected list.\n\nThis action cannot be undone. Continue?")
+                .setPositiveButton("Run Lottery", (dialog, which) -> runLottery(lotterySize))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void runLottery(int numberOfWinners) {
+        List<User> winners = event.drawLotteryWinners(numberOfWinners);
+
+        // gets all of the winners
+        List<String> winnerIds = new ArrayList<>();
+        for (User user : winners) {
+            winnerIds.add(user.getId());
+        }
+
+        updateFirestoreAfterLottery(winnerIds);
+    }
+
+    private void updateFirestoreAfterLottery(List<String> winnerIds) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("selectedIds", FieldValue.arrayUnion(winnerIds.toArray()));
+        updates.put("lotteryDrawn", true);
+        updates.put("lotteryDrawnAt", System.currentTimeMillis());
+
+        List<Map<String, Object>> newWaitlist = new ArrayList<>();
+        for (User user : event.getWaitlist().getWaitlistedUsers()) {
+            if (!winnerIds.contains(user.getId())) {
+                Map<String, Object> userData = new HashMap<>();
+                userData.put("id", user.getId());
+                newWaitlist.add(userData);
+            }
+        }
+        updates.put("waitlist.waitlistedUsers", newWaitlist);
+
+        db.collection("event-p4")
+                .document(event.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    notifyWinners(winnerIds);
+
+                    loadWaitlistCount();
+
+                    if (listener != null) {
+                        listener.onEventUpdated(event);
+                    }
+
+                    Log.d(TAG, "Lottery completed successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update after lottery", e);
+                    Toast.makeText(requireContext(), "Failed to complete lottery: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+
+    private void notifyWinners(List<String> winnerIds) {
+        if (winnerIds.isEmpty()) return;
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+
+        // notifies winners in batches so it does not notify too many users at once
+        for (int i = 0; i < winnerIds.size(); i += 10) {
+            int end = Math.min(i + 10, winnerIds.size());
+            List<String> batch = winnerIds.subList(i, end);
+
+            db.collection("users-p4")
+                    .whereIn("userId", batch)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        for (DocumentSnapshot userDoc : querySnapshot.getDocuments()) {
+                            User user = userDoc.toObject(User.class);
+                            if (user != null) {
+                                notificationSystem.notifyLotteryWinner(user, event.getName());
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to fetch users for notification", e));
+        }
+    }
 
     /**
      * Opens the built-in DatePickerDialog from Android Studio, given a target text field.
@@ -286,11 +442,8 @@ public class EditEventDialog extends DialogFragment {
         int month = calendar.get(Calendar.MONTH);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog dialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int monthIndex, int dayOfMonth) {
-                targetText.setText(String.valueOf(year) + "-" + String.valueOf(monthIndex + 1) + "-" + String.valueOf(dayOfMonth));
-            }
+        DatePickerDialog dialog = new DatePickerDialog(getContext(), (view, year1, monthIndex, dayOfMonth) -> {
+            targetText.setText(year1 + "-" + (monthIndex + 1) + "-" + dayOfMonth);
         }, year, month, day);
         dialog.show();
     }
