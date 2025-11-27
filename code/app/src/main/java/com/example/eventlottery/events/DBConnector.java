@@ -177,6 +177,22 @@ public class DBConnector {
                 });
     }
 
+    public void updateOrganizerPerms(String id, boolean organizerStatus, OnCompleteListener<Void> listener) {
+        Map<String, Object> items = new HashMap<>();
+        items.put("creationBan", organizerStatus);
+
+        getUserDoc(id).get().addOnCompleteListener(task -> {
+            DocumentSnapshot userData = task.getResult();
+            if (userData != null) {
+                getUserDoc(id)
+                        .set(items, SetOptions.merge())
+                        .addOnCompleteListener(listener);
+            } else {
+                Log.e(TAG, "Failed to retrieve user data or user doesn't exist in the database.");
+            }
+        });
+    }
+
     /**
      * Gets the UUID of the user
      * @return UUID of the user

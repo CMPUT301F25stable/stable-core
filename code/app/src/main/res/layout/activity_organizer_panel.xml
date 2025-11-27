@@ -51,16 +51,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/downloadQRCode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Download QR Code"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black" />
-
         <!-- Top Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -193,6 +183,20 @@
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 android:text="Cancelled Entrants"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="#3A3A3A"
+                android:textColor="#FFFFFF"
+                android:elevation="3dp"
+                android:stateListAnimator="@null" />
+
+            <Button
+                android:id="@+id/downloadQRCode"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="Download QR Code"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="#3A3A3A"

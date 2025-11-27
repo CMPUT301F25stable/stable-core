@@ -1,5 +1,6 @@
 package com.example.eventlottery.view;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlottery.R;
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
@@ -22,6 +24,7 @@ import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
 public class TaskbarFragment extends Fragment {
+    private DBConnector db;
     private User user;
 
     /**
@@ -45,6 +48,8 @@ public class TaskbarFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        db = new DBConnector(getContext());
+
         if (getArguments() != null) {
             user = (User) getArguments().getSerializable("User");
         }
@@ -91,10 +96,29 @@ public class TaskbarFragment extends Fragment {
          */
         View organizerIcon = view.findViewById(R.id.OrganizerIcon);
         organizerIcon.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), OrganizerPanel.class);
-            // If exists in stack, retrieve it instead of making a new one
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(intent);
+            if (!(getActivity() instanceof OrganizerPanel)) { // Prevents redundant calls to the database from OrganizerPanel
+                db.loadUserInfo(user.getId(), task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            user = document.toObject(User.class);
+
+                            if (user != null && !user.isCreationBan()) {
+                                Intent intent = new Intent(getActivity(), OrganizerPanel.class);
+                                // If exists in stack, retrieve it instead of making a new one
+                                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                                startActivity(intent);
+                            } else {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Organizer Access Revoked")
+                                        .setMessage("Your organizer permissions have been revoked due to violation of app policy.")
+                                        .setPositiveButton("Ok", null)
+                                        .show();
+                            }
+                        }
+                    }
+                });
+            }
         });
 
         /**
