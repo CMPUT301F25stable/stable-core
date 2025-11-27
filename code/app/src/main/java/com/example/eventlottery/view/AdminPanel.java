@@ -228,13 +228,15 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // 1. Delete eventId from all users locally & in firebase
         for (User user : userList) {
             // Remove eventId from user's CreatedEvents() array (if they made it)
-            if (user.getCreatedEvents().contains(eventId)) {
+            ArrayList<String> createdEvents = user.getCreatedEvents();
+            if (createdEvents != null && createdEvents.contains(eventId)) {
                 user.getCreatedEvents().remove(eventId);
                 db.collection("users-p4").document(user.getId()).set(user);
             }
 
             // Remove eventId from user's Waitlist (if they joined it)
-            if (user.getWaitlistedEvents().contains(eventId)) {
+            ArrayList<String> waitlistedEvents = user.getWaitlistedEvents();
+            if (waitlistedEvents != null && waitlistedEvents.contains(eventId)) {
                 user.getWaitlistedEvents().remove(eventId);
                 db.collection("users-p4").document(user.getId()).set(user);
             }

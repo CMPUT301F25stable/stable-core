@@ -62,6 +62,9 @@ public class EventJoinAndLeave extends AppCompatActivity {
     private Date registrationStart;
     private User currentUser;
     private User user;
+    /** For checking if waitlist is full */
+    private int waitlistMax;
+    private int size;
 
 
     // For US02.02.03 - geolocation
@@ -108,6 +111,7 @@ public class EventJoinAndLeave extends AppCompatActivity {
         registrationEnd = (Date) getIntent().getSerializableExtra("registrationEnd");
         registrationStart = (Date) getIntent().getSerializableExtra("registrationStart");
         geolocation = (boolean) getIntent().getSerializableExtra("geolocation");
+        waitlistMax = (int) getIntent().getSerializableExtra("waitlistMax");
 
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
@@ -188,6 +192,12 @@ public class EventJoinAndLeave extends AppCompatActivity {
         // Case 2: Registration hasn't started
         if (now.before(registrationStart)) {
             Toast.makeText(this, "Registration hasn't started", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if waitlist is full
+        if (waitlistMax <= size) {
+            Toast.makeText(this, "Waitlist is full", Toast.LENGTH_SHORT).show();
             return;
         }
       
@@ -347,10 +357,10 @@ public class EventJoinAndLeave extends AppCompatActivity {
 
                         List<Object> waitlistUsers = (List<Object>) waitlistMap.get("waitlistedUsers");
                         if (waitlistUsers != null) {
-                            int size = waitlistUsers.size();
+                            size = waitlistUsers.size();
                             textView.setText("\n🧍 Waitlist: " + size);
                         } else {
-                            int size = 0;
+                            size = 0;
                             textView.setText("\n🧍 Waitlist: " + size);
                         }
                     } else {
