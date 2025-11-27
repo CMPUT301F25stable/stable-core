@@ -67,60 +67,46 @@ secrets {
 }
 
 dependencies {
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.activity)
-    implementation(libs.constraintlayout)
-    implementation(libs.fragment)
-    // Maps SDK for Android
-    implementation(libs.play.services.maps)
-    testImplementation(libs.junit)
-    testImplementation("androidx.test:core:1.7.0")
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
     // --- Core AndroidX + Material ---
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.activity:activity:1.9.2")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.fragment:fragment:1.8.3")
+    implementation("androidx.fragment:fragment:1.8.5")
+    implementation("androidx.core:core:1.13.1")
 
     // --- Geolocation ---
-    implementation("com.google.android.gms:play-services-location:17.0.0")
-    testImplementation("junit:junit:4.12")
-    androidTestImplementation("androidx.test.ext:junit:1.1.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
-
 
     // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
     implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-storage:22.0.1")
-    implementation("com.google.firebase:firebase-messaging:23.4.0")
-    implementation("com.google.firebase:firebase-analytics:21.5.0")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
 
     // --- Third-party libraries ---
     implementation("com.google.zxing:core:3.4.1")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("com.github.bumptech.glide:glide:5.0.5")
-    implementation(libs.core)
-    implementation(libs.espresso.intents)
-    implementation(libs.ext.junit)
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
 
     // --- Unit Testing ---
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core:1.5.0")
 
-    // --- Android Instrumented Testing (fixes your red imports) ---
+    // --- Android Instrumented Testing ---
     androidTestImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    implementation("com.google.android.flexbox:flexbox:3.0.0")
 
-    // --- OkHttp for HTTP requests
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
+    // --- Fragment Testing (CRITICAL for FragmentScenario) ---
+    debugImplementation("androidx.fragment:fragment-testing:1.8.5")
+    androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
 }
