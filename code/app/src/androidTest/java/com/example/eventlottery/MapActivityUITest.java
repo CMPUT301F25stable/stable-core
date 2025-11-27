@@ -1,11 +1,13 @@
 package com.example.eventlottery;
 
+import static androidx.test.InstrumentationRegistry.getTargetContext;
 import static androidx.test.espresso.Espresso.onData;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.intent.Intents.intended;
 import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static org.hamcrest.CoreMatchers.anything;
 
 import android.os.SystemClock;
@@ -34,10 +36,16 @@ public class MapActivityUITest {
     /**
      * US 02.02.02, US02.02.03
      * Tests opening the google maps activity.
-     * Assumes that as an organizer, your first event has geolocation on & has an entrant that joined with their precise location enabled.
+     * Assumes that as an organizer, your first event has geolocation on & has an entrant that joined.
      */
     @Test
     public void testOpenMaps() {
+        // Accept notification permissions before running UI test
+        getInstrumentation().getUiAutomation().grantRuntimePermission(
+                getTargetContext().getPackageName(),
+                android.Manifest.permission.POST_NOTIFICATIONS
+        );
+
         // Initialize intents for espresso
         Intents.init();
 
