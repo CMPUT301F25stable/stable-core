@@ -286,6 +286,44 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     }
 
     /**
+     * Updates the selected {@link User}'s organizer permissions.
+     * @param user The user who will have their organizer permission changed.
+     */
+    private void updateOrganizerPerms(User user) {
+        boolean creationBan = user.isCreationBan();
+        String dialogTitle;
+        String name = user.getName();
+
+        if (creationBan) {
+            dialogTitle = "This will give " + name + " organizer permissions.";
+        } else {
+            dialogTitle = "This will revoke " + name + "'s organizer permissions.";
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(dialogTitle)
+                .setMessage("Are you sure?")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Yes", (dialogInterface, i) -> {
+                    userDatabase.updateOrganizerPerms(user.getId(), !creationBan, AdminPanel.this::updatePermsListener);
+                })
+                .show();
+    }
+
+    /**
+     * Callback method which is called when Firestore completes updating the user's permissions.
+     * @param task The listener given by a completed Firestore request.
+     */
+    private void updatePermsListener(Task<Void> task) {
+        if (task.isSuccessful()) {
+            Toast.makeText(this, "Organizer permissions successfully updated.", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Failed to update organizer permissions.", Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Failed to update organizer permissions.");
+        }
+    }
+
+    /**
      * Option menu for selecting a user
      * Note: for now only deleting a user is possible
      * @param menuItem: firestore get data request
@@ -294,6 +332,9 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     public boolean onMenuItemClick(MenuItem menuItem) {
         if (menuItem.getItemId() == R.id.delete_user) {
             deleteSelectedUser(selectedUser);
+            return true;
+        } else if (menuItem.getItemId() == R.id.organizer_perms) {
+            updateOrganizerPerms(selectedUser);
             return true;
         }
         return false;
