@@ -1,9 +1,6 @@
 package com.example.eventlottery;
 
-import android.os.Bundle;
-
-import androidx.fragment.app.FragmentActivity;
-import androidx.test.core.app.ActivityScenario;
+import androidx.fragment.app.testing.FragmentScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
@@ -19,6 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -32,7 +31,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
 
 /**
- * UI tests for OrganizerEventInfoFragment
+ * UI tests for OrganizerEventInfoFragment using FragmentScenario
  * Tests entrant count display and notification functionality
  */
 @RunWith(AndroidJUnit4.class)
@@ -46,32 +45,21 @@ public class OrganizerEventInfoFragmentUITest {
     private String testUserId2 = "test_user_002";
     private String testUserId3 = "test_user_003";
 
-    /**
-     * Simple test activity to host the fragment
-     */
-    public static class TestFragmentActivity extends FragmentActivity {
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_organizer_panel);
-        }
-
-        public void setFragment(OrganizerEventInfoFragment fragment) {
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.eventListFragment, fragment)
-                    .commitNow();
-        }
-    }
-
     @Before
     public void setUp() {
         // Initialize Firestore
         db = FirebaseFirestore.getInstance();
 
-        // Create test data
+        // Create test data with proper synchronization
         setupTestEvent();
         setupTestUsers();
+
+        // Wait for all Firestore operations to complete
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @After
@@ -84,6 +72,8 @@ public class OrganizerEventInfoFragmentUITest {
      * Sets up a test event in Firestore with waitlist, selected, and cancelled entrants
      */
     private void setupTestEvent() {
+        CountDownLatch latch = new CountDownLatch(1);
+
         Map<String, Object> eventData = new HashMap<>();
         eventData.put("id", testEventId);
         eventData.put("name", testEventName);
@@ -108,11 +98,16 @@ public class OrganizerEventInfoFragmentUITest {
         cancelledEntrants.add(testUserId3);
         eventData.put("cancelledEntrants", cancelledEntrants);
 
-        db.collection("event-p4").document(testEventId).set(eventData);
+        db.collection("event-p4").document(testEventId)
+                .set(eventData)
+                .addOnSuccessListener(aVoid -> latch.countDown())
+                .addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    latch.countDown();
+                });
 
-        // Wait for Firestore operation
         try {
-            Thread.sleep(1000);
+            latch.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -122,13 +117,17 @@ public class OrganizerEventInfoFragmentUITest {
      * Sets up test users in Firestore
      */
     private void setupTestUsers() {
+        CountDownLatch latch = new CountDownLatch(3);
+
         // User 1 - Waitlisted
         Map<String, Object> user1Data = new HashMap<>();
         user1Data.put("id", testUserId1);
         user1Data.put("name", "Test User One");
         user1Data.put("email", "user1@test.com");
         user1Data.put("fcmToken", "test_token_1");
-        db.collection("users-p4").document(testUserId1).set(user1Data);
+        db.collection("users-p4").document(testUserId1)
+                .set(user1Data)
+                .addOnCompleteListener(task -> latch.countDown());
 
         // User 2 - Selected
         Map<String, Object> user2Data = new HashMap<>();
@@ -136,7 +135,9 @@ public class OrganizerEventInfoFragmentUITest {
         user2Data.put("name", "Test User Two");
         user2Data.put("email", "user2@test.com");
         user2Data.put("fcmToken", "test_token_2");
-        db.collection("users-p4").document(testUserId2).set(user2Data);
+        db.collection("users-p4").document(testUserId2)
+                .set(user2Data)
+                .addOnCompleteListener(task -> latch.countDown());
 
         // User 3 - Cancelled
         Map<String, Object> user3Data = new HashMap<>();
@@ -144,11 +145,12 @@ public class OrganizerEventInfoFragmentUITest {
         user3Data.put("name", "Test User Three");
         user3Data.put("email", "user3@test.com");
         user3Data.put("fcmToken", "test_token_3");
-        db.collection("users-p4").document(testUserId3).set(user3Data);
+        db.collection("users-p4").document(testUserId3)
+                .set(user3Data)
+                .addOnCompleteListener(task -> latch.countDown());
 
-        // Wait for Firestore operations
         try {
-            Thread.sleep(1000);
+            latch.await(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -165,31 +167,55 @@ public class OrganizerEventInfoFragmentUITest {
     }
 
     /**
-     * Creates fragment with test arguments
+     * Launches the fragment using FragmentScenario with test arguments
      */
-    private OrganizerEventInfoFragment createTestFragment() {
-        return OrganizerEventInfoFragment.newInstance(
-                testEventId,
-                testEventName,
-                1, // waitlist count
-                1, // selected count
-                1  // cancelled count
-        );
+    private FragmentScenario<OrganizerEventInfoFragment> launchFragment(int waitlistCount, int selectedCount, int cancelledCount) {
+        android.os.Bundle args = new android.os.Bundle();
+        args.putString("event_id", testEventId);
+        args.putString("event_name", testEventName);
+        args.putInt("waitlist_count", waitlistCount);
+        args.putInt("selected_count", selectedCount);
+        args.putInt("cancelled_count", cancelledCount);
+
+        FragmentScenario<OrganizerEventInfoFragment> scenario =
+                FragmentScenario.launchInContainer(
+                        OrganizerEventInfoFragment.class,
+                        args,
+                        com.google.android.material.R.style.Theme_MaterialComponents_Light
+                );
+
+        // Wait for fragment to initialize and load data
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return scenario;
     }
 
     /**
-     * Launches the fragment in a test activity
+     * Helper method to wait for a view to be displayed
      */
-    private ActivityScenario<TestFragmentActivity> launchFragment(OrganizerEventInfoFragment fragment) {
-        ActivityScenario<TestFragmentActivity> scenario = ActivityScenario.launch(TestFragmentActivity.class);
-        scenario.onActivity(activity -> activity.setFragment(fragment));
-        return scenario;
+    private void waitForView(int viewId, long timeoutMs) {
+        long endTime = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < endTime) {
+            try {
+                onView(withId(viewId)).check(matches(isDisplayed()));
+                return;
+            } catch (Exception e) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+            }
+        }
     }
 
     @Test
     public void testFragmentLaunches() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify fragment is displayed
         onView(withId(R.id.headerText)).check(matches(isDisplayed()));
@@ -199,15 +225,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testEventNameDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify event name is displayed
         onView(withId(R.id.headerText)).check(matches(withText(testEventName)));
@@ -217,15 +235,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testWaitlistCountDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify waitlist count is displayed
         onView(withId(R.id.waitingCount)).check(matches(withText("1")));
@@ -235,15 +245,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSelectedCountDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify selected count is displayed
         onView(withId(R.id.selectedCount)).check(matches(withText("1")));
@@ -253,15 +255,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testCancelledCountDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify cancelled count is displayed
         onView(withId(R.id.cancelledCount)).check(matches(withText("1")));
@@ -271,8 +265,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testWaitingListCardDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify waiting list card is displayed
         onView(withId(R.id.waitingListCard)).check(matches(isDisplayed()));
@@ -282,8 +275,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSelectedCardDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify selected card is displayed
         onView(withId(R.id.selectedCard)).check(matches(isDisplayed()));
@@ -293,8 +285,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testCancelledCardDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify cancelled card is displayed
         onView(withId(R.id.cancelledCard)).check(matches(isDisplayed()));
@@ -304,8 +295,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testCloseButtonDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify close button is displayed
         onView(withId(R.id.closeButton)).check(matches(isDisplayed()));
@@ -315,22 +305,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testWaitingListCardClickShowsDialog() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog to appear
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -345,22 +327,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSelectedCardClickShowsDialog() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click selected card
         onView(withId(R.id.selectedCard)).perform(click());
 
         // Wait for dialog to appear
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -373,22 +347,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testCancelledCardClickShowsDialog() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click cancelled card
         onView(withId(R.id.cancelledCard)).perform(click());
 
         // Wait for dialog to appear
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -401,22 +367,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testRecipientCountDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -430,22 +388,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSuggestionChipsDisplayed() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -460,22 +410,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSendButtonInitiallyDisabled() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -488,22 +430,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSuggestionChipFillsMessageInput() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -519,22 +453,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testSendButtonEnabledAfterTyping() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -545,7 +471,7 @@ public class OrganizerEventInfoFragmentUITest {
 
         // Wait for UI update
         try {
-            Thread.sleep(300);
+            Thread.sleep(500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -558,22 +484,14 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testCancelButtonClosesDialog() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -596,15 +514,7 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testRealtimeCountUpdates() {
-        OrganizerEventInfoFragment fragment = createTestFragment();
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for initial data load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(1, 1, 1);
 
         // Verify initial count
         onView(withId(R.id.waitingCount)).check(matches(withText("1")));
@@ -627,9 +537,9 @@ public class OrganizerEventInfoFragmentUITest {
                 .document(testEventId)
                 .update("waitlist", waitlist);
 
-        // Wait for real-time update
+        // Wait for real-time update (increased time)
         try {
-            Thread.sleep(2000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -643,22 +553,7 @@ public class OrganizerEventInfoFragmentUITest {
     @Test
     public void testEmptyWaitlistShowsToast() {
         // Create fragment with zero counts
-        OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
-                testEventId,
-                testEventName,
-                0, // empty waitlist
-                0,
-                0
-        );
-
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
-
-        // Wait for data to load
-        try {
-            Thread.sleep(1500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(0, 0, 0);
 
         // Update Firestore to have empty waitlist
         Map<String, Object> waitlist = new HashMap<>();
@@ -668,7 +563,7 @@ public class OrganizerEventInfoFragmentUITest {
                 .update("waitlist", waitlist);
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(1500);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -691,30 +586,47 @@ public class OrganizerEventInfoFragmentUITest {
 
     @Test
     public void testMultipleRecipients() {
-        // Create fragment with multiple recipients
-        OrganizerEventInfoFragment fragment = OrganizerEventInfoFragment.newInstance(
-                testEventId,
-                testEventName,
-                3, // 3 recipients
-                1,
-                1
-        );
+        // First, add more users to the waitlist in Firestore
+        Map<String, Object> waitlist = new HashMap<>();
+        List<Map<String, Object>> waitlistedUsers = new ArrayList<>();
 
-        ActivityScenario<TestFragmentActivity> scenario = launchFragment(fragment);
+        // Add existing user
+        Map<String, Object> user1 = new HashMap<>();
+        user1.put("id", testUserId1);
+        waitlistedUsers.add(user1);
 
-        // Wait for data to load
+        // Add two more users
+        Map<String, Object> user2 = new HashMap<>();
+        user2.put("id", "extra_user_1");
+        waitlistedUsers.add(user2);
+
+        Map<String, Object> user3 = new HashMap<>();
+        user3.put("id", "extra_user_2");
+        waitlistedUsers.add(user3);
+
+        waitlist.put("waitlistedUsers", waitlistedUsers);
+
+        // Update Firestore with 3 users
+        db.collection("event-p4")
+                .document(testEventId)
+                .update("waitlist", waitlist);
+
+        // Wait for Firestore update
         try {
-            Thread.sleep(1500);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        // Create fragment with multiple recipients
+        FragmentScenario<OrganizerEventInfoFragment> scenario = launchFragment(3, 1, 1);
 
         // Click waiting list card
         onView(withId(R.id.waitingListCard)).perform(click());
 
         // Wait for dialog
         try {
-            Thread.sleep(500);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
