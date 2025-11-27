@@ -358,15 +358,8 @@ public class EditEventDialog extends DialogFragment {
     }
 
     private void runLottery(int numberOfWinners) {
-        List<User> winners = event.drawLotteryWinners(numberOfWinners);
-
-        // gets all of the winners
-        List<String> winnerIds = new ArrayList<>();
-        for (User user : winners) {
-            winnerIds.add(user.getId());
-        }
-
-        updateFirestoreAfterLottery(winnerIds);
+        event.drawLotteryWinners(numberOfWinners);
+        updateFirestoreAfterLottery(event.getSelectedIds());
     }
 
     private void updateFirestoreAfterLottery(List<String> winnerIds) {
@@ -389,8 +382,10 @@ public class EditEventDialog extends DialogFragment {
                 .document(event.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    notifyWinners(winnerIds);
+                    // Update each winner's user document
+                    updateWinnerUserDocuments(winnerIds);
 
+                    notifyWinners(winnerIds);
                     loadWaitlistCount();
 
                     if (listener != null) {
@@ -403,6 +398,35 @@ public class EditEventDialog extends DialogFragment {
                     Log.e(TAG, "Failed to update after lottery", e);
                     Toast.makeText(requireContext(), "Failed to complete lottery: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
+    }
+
+    /**
+     * Updates user documents to move winners from waitlistedEvents to registeredEvents
+     * @param winnerIds List of user IDs who won the lottery
+     */
+    private void updateWinnerUserDocuments(List<String> winnerIds) {
+        for (String userId : winnerIds) {
+            Map<String, Object> userUpdates = new HashMap<>();
+
+            // Add to registeredEvents with "Notified" status
+            userUpdates.put("registeredEvents." + event.getId(), "Notified");
+
+            // Remove from waitlistedEvents array
+            userUpdates.put("waitlistedEvents", FieldValue.arrayRemove(event.getId()));
+
+            // Also remove from waitlistedEventIds if it exists
+            userUpdates.put("waitlistedEventIds", FieldValue.arrayRemove(event.getId()));
+
+            db.collection("users-p4")
+                    .document(userId)
+                    .update(userUpdates)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Updated user document for winner: " + userId);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to update user document for: " + userId, e);
+                    });
+        }
     }
 
 

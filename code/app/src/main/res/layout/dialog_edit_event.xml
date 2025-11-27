@@ -236,7 +236,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="🎲 Run Lottery Drawing"
-                android:backgroundTint="#6200EE"
+                android:backgroundTint="#000000"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"/>
         </LinearLayout>

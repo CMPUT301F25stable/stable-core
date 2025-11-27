@@ -214,7 +214,7 @@ public class InfoActivity extends AppCompatActivity {
         acceptButton.setAlpha(0.5f);
         declineButton.setAlpha(0.5f);
 
-        // Single-field Firestore update
+        // Single-field Firestore update for user document
         Map<String, Object> updates = new HashMap<>();
         updates.put("registeredEvents." + eventId, "Accepted");
 
@@ -228,6 +228,9 @@ public class InfoActivity extends AppCompatActivity {
 
                     // Adds to finalizedUsers
                     updateJoinFinalizedUsers(eventId, currentUser);
+
+                    // Remove user from selectedIds in event document
+                    removeFromSelectedIds(eventId);
 
                     Toast.makeText(this, "You accepted the invitation!", Toast.LENGTH_SHORT).show();
 
@@ -248,6 +251,24 @@ public class InfoActivity extends AppCompatActivity {
                     declineButton.setAlpha(1.0f);
 
                     Toast.makeText(this, "Failed to save: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /**
+     * Removes the current user's ID from the selectedIds array in the event document
+     * @param eventId The ID of the event to update
+     */
+    private void removeFromSelectedIds(String eventId) {
+        Map<String, Object> eventUpdates = new HashMap<>();
+        eventUpdates.put("selectedIds", FieldValue.arrayRemove(currentUser.getId()));
+
+        db.collection("event-p4").document(eventId)
+                .update(eventUpdates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("InfoActivity", "User removed from selectedIds");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("InfoActivity", "Failed to remove from selectedIds: " + e.getMessage());
                 });
     }
 
