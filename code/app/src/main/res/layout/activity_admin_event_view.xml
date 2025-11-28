@@ -123,7 +123,7 @@
                 android:backgroundTint="#4CAF50"
                 android:elevation="4dp"
                 android:fontFamily="sans-serif-medium"
-                android:text="Edit Image"
+                android:text="Remove Image"
                 android:textAllCaps="false"
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
