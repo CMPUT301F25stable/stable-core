@@ -46,6 +46,14 @@ public class EventAdapter extends ArrayAdapter<Event> {
         this.eventList = events;
     }
 
+    public void setFilteredList(List<Event> filteredList) {
+        if (filteredList == null) filteredList = new ArrayList<>();
+        this.eventList = new ArrayList<>(filteredList);
+        clear();
+        addAll(this.eventList);
+        notifyDataSetChanged();
+    }
+
     /**
      * Sets event_list_item.xml's text fields
      * @param position The position of the item within the adapter's data set of the item whose view

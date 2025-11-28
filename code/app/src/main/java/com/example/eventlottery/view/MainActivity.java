@@ -238,7 +238,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     /**
      * Creates a Date object for the specified year, month, day, hour, and minute.
      * @param year The year (e.g., 2025)
@@ -350,6 +349,11 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Applies the given filters to the data.
+     * @param tags
+     * @param datesMidnight
+     */
     private void applyFilters(List<String> tags, Set<Long> datesMidnight) {
         boolean hasTagFilter = (tags != null && !tags.isEmpty());
         boolean hasDateFilter = (datesMidnight != null && !datesMidnight.isEmpty());

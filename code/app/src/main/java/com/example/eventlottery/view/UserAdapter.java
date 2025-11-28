@@ -14,6 +14,7 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.users.User;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Adapter for a user class: we want it to display the user's name & their id
@@ -33,6 +34,19 @@ public class UserAdapter extends ArrayAdapter<User> {
         this.context = context;
         this.userList = users;
     }
+
+    /**
+     * Sets the filtered list of users.
+     * @param filteredList
+     */
+    public void setFilteredList(List<User> filteredList) {
+        if (filteredList == null) filteredList = new ArrayList<>();
+        this.userList = new ArrayList<>(filteredList);
+        clear();
+        addAll(this.userList);
+        notifyDataSetChanged();
+    }
+
 
     /**
      * Sets user_list_item.xml's text fields
