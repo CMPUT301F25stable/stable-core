@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,15 +19,29 @@ import androidx.core.view.WindowInsetsCompat;
 import com.bumptech.glide.Glide;
 import com.example.eventlottery.R;
 import com.example.eventlottery.model.EventDatabase;
+import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageKt;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 import java.util.Map;
 
 public class AdminEventView extends AppCompatActivity {
+
     private String TAG = "AdminEventView";
     private String eventId;
+    private String imageURL;
+    private String eventStoragePath;
+
+    private Button deleteImagebutton;
     private Button deleteButton;
+
+    private ImageView image;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,10 +63,14 @@ public class AdminEventView extends AppCompatActivity {
         String timeEnd   = getIntent().getStringExtra("timeEnd");
         String location  = getIntent().getStringExtra("location");
         String organizer = getIntent().getStringExtra("organizer");
-        String imageURL = getIntent().getStringExtra("image");
+        imageURL = getIntent().getStringExtra("image");
+        eventStoragePath = getIntent().getStringExtra("storagePath");
+
 
         // Set up buttons & such
         deleteButton = findViewById(R.id.adminDeleteButton);
+        deleteImagebutton = findViewById(R.id.adminRemoveImage);
+        image = findViewById(R.id.adminImageView);
         ImageView image = findViewById(R.id.adminImageView);
         TextView title = findViewById(R.id.adminEventTitle);
         TextView subtitle = findViewById(R.id.adminEventSubtitle);
@@ -98,6 +117,43 @@ public class AdminEventView extends AppCompatActivity {
                 finish();
             }
         });
+
+
+        deleteImagebutton.setOnClickListener(v -> {
+            /**
+             * On click, it deletes the image for the event locally + on firebase.
+             * @param v The view that was clicked.
+             */
+            if (eventStoragePath == null || eventStoragePath.isEmpty()) {
+                Toast.makeText(this, "No image to delete.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseStorage.getInstance()
+                    .getReference(eventStoragePath)
+                    .delete()
+                    .addOnSuccessListener(unused -> {
+                        FirebaseFirestore.getInstance()
+                                .collection("event-p4")
+                                .document(eventId)
+                                .update("image", null, "storagePath", null)
+                                .addOnSuccessListener(unused2 -> {
+                                    imageURL = null;
+                                    eventStoragePath = null;
+
+                                    Glide.with(this) // Replace image with placeholder
+                                            .load(R.drawable.placeholder)
+                                            .into(image);
+
+                                    Toast.makeText(this, "Image deleted.", Toast.LENGTH_SHORT).show();
+                                });
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Failed to delete image.", Toast.LENGTH_SHORT).show()
+                    );
+        });
+
+
     }
 
     /**
