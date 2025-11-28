@@ -129,6 +129,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             intent.putExtra("location", event.getLocation());
             intent.putExtra("organizer", event.getOrganizer());
             intent.putExtra("image", event.getImage());
+            intent.putExtra("storagePath", event.getStoragePath());
             EventViewResultLauncher.launch(intent);
         });
         // Delete Selected User
@@ -257,7 +258,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // 3. Delete event from "event-p4" in firebase
         db.collection("event-p4").document(eventId).delete();
     }
-      
+
     /*
      * Deletes the selected User
      * @param user: the user to be deleted
