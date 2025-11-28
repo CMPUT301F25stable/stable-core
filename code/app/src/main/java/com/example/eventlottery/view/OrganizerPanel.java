@@ -327,7 +327,8 @@ public class OrganizerPanel extends AppCompatActivity {
         editEvent.setOnClickListener(v -> {
             if (selectedEventIndex != -1) {
                 selectedEvent = data.get(selectedEventIndex);
-                EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent);
+                // checks if the selected event is an edit event
+                EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent, true);
 
                 // Updates event in Firestore and refreshes adapter when an edit is made
                 dialog.setOnEventUpdatedListener(updatedEvent -> {

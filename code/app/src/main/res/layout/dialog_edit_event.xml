@@ -1,211 +1,330 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal"
-        android:paddingLeft="12dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/titleText"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:paddingLeft="12dp">
+
+            <TextView
+                android:id="@+id/titleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/titleInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="Enter your title here"
+                android:inputType="text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:paddingLeft="12dp">
+
+            <TextView
+                android:id="@+id/descriptionText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Description: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/descriptionInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="Enter your description here"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:paddingLeft="12dp">
+
+            <TextView
+                android:id="@+id/locationText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Location: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/locationInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="Enter your location here"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/waitlistMaxText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:text="Waitlist Max: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/waitlistMaxInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="Leave empty for no limit"
+                android:inputType="text"
+                android:textSize="16sp"
+                tools:ignore="TouchTargetSizeCheck" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/startDateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:text="Start Date: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/startDateInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:focusable="false"
+                android:hint="YYYY-MM-DD"
+                android:inputType="date"
+                android:textSize="16sp"
+                tools:ignore="TouchTargetSizeCheck" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/endDateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:text="End Date: "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/endDateInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:focusable="false"
+                android:hint="YYYY-MM-DD"
+                android:inputType="date"
+                android:textSize="16sp"
+                tools:ignore="TouchTargetSizeCheck" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/geolocationSwitch"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Title: "
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/titleInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Enter your title here"
-            android:inputType="text" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal"
-        android:paddingLeft="12dp">
-
-        <TextView
-            android:id="@+id/descriptionText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Description: "
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/descriptionInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Enter your description here"
-            android:inputType="text" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal"
-        android:paddingLeft="12dp">
-
-        <TextView
-            android:id="@+id/locationText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Location: "
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/locationInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Enter your location here"
-            android:inputType="text" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/waitlistMaxText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:paddingLeft="12dp"
-            android:text="Waitlist Max: "
+            android:text="Geolocation: "
             android:textSize="16sp" />
 
-        <EditText
-            android:id="@+id/waitlistMaxInput"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:id="@+id/initialUploadSection"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:hint="Leave empty for no limit"
-            android:inputType="text"
-            android:textSize="16sp"
-            tools:ignore="TouchTargetSizeCheck" />
-    </LinearLayout>
+            android:orientation="vertical"
+            android:visibility="gone">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <Button
+                    android:id="@+id/select_image_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Select Image"
+                    android:textColor="@color/black"
+                    android:backgroundTint="@color/LightGrey"/>
+
+                <Button
+                    android:id="@+id/upload_image_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Upload Image"
+                    android:textColor="@color/black"
+                    android:backgroundTint="@color/LightGrey"
+                    android:layout_alignParentEnd="true"/>
+            </RelativeLayout>
+
+            <ProgressBar
+                android:id="@+id/upload_img_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:progress="0"
+                android:max="100"
+                android:visibility="gone"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/preview_select_img_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/startDateText"
-            android:layout_width="wrap_content"
+            android:id="@+id/posterSectionTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:text="Start Date: "
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/startDateInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:focusable="false"
-            android:hint="YYYY-MM-DD"
-            android:inputType="date"
+            android:text="Event Poster"
+            android:textStyle="bold"
             android:textSize="16sp"
-            tools:ignore="TouchTargetSizeCheck" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/endDateText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:text="End Date: "
-            android:textSize="16sp" />
-
-        <EditText
-            android:id="@+id/endDateInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:focusable="false"
-            android:hint="YYYY-MM-DD"
-            android:inputType="date"
-            android:textSize="16sp"
-            tools:ignore="TouchTargetSizeCheck" />
-    </LinearLayout>
-
-    <Switch
-        android:id="@+id/geolocationSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:paddingLeft="12dp"
-        android:text="Geolocation: "
-        android:textSize="16sp" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp">
-
-        <Button
-            android:id="@+id/select_image_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Select Image"
-            android:textColor="@color/black"
-            android:backgroundTint="@color/LightGrey"/>
-
-        <Button
-            android:id="@+id/upload_image_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Upload Image"
-            android:textColor="@color/black"
-            android:backgroundTint="@color/LightGrey"
-            android:layout_alignParentEnd="true"/>
-    </RelativeLayout>
-
-    <ProgressBar
-        android:id="@+id/upload_img_progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:progress="0"
-        android:max="100"
-        android:visibility="gone"
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="12dp" />
 
         <ImageView
-            android:id="@+id/preview_select_img_view"
+            android:id="@+id/eventPosterPreview"
             android:layout_width="match_parent"
-            android:layout_height="250dp"/>
-    </LinearLayout>
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:background="@android:color/darker_gray"
+            android:contentDescription="Event poster preview" />
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/changePosterButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Change Poster"
+                android:backgroundTint="@android:color/holo_blue_light"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/removePosterButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Remove Poster"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@android:color/holo_red_light" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/lotterySectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lottery Drawing"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="12dp" />
+
+        <LinearLayout
+            android:id="@+id/lotteryInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="12dp">
+
+            <TextView
+                android:id="@+id/waitlistInfoText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Current waitlist: 0 entrants"
+                android:textSize="14sp"
+                android:paddingBottom="8dp" />
+
+            <EditText
+                android:id="@+id/lotterySizeInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Number of entrants to select"
+                android:inputType="number" />
+
+            <Button
+                android:id="@+id/runLotteryButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Run Lottery"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/lotteryStatusLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingLeft="12dp"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/lotteryResultText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lottery result"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
