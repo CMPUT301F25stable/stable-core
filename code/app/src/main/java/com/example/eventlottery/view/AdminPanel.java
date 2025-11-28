@@ -19,6 +19,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.widget.SearchView;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
@@ -63,6 +64,10 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     /** Adapter for user object */
     private UserAdapter userAdapter;
 
+    private SearchView eventSearchBar;
+    private SearchView userSearchBar;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +97,8 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         db = FirebaseFirestore.getInstance();
         userAdapter = new UserAdapter(AdminPanel.this, userList);
         userListFragment.setAdapter(userAdapter);
+        eventSearchBar = findViewById(R.id.eventSearchBar);
+        userSearchBar = findViewById(R.id.userSearchBar);
 
         loadProfilesFromFirestore();
 
@@ -140,6 +147,25 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             popupMenu.setOnMenuItemClickListener(this);
             popupMenu.inflate(R.menu.menu);
             popupMenu.show();
+        });
+
+        // Configure SearchView filtering for events
+        eventSearchBar.clearFocus();
+        eventSearchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
+                filterEventList(newText);
+                return true;
+            }
+        });
+        // Configure SearchView filtering for users
+        userSearchBar.clearFocus();
+        userSearchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
+                filterEventList(newText);
+                return true;
+            }
         });
     }
 
@@ -341,4 +367,63 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         }
         return false;
     }
+
+    /**
+     * Filters the event list by event name and updates the adapter.
+     */
+    private void filterEventList(String text) {
+        String q = (text == null) ? "" : text.trim().toLowerCase();
+
+        // If search is empty, show all events
+        if (q.isEmpty()) {
+            // If your EventAdapter has a method like setFilteredList, use that
+            if (eventAdapter != null) {
+                eventAdapter.setFilteredList(new ArrayList<>(eventListData));
+            }
+            return;
+        }
+
+        ArrayList<Event> filtered = new ArrayList<>();
+        for (Event event : eventListData) {
+            if (event.getName() != null &&
+                    event.getName().toLowerCase().contains(q)) {
+                filtered.add(event);
+            }
+        }
+
+        if (eventAdapter != null) {
+            eventAdapter.setFilteredList(filtered);
+        }
+    }
+
+    /**
+     * Filters the user list by user name (and/or ID) and updates the adapter.
+     */
+    private void filterUserList(String text) {
+        String q = (text == null) ? "" : text.trim().toLowerCase();
+
+        if (q.isEmpty()) {
+            if (userAdapter != null) {
+                userAdapter.setFilteredList(new ArrayList<>(userList));
+            }
+            return;
+        }
+
+        ArrayList<User> filtered = new ArrayList<>();
+        for (User user : userList) {
+            boolean matchesName = user.getName() != null &&
+                    user.getName().toLowerCase().contains(q);
+            boolean matchesId = user.getId() != null &&
+                    user.getId().toLowerCase().contains(q);
+
+            if (matchesName || matchesId) {
+                filtered.add(user);
+            }
+        }
+
+        if (userAdapter != null) {
+            userAdapter.setFilteredList(filtered);
+        }
+    }
+
 }
