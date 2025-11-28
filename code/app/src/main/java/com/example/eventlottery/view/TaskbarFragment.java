@@ -97,7 +97,7 @@ public class TaskbarFragment extends Fragment {
         View organizerIcon = view.findViewById(R.id.OrganizerIcon);
         organizerIcon.setOnClickListener(v -> {
             if (!(getActivity() instanceof OrganizerPanel)) { // Prevents redundant calls to the database from OrganizerPanel
-                db.loadUserInfo(user.getId(), task -> {
+                db.loadUserInfo(db.getUserId(), task -> {
                     if (task.isSuccessful()) {
                         DocumentSnapshot document = task.getResult();
                         if (document.exists()) {
