@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    >
 
     <!-- Main Content Layout -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -14,20 +15,18 @@
         android:background="#F5F5F5"
         tools:context=".view.OrganizerPanel">
 
+
         <!-- Event search bar -->
-        <SearchView
+        <androidx.appcompat.widget.SearchView
             android:id="@+id/eventSearchBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:background="@color/white"
-            android:elevation="2dp"
-            android:iconifiedByDefault="false"
-            android:queryHint="Search Events"
-            android:textColor="#000000"
-            android:textColorHint="#999999"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:background="@drawable/search_view_bg"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search Events..."
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/fragmentContainerView1" />
 
@@ -44,19 +43,18 @@
             app:layout_constraintVertical_weight="1" />
 
         <!-- User search bar -->
-        <SearchView
+        <androidx.appcompat.widget.SearchView
             android:id="@+id/userSearchBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:background="@color/white"
-            android:elevation="2dp"
-            android:iconifiedByDefault="false"
-            android:queryHint="Search Profiles"
+            android:background="@drawable/search_view_bg"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search Profiles..."
             app:layout_constraintTop_toBottomOf="@id/fragmentContainerView1"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView2"/>
+            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView2" />
 
         <!-- Container for UserList -->
         <androidx.fragment.app.FragmentContainerView
@@ -67,9 +65,26 @@
             app:layout_constraintTop_toBottomOf="@id/userSearchBar"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/backButton"
             app:layout_constraintVertical_weight="1" />
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go Back"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#000000"
+            android:textColor="#FFFFFF"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="12dp"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
+
