@@ -132,6 +132,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             intent.putExtra("storagePath", event.getStoragePath());
             EventViewResultLauncher.launch(intent);
         });
+
         // Delete Selected User
         userListFragment.setOnItemClickListener((parent, v, p, id) -> {
             selectedUser = (User) parent.getItemAtPosition(p);
