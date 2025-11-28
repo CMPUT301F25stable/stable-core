@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -62,8 +64,10 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private User selectedUser;
     /** Adapter for user object */
     private UserAdapter userAdapter;
+    /** Button for going back */
+    private Button backButton;
 
-    @Override
+     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -87,6 +91,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // Initialize other activity variables
         eventlistFragment = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView1);
         userListFragment = (UserListFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView2);
+        backButton = findViewById(R.id.backButton);
         eventListData = new ArrayList<Event>();
         userList = new ArrayList<User>();
         db = FirebaseFirestore.getInstance();
@@ -132,6 +137,14 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             intent.putExtra("storagePath", event.getStoragePath());
             EventViewResultLauncher.launch(intent);
         });
+
+        // Set click listener for going back
+         backButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 finish();
+             }
+         });
 
         // Delete Selected User
         userListFragment.setOnItemClickListener((parent, v, p, id) -> {
