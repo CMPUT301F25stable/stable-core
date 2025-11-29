@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -19,6 +21,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.widget.SearchView;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
@@ -62,6 +65,12 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private User selectedUser;
     /** Adapter for user object */
     private UserAdapter userAdapter;
+    /** Button for going back */
+    private Button backButton;
+
+    private SearchView eventSearchBar;
+    private SearchView userSearchBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,11 +96,14 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // Initialize other activity variables
         eventlistFragment = (EventlistFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView1);
         userListFragment = (UserListFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView2);
+        backButton = findViewById(R.id.backButton);
         eventListData = new ArrayList<Event>();
         userList = new ArrayList<User>();
         db = FirebaseFirestore.getInstance();
         userAdapter = new UserAdapter(AdminPanel.this, userList);
         userListFragment.setAdapter(userAdapter);
+        eventSearchBar = findViewById(R.id.eventSearchBar);
+        userSearchBar = findViewById(R.id.userSearchBar);
 
         loadProfilesFromFirestore();
 
@@ -129,8 +141,18 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             intent.putExtra("location", event.getLocation());
             intent.putExtra("organizer", event.getOrganizer());
             intent.putExtra("image", event.getImage());
+            intent.putExtra("storagePath", event.getStoragePath());
             EventViewResultLauncher.launch(intent);
         });
+
+        // Set click listener for going back
+         backButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 finish();
+             }
+         });
+
         // Delete Selected User
         userListFragment.setOnItemClickListener((parent, v, p, id) -> {
             selectedUser = (User) parent.getItemAtPosition(p);
@@ -138,6 +160,25 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             popupMenu.setOnMenuItemClickListener(this);
             popupMenu.inflate(R.menu.menu);
             popupMenu.show();
+        });
+
+        // Configure SearchView filtering for events
+        eventSearchBar.clearFocus();
+        eventSearchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
+                filterEventList(newText);
+                return true;
+            }
+        });
+        // Configure SearchView filtering for users
+        userSearchBar.clearFocus();
+        userSearchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) {
+                filterEventList(newText);
+                return true;
+            }
         });
     }
 
@@ -257,7 +298,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // 3. Delete event from "event-p4" in firebase
         db.collection("event-p4").document(eventId).delete();
     }
-      
+
     /*
      * Deletes the selected User
      * @param user: the user to be deleted
@@ -286,6 +327,44 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     }
 
     /**
+     * Updates the selected {@link User}'s organizer permissions.
+     * @param user The user who will have their organizer permission changed.
+     */
+    private void updateOrganizerPerms(User user) {
+        boolean creationBan = user.isCreationBan();
+        String dialogTitle;
+        String name = user.getName();
+
+        if (creationBan) {
+            dialogTitle = "This will give " + name + " organizer permissions.";
+        } else {
+            dialogTitle = "This will revoke " + name + "'s organizer permissions.";
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(dialogTitle)
+                .setMessage("Are you sure?")
+                .setNegativeButton("No", null)
+                .setPositiveButton("Yes", (dialogInterface, i) -> {
+                    userDatabase.updateOrganizerPerms(user.getId(), !creationBan, AdminPanel.this::updatePermsListener);
+                })
+                .show();
+    }
+
+    /**
+     * Callback method which is called when Firestore completes updating the user's permissions.
+     * @param task The listener given by a completed Firestore request.
+     */
+    private void updatePermsListener(Task<Void> task) {
+        if (task.isSuccessful()) {
+            Toast.makeText(this, "Organizer permissions successfully updated.", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Failed to update organizer permissions.", Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Failed to update organizer permissions.");
+        }
+    }
+
+    /**
      * Option menu for selecting a user
      * Note: for now only deleting a user is possible
      * @param menuItem: firestore get data request
@@ -295,7 +374,69 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         if (menuItem.getItemId() == R.id.delete_user) {
             deleteSelectedUser(selectedUser);
             return true;
+        } else if (menuItem.getItemId() == R.id.organizer_perms) {
+            updateOrganizerPerms(selectedUser);
+            return true;
         }
         return false;
     }
+
+    /**
+     * Filters the event list by event name and updates the adapter.
+     */
+    private void filterEventList(String text) {
+        String q = (text == null) ? "" : text.trim().toLowerCase();
+
+        // If search is empty, show all events
+        if (q.isEmpty()) {
+            // If your EventAdapter has a method like setFilteredList, use that
+            if (eventAdapter != null) {
+                eventAdapter.setFilteredList(new ArrayList<>(eventListData));
+            }
+            return;
+        }
+
+        ArrayList<Event> filtered = new ArrayList<>();
+        for (Event event : eventListData) {
+            if (event.getName() != null &&
+                    event.getName().toLowerCase().contains(q)) {
+                filtered.add(event);
+            }
+        }
+
+        if (eventAdapter != null) {
+            eventAdapter.setFilteredList(filtered);
+        }
+    }
+
+    /**
+     * Filters the user list by user name (and/or ID) and updates the adapter.
+     */
+    private void filterUserList(String text) {
+        String q = (text == null) ? "" : text.trim().toLowerCase();
+
+        if (q.isEmpty()) {
+            if (userAdapter != null) {
+                userAdapter.setFilteredList(new ArrayList<>(userList));
+            }
+            return;
+        }
+
+        ArrayList<User> filtered = new ArrayList<>();
+        for (User user : userList) {
+            boolean matchesName = user.getName() != null &&
+                    user.getName().toLowerCase().contains(q);
+            boolean matchesId = user.getId() != null &&
+                    user.getId().toLowerCase().contains(q);
+
+            if (matchesName || matchesId) {
+                filtered.add(user);
+            }
+        }
+
+        if (userAdapter != null) {
+            userAdapter.setFilteredList(filtered);
+        }
+    }
+
 }

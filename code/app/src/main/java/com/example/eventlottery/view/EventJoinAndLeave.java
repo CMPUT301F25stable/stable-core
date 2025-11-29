@@ -195,8 +195,8 @@ public class EventJoinAndLeave extends AppCompatActivity {
             return;
         }
 
-        // Check if waitlist is full
-        if (waitlistMax <= size) {
+        // Check if waitlist is full & user hasn't joined
+        if (size >= waitlistMax && !isJoined) {
             Toast.makeText(this, "Waitlist is full", Toast.LENGTH_SHORT).show();
             return;
         }

@@ -103,7 +103,7 @@ public class CreateEventDialog extends DialogFragment {
         // Inflate dialog view
         LayoutInflater inflater = getLayoutInflater();
         // Note: This uses the same layout as editing the event
-        View dialogView = inflater.inflate(R.layout.dialog_edit_event, null);
+        View dialogView = inflater.inflate(R.layout.dialog_create_event, null);
 
         // Set up variables for getting input
         EditText title = dialogView.findViewById(R.id.titleInput);

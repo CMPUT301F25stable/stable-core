@@ -106,7 +106,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
 
-    // --- Fragment Testing (CRITICAL for FragmentScenario) ---
+    // --- Fragment Testing ---
     debugImplementation("androidx.fragment:fragment-testing:1.8.5")
     androidTestImplementation("androidx.fragment:fragment-testing:1.8.5")
 }

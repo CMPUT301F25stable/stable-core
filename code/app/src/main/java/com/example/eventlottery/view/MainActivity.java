@@ -151,22 +151,8 @@ public class MainActivity extends AppCompatActivity {
             else {
                 // User does not exist - create a new user
                 Log.d("MainActivity", "User doesn't exist, creating new user");
-                currentUser = new User();
-                currentUser.setId(DEVICE_ID);
-                // Set other default user properties as needed
-
-                // Save the user to Firestore
-                db.collection("users-p4")
-                        .document(DEVICE_ID)
-                        .set(currentUser)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("MainActivity", "New user created successfully");
-                            loadEventsFromFirestore();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("MainActivity", "Failed to create user", e);
-                        });
-
+                DBConnector dbConnector = new DBConnector(this);
+                dbConnector.saveNewUser(this);
             }
         });
 
@@ -251,7 +237,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 
     /**
      * Creates a Date object for the specified year, month, day, hour, and minute.
@@ -364,6 +349,11 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Applies the given filters to the data.
+     * @param tags
+     * @param datesMidnight
+     */
     private void applyFilters(List<String> tags, Set<Long> datesMidnight) {
         boolean hasTagFilter = (tags != null && !tags.isEmpty());
         boolean hasDateFilter = (datesMidnight != null && !datesMidnight.isEmpty());

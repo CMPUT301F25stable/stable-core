@@ -418,7 +418,8 @@ public class Event implements Serializable {
 
     /**
      * Runs the lottery for this event and stores the selected winners internally.
-     * Any previous winners are cleared before the new draw. Only draws chosen entrants
+     * Any previous winners are cleared before the new draw. Draws chosen entrants
+     * and stores their IDs in selectedIds.
      * @param capacity the number of winners to select (must be &ge; 0 and
      *                 not larger than the current wait-list size)
      * @return an unmodifiable view of the newly selected winners; the same
@@ -426,12 +427,19 @@ public class Event implements Serializable {
      */
     public List<User> drawLotteryWinners(int capacity) {
         chosenEntrants.clear();
+        selectedIds.clear(); // Clear previous selected IDs
 
         if (lotteryEngine == null) {
             lotteryEngine = new LotterySystem(waitlist.getWaitlistedUsers());
         }
 
         chosenEntrants.addAll(lotteryEngine.selectWinners(capacity));
+
+        // Populate selectedIds from chosenEntrants
+        for (User user : chosenEntrants) {
+            selectedIds.add(user.getId());
+        }
+
         return chosenEntrants;
     }
     public List<User> getChosenEntrants() {

@@ -88,21 +88,13 @@ public class EditEventDialog extends DialogFragment {
         return dialog;
     }
 
-    /**
-     * Listener interface for notifying when an event is updated.
-     */
     public interface OnEventUpdatedListener {
         void onEventUpdated(Event updatedEvent);
     }
 
-    /**
-     * Sets the listener for this dialog.
-     * @param listener The listener.
-     */
     public void setOnEventUpdatedListener(OnEventUpdatedListener listener) {
         this.listener = listener;
     }
-
 
     /**
      * Creates and returns the dialog for editing an event.
@@ -221,16 +213,10 @@ public class EditEventDialog extends DialogFragment {
 
         // Display current start & end date
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-        Date currentStartDate = event.getStartTime();
-        Date currentEndDate = event.getEndTime();
-        String currentStartDateString = isoFormat.format(currentStartDate);
-        String currentEndDateString = isoFormat.format(currentEndDate);
-        startDate.setText(currentStartDateString);
-        endDate.setText(currentEndDateString);
+        startDate.setText(isoFormat.format(event.getStartTime()));
+        endDate.setText(isoFormat.format(event.getEndTime()));
 
-        // Display proper geolocation status
-        boolean currentGeolocation = event.getGeolocation();
-        geolocationSwitch.setChecked(currentGeolocation);
+        geolocationSwitch.setChecked(event.getGeolocation());
 
         // Display current poster if it exists
         loadCurrentPoster();
@@ -238,7 +224,6 @@ public class EditEventDialog extends DialogFragment {
         /*********************************
          * 2. Build and show AlertDialog *
          *********************************/
-
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Event Parameters");
         builder.setView(dialogView);
@@ -282,11 +267,7 @@ public class EditEventDialog extends DialogFragment {
                  * 6. Get waitlist max input *
                  *****************************/
                 String waitlistMaxText = waitlistMax.getText().toString();
-
-                // Assume no waitlist limit unless there is valid text input
                 int maxSize = Integer.MAX_VALUE;
-
-                // Get valid integer if there's any input. Check if input was valid
                 if (!waitlistMaxText.isEmpty()) {
                     try {
                         maxSize = Integer.parseInt(waitlistMaxText);
@@ -311,8 +292,7 @@ public class EditEventDialog extends DialogFragment {
 
                 // Initialize date formatter & variables for storing start & end date
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-                Date start;
-                Date end;
+                Date start, end;
 
                 // Check if either start or end date is empty
                 if (startDateText.isEmpty() || endDateText.isEmpty()) {
@@ -349,12 +329,7 @@ public class EditEventDialog extends DialogFragment {
                 /****************************
                  * 8. Get geolocation input *
                  ****************************/
-                boolean geolocation;
-                if (geolocationSwitch.isChecked()) {
-                    geolocation = true;
-                } else {
-                    geolocation = false;
-                }
+                boolean geolocation = geolocationSwitch.isChecked();
 
                 /***********************************************************
                  * 9. Update event locally & run OrganizerPanel's listener *
@@ -376,11 +351,11 @@ public class EditEventDialog extends DialogFragment {
                     listener.onEventUpdated(event);
                 }
 
-                // Dialog only dismisses if all inputs are valid
                 dialog.dismiss();
             });
         });
 
+        Log.d(TAG, "Dialog created successfully");
         return dialog;
     }
 
@@ -410,13 +385,9 @@ public class EditEventDialog extends DialogFragment {
                         }
                     }
                 })
-                .addOnFailureListener(e -> {
-                });
+                .addOnFailureListener(e -> Log.e(TAG, "Failed to load waitlist count", e));
     }
 
-    /**
-     * Shows lottery completed status
-     */
     private void showLotteryCompletedStatus(DocumentSnapshot doc) {
         List<String> selectedIds = (List<String>) doc.get("selectedIds");
         Long lotteryDrawnAt = doc.getLong("lotteryDrawnAt");
@@ -440,69 +411,48 @@ public class EditEventDialog extends DialogFragment {
     private void showLotteryConfirmationDialog() {
         String lotterySizeStr = lotterySizeInput.getText().toString().trim();
 
+        // checks if nothing was entered
         if (lotterySizeStr.isEmpty()) {
-            Toast.makeText(requireContext(), "Please enter number of entrants to select",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Please enter number of entrants to select", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // checks if int was entered
         int lotterySize;
         try {
             lotterySize = Integer.parseInt(lotterySizeStr);
         } catch (NumberFormatException e) {
-            Toast.makeText(requireContext(), "Please enter a valid number",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Please enter a valid number", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Makes sure at least one lottery winner is selected
         if (lotterySize <= 0) {
-            Toast.makeText(requireContext(), "Number must be greater than 0",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Number must be greater than 0", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Checks that organizer didn't select a size bigger than the waitlist
         if (lotterySize > currentWaitlistCount) {
-            Toast.makeText(requireContext(),
-                    "Cannot select " + lotterySize + " from " + currentWaitlistCount + " on waitlist",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(requireContext(), "Cannot select " + lotterySize + " from " + currentWaitlistCount + " on waitlist", Toast.LENGTH_LONG).show();
             return;
         }
 
         new AlertDialog.Builder(requireContext())
                 .setTitle("Run Lottery Drawing?")
-                .setMessage("This will randomly select " + lotterySize +
-                        " entrants from " + currentWaitlistCount + " on the waitlist.\n\n" +
-                        "Selected entrants will be notified and moved to the selected list.\n\n" +
-                        "This action cannot be undone. Continue?")
-                .setPositiveButton("Run Lottery", (dialog, which) -> {
-                    runLottery(lotterySize);
-                })
+                .setMessage("This will randomly select " + lotterySize + " entrants from " + currentWaitlistCount + " on the waitlist.\n\nSelected entrants will be notified and moved to the selected list.\n\nThis action cannot be undone. Continue?")
+                .setPositiveButton("Run Lottery", (dialog, which) -> runLottery(lotterySize))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    /**
-     * Runs the lottery drawing
-     */
     private void runLottery(int numberOfWinners) {
-
-        List<User> winners = event.drawLotteryWinners(numberOfWinners);
-
-        List<String> winnerIds = new ArrayList<>();
-        for (User user : winners) {
-            winnerIds.add(user.getId());
-        }
-
-        updateFirestoreAfterLottery(winnerIds);
+        event.drawLotteryWinners(numberOfWinners);
+        updateFirestoreAfterLottery(event.getSelectedIds());
     }
 
-
-    /**
-     * Updates Firestore after lottery is run
-     */
     private void updateFirestoreAfterLottery(List<String> winnerIds) {
         Map<String, Object> updates = new HashMap<>();
-
         updates.put("selectedIds", FieldValue.arrayUnion(winnerIds.toArray()));
         updates.put("lotteryDrawn", true);
         updates.put("lotteryDrawnAt", System.currentTimeMillis());
@@ -521,36 +471,60 @@ public class EditEventDialog extends DialogFragment {
                 .document(event.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
+                    // Update each winner's user document
+                    updateWinnerUserDocuments(winnerIds);
 
                     notifyWinners(winnerIds);
+                    loadWaitlistCount();
 
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle("Lottery Complete! 🎉")
-                            .setMessage("Successfully selected " + winnerIds.size() + " winners!\n\n" +
-                                    "Winners have been notified and moved to the selected list.")
-                            .setPositiveButton("OK", (dialog, which) -> {
-                                loadWaitlistCount();
-                                if (listener != null) listener.onEventUpdated(event);
-                            })
-                            .show();
+                    if (listener != null) {
+                        listener.onEventUpdated(event);
+                    }
+
+                    Log.d(TAG, "Lottery completed successfully");
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(requireContext(),
-                            "Failed to complete lottery: " + e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Failed to update after lottery", e);
+                    Toast.makeText(requireContext(), "Failed to complete lottery: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
 
-
     /**
-     * Sends notifications to lottery winners
+     * Updates user documents to move winners from waitlistedEvents to registeredEvents
+     * @param winnerIds List of user IDs who won the lottery
      */
+    private void updateWinnerUserDocuments(List<String> winnerIds) {
+        for (String userId : winnerIds) {
+            Map<String, Object> userUpdates = new HashMap<>();
+
+            // Add to registeredEvents with "Notified" status
+            userUpdates.put("registeredEvents." + event.getId(), "Notified");
+
+            // Remove from waitlistedEvents array
+            userUpdates.put("waitlistedEvents", FieldValue.arrayRemove(event.getId()));
+
+            // Also remove from waitlistedEventIds if it exists
+            userUpdates.put("waitlistedEventIds", FieldValue.arrayRemove(event.getId()));
+
+            db.collection("users-p4")
+                    .document(userId)
+                    .update(userUpdates)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Updated user document for winner: " + userId);
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to update user document for: " + userId, e);
+                    });
+        }
+    }
+
+
     private void notifyWinners(List<String> winnerIds) {
         if (winnerIds.isEmpty()) return;
 
         NotificationSystem notificationSystem = new NotificationSystem(requireContext());
 
-        // Sends the notification in batches to not cause issues if there are a lot of winners
+        // notifies winners in batches so it does not notify too many users at once
         for (int i = 0; i < winnerIds.size(); i += 10) {
             int end = Math.min(i + 10, winnerIds.size());
             List<String> batch = winnerIds.subList(i, end);
@@ -794,11 +768,8 @@ public class EditEventDialog extends DialogFragment {
         int month = calendar.get(Calendar.MONTH);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-        DatePickerDialog dialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int monthIndex, int dayOfMonth) {
-                targetText.setText(String.valueOf(year) + "-" + String.valueOf(monthIndex + 1) + "-" + String.valueOf(dayOfMonth));
-            }
+        DatePickerDialog dialog = new DatePickerDialog(getContext(), (view, year1, monthIndex, dayOfMonth) -> {
+            targetText.setText(year1 + "-" + (monthIndex + 1) + "-" + dayOfMonth);
         }, year, month, day);
         dialog.show();
     }

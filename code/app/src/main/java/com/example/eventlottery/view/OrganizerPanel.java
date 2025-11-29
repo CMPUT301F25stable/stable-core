@@ -52,6 +52,9 @@ import java.util.concurrent.Executors;
  * <p>
  */
 public class OrganizerPanel extends AppCompatActivity {
+    /** Tag for logging debug information. */
+    private static final String TAG = "OrganizerPanel";
+
     /** The unique Android device ID for the current organizer. */
     private String userID;
 
@@ -142,6 +145,7 @@ public class OrganizerPanel extends AppCompatActivity {
         // Hide buttons until an event is selected
         chosenEntrantsBtn.setVisibility(View.GONE);
         cancelledEntrantsBtn.setVisibility(View.GONE);
+        downloadQRCode.setVisibility(View.GONE);
 
 
         // Initialize databases and organizer info
@@ -185,7 +189,7 @@ public class OrganizerPanel extends AppCompatActivity {
                 DocumentSnapshot document = task.getResult();
                 if (document.exists()) {
                     organizer = document.toObject(User.class);
-                    Log.d("OrganizerPanel", "Organizer loaded");
+                    Log.d(TAG, "Organizer loaded");
 
                     // Load events after organizer data is retrieved
                     adapter = new EventAdapter(OrganizerPanel.this, data);
@@ -199,10 +203,10 @@ public class OrganizerPanel extends AppCompatActivity {
                             .replace(R.id.fragmentContainerView, taskbar)
                             .commitAllowingStateLoss();
                 } else {
-                    Log.d("OrganizerPanel", "No organizer found");
+                    Log.d(TAG, "No organizer found");
                 }
             } else {
-                Log.e("OrganizerPanel", "Error loading organizer info", task.getException());
+                Log.e(TAG, "Error loading organizer info", task.getException());
             }
         });
     }
@@ -229,6 +233,7 @@ public class OrganizerPanel extends AppCompatActivity {
             int cancelledCount = selectedEvent.getCancelledEntrants().size();
             chosenEntrantsBtn.setVisibility(View.VISIBLE);
             cancelledEntrantsBtn.setVisibility(View.VISIBLE);
+            downloadQRCode.setVisibility(View.VISIBLE);
 
             // Show the fragment container (which dims the background)
             //findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
@@ -415,6 +420,7 @@ public class OrganizerPanel extends AppCompatActivity {
                 }
             }
         });
+
         chosenEntrantsBtn.setOnClickListener(v -> {
             if (selectedEventIndex == -1) {
                 Toast.makeText(this, "Please click an event first", Toast.LENGTH_SHORT).show();
@@ -447,7 +453,6 @@ public class OrganizerPanel extends AppCompatActivity {
 
             startActivity(intent);
         });
-
     }
 
     /**
@@ -488,7 +493,11 @@ public class OrganizerPanel extends AppCompatActivity {
                     outputStream.close();
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                Log.e(TAG, "Failed to download QR Code.");
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Failed to download the event QR Code. Please try again.", Toast.LENGTH_SHORT).show();
+                });
             }
         });
         executor.close();
