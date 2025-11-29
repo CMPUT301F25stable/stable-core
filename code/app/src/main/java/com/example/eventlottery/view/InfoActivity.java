@@ -332,6 +332,17 @@ public class InfoActivity extends AppCompatActivity {
                                 Log.w("InfoActivity", "Failed to add to cancelled list");
                             });
 
+                    // Remove user from selectedIds
+                    db.collection("event-p4").document(eventId)
+                            .update("selectedIds", com.google.firebase.firestore.FieldValue.arrayRemove(userId))
+                            .addOnSuccessListener(aVoid2 -> {
+                                Log.d("InfoActivity", "User removed from selectedIds");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.w("InfoActivity", "Failed to remove from selectedIds");
+                            });
+
+
                     // User WAS a winner - need to find replacement from waitlist
                     android.util.Log.d("InfoActivity", "User was a winner, searching for replacement...");
 
