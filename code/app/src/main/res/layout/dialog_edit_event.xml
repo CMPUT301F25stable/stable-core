@@ -303,6 +303,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Run Lottery"
+                android:backgroundTint="@color/black"
                 android:layout_marginTop="8dp" />
 
         </LinearLayout>
