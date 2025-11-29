@@ -99,7 +99,6 @@ public class EditEventDialog extends DialogFragment {
     /**
      * Creates and returns the dialog for editing an event.
      * <p>
-     * The dialog retrieves the event passed via {@link #newInstance(Event)},
      * displays its current waitlist maximum, and allows the user to modify it.
      * Input is validated to ensure it is a non-negative integer. Once validated,
      * the event object is updated locally, and the listener is notified.
@@ -458,6 +457,7 @@ public class EditEventDialog extends DialogFragment {
         updates.put("lotteryDrawnAt", System.currentTimeMillis());
 
         List<Map<String, Object>> newWaitlist = new ArrayList<>();
+
         for (User user : event.getWaitlist().getWaitlistedUsers()) {
             if (!winnerIds.contains(user.getId())) {
                 Map<String, Object> userData = new HashMap<>();
@@ -471,10 +471,17 @@ public class EditEventDialog extends DialogFragment {
                 .document(event.getId())
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    // Update each winner's user document
                     updateWinnerUserDocuments(winnerIds);
-
                     notifyWinners(winnerIds);
+
+                    // Get losers and notify them
+                    List<User> losers = event.getLosers();
+                    List<String> loserIds = new ArrayList<>();
+                    for (User loser : losers) {
+                        loserIds.add(loser.getId());
+                    }
+                    notifyLosers(loserIds);
+
                     loadWaitlistCount();
 
                     if (listener != null) {
@@ -525,22 +532,40 @@ public class EditEventDialog extends DialogFragment {
         NotificationSystem notificationSystem = new NotificationSystem(requireContext());
 
         // notifies winners in batches so it does not notify too many users at once
-        for (int i = 0; i < winnerIds.size(); i += 10) {
-            int end = Math.min(i + 10, winnerIds.size());
-            List<String> batch = winnerIds.subList(i, end);
-
+        for (String winnerId : winnerIds) {
             db.collection("users-p4")
-                    .whereIn("userId", batch)
+                    .document(winnerId)
                     .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        for (DocumentSnapshot userDoc : querySnapshot.getDocuments()) {
-                            User user = userDoc.toObject(User.class);
-                            if (user != null) {
-                                notificationSystem.notifyLotteryWinner(user, event.getName());
-                            }
+                    .addOnSuccessListener(userDoc -> {
+                        User user = userDoc.toObject(User.class);
+                        if (user != null) {
+                            notificationSystem.notifyLotteryWinner(user, event.getName());
                         }
                     })
                     .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to fetch user: " + winnerId, e);
+                    });
+        }
+    }
+
+    private void notifyLosers(List<String> loserIds) {
+        if (loserIds.isEmpty()) return;
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+
+        // Notify losers in batches
+        for (String loserId : loserIds) {
+            db.collection("users-p4")
+                    .document(loserId)
+                    .get()
+                    .addOnSuccessListener(userDoc -> {
+                        User user = userDoc.toObject(User.class);
+                        if (user != null) {
+                            notificationSystem.notifyLotteryLoser(user, event.getName());
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to fetch user: " + loserId, e);
                     });
         }
     }

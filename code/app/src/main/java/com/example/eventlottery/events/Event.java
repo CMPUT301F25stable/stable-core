@@ -483,4 +483,20 @@ public class Event implements Serializable {
             this.cancelledEntrants.add(userId);
         }
     }
+
+    /**
+     * Returns the list of users who were not selected in the lottery.
+     * @return List of users who lost the lottery (were on waitlist but not selected)
+     */
+    public List<User> getLosers() {
+        List<User> losers = new ArrayList<>();
+
+        for (User user : waitlist.getWaitlistedUsers()) {
+            if (!selectedIds.contains(user.getId())) {
+                losers.add(user);
+            }
+        }
+
+        return losers;
+    }
 }
