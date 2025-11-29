@@ -67,8 +67,9 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private UserAdapter userAdapter;
     /** Button for going back */
     private Button backButton;
-
+    /** SearchView for filtering events */
     private SearchView eventSearchBar;
+    /** SearchView for filtering users */
     private SearchView userSearchBar;
 
 
@@ -176,7 +177,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         userSearchBar.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override public boolean onQueryTextSubmit(String query) { return false; }
             @Override public boolean onQueryTextChange(String newText) {
-                filterEventList(newText);
+                filterUserList(newText);
                 return true;
             }
         });
@@ -230,7 +231,9 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                         eventListData.add(event);
                     }
 
-                    eventAdapter.notifyDataSetChanged();
+                    if (eventAdapter != null) {
+                        eventAdapter.setFilteredList(new ArrayList<>(eventListData));
+                    }
                 });
     }
 
@@ -254,7 +257,9 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                         user.setWaitlistedEventIds(waitlistedEvents);
                         userList.add(user);
                     }
-                    userAdapter.notifyDataSetChanged();
+                    if (userAdapter != null) {
+                        userAdapter.setFilteredList(new ArrayList<>(userList));
+                    }
                 });
     }
 
@@ -387,25 +392,29 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private void filterEventList(String text) {
         String q = (text == null) ? "" : text.trim().toLowerCase();
 
-        // If search is empty, show all events
+        // If search is empty, show all events again
         if (q.isEmpty()) {
-            // If your EventAdapter has a method like setFilteredList, use that
             if (eventAdapter != null) {
                 eventAdapter.setFilteredList(new ArrayList<>(eventListData));
             }
             return;
         }
 
-        ArrayList<Event> filtered = new ArrayList<>();
-        for (Event event : eventListData) {
-            if (event.getName() != null &&
-                    event.getName().toLowerCase().contains(q)) {
-                filtered.add(event);
+        ArrayList<Event> filteredList = new ArrayList<>();
+        for (Event item : eventListData) {   // use full list
+            if (item.getName() != null &&
+                    item.getName().toLowerCase().contains(q)) {
+                filteredList.add(item);
             }
         }
 
         if (eventAdapter != null) {
-            eventAdapter.setFilteredList(filtered);
+            if (filteredList.isEmpty()) {
+                Toast.makeText(this, "No events found.", Toast.LENGTH_SHORT).show();
+                eventAdapter.setFilteredList(new ArrayList<>());  // show empty list
+            } else {
+                eventAdapter.setFilteredList(filteredList);
+            }
         }
     }
 
@@ -415,6 +424,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private void filterUserList(String text) {
         String q = (text == null) ? "" : text.trim().toLowerCase();
 
+        // If search is empty, show all users again
         if (q.isEmpty()) {
             if (userAdapter != null) {
                 userAdapter.setFilteredList(new ArrayList<>(userList));
@@ -422,21 +432,27 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             return;
         }
 
-        ArrayList<User> filtered = new ArrayList<>();
-        for (User user : userList) {
+        ArrayList<User> filteredList = new ArrayList<>();
+        for (User user : userList) {   // full list
             boolean matchesName = user.getName() != null &&
                     user.getName().toLowerCase().contains(q);
             boolean matchesId = user.getId() != null &&
                     user.getId().toLowerCase().contains(q);
 
             if (matchesName || matchesId) {
-                filtered.add(user);
+                filteredList.add(user);
             }
         }
 
         if (userAdapter != null) {
-            userAdapter.setFilteredList(filtered);
+            if (filteredList.isEmpty()) {
+                Toast.makeText(this, "No users found.", Toast.LENGTH_SHORT).show();
+                userAdapter.setFilteredList(new ArrayList<>());
+            } else {
+                userAdapter.setFilteredList(filteredList);
+            }
         }
     }
+
 
 }

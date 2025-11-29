@@ -30,7 +30,7 @@ import java.util.Locale;
  * @see android.widget.ArrayAdapter
  */
 public class EventAdapter extends ArrayAdapter<Event> {
-    private List<Event> eventList = new ArrayList<>();
+
     private Context context;
 
 
@@ -41,16 +41,17 @@ public class EventAdapter extends ArrayAdapter<Event> {
      * @param events  The list of {@link Event} objects to display.
      */
     public EventAdapter(Context context, ArrayList<Event> events) {
-        super(context, 0, events);
+        super(context, 0, new ArrayList<>(events));
         this.context = context;
-        this.eventList = events;
     }
 
     public void setFilteredList(List<Event> filteredList) {
-        if (filteredList == null) filteredList = new ArrayList<>();
-        this.eventList = new ArrayList<>(filteredList);
-        clear();
-        addAll(this.eventList);
+        clear();  // clear ArrayAdapter's internal list
+
+        if (filteredList != null) {
+            addAll(filteredList);   // repopulate with filtered/full data
+        }
+
         notifyDataSetChanged();
     }
 
@@ -70,15 +71,18 @@ public class EventAdapter extends ArrayAdapter<Event> {
                     .inflate(R.layout.event_list_item, parent, false);
         }
 
-        Event event = eventList.get(position);
+        Event event = getItem(position);
         TextView eventNameText = convertView.findViewById(R.id.eventNameText);
         TextView eventStartEnd = convertView.findViewById(R.id.eventStartEnd);
 
-        eventNameText.setText(event.getName());
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
-        eventStartEnd.setText(sdf.format(event.getStartTime()) + " - " + sdf.format(event.getEndTime()));
-
+        if (event != null) {
+            eventNameText.setText(event.getName());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CANADA);
+            eventStartEnd.setText(sdf.format(event.getStartTime()) + " - " + sdf.format(event.getEndTime()));
+        } else {
+            eventNameText.setText("");
+            eventStartEnd.setText("");
+        }
         return convertView;
     }
 }
