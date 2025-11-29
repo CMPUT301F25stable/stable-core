@@ -118,6 +118,28 @@ public class CreateEventDialog extends DialogFragment {
         ImageView imgPreview = dialogView.findViewById(R.id.preview_select_img_view);
         progressBar = dialogView.findViewById(R.id.upload_img_progress);
 
+        // Hide lottery and edit poster sections (only show initial upload for CREATE mode)
+        View lotteryInputLayout = dialogView.findViewById(R.id.lotteryInputLayout);
+        View lotteryStatusLayout = dialogView.findViewById(R.id.lotteryStatusLayout);
+        View eventPosterPreview = dialogView.findViewById(R.id.eventPosterPreview);
+        View changePosterButton = dialogView.findViewById(R.id.changePosterButton);
+        View removePosterButton = dialogView.findViewById(R.id.removePosterButton);
+        View posterSectionTitle = dialogView.findViewById(R.id.posterSectionTitle);
+        View lotterySectionTitle = dialogView.findViewById(R.id.lotterySectionTitle);
+        View initialUploadSection = dialogView.findViewById(R.id.initialUploadSection);
+
+        // Hide all edit-mode sections
+        if (lotteryInputLayout != null) lotteryInputLayout.setVisibility(View.GONE);
+        if (lotteryStatusLayout != null) lotteryStatusLayout.setVisibility(View.GONE);
+        if (eventPosterPreview != null) eventPosterPreview.setVisibility(View.GONE);
+        if (changePosterButton != null) changePosterButton.setVisibility(View.GONE);
+        if (removePosterButton != null) removePosterButton.setVisibility(View.GONE);
+        if (posterSectionTitle != null) posterSectionTitle.setVisibility(View.GONE);
+        if (lotterySectionTitle != null) lotterySectionTitle.setVisibility(View.GONE);
+
+        // Show only initial upload section
+        if (initialUploadSection != null) initialUploadSection.setVisibility(View.VISIBLE);
+
         // Set click listeners for the TimePickerDialog
         startDate.setOnClickListener(v -> openDatePicker(startDate));
         endDate.setOnClickListener(v -> openDatePicker(endDate));
@@ -343,15 +365,15 @@ public class CreateEventDialog extends DialogFragment {
             reference.putFile(filePath)
                     .addOnSuccessListener(task -> {
                         reference.getDownloadUrl().addOnSuccessListener(uri -> {
-                            eventImg = uri.toString();
-                            eventStoragePath = storagePath;  // for deleting later
-                            progressBar.setVisibility(View.GONE);
-                            Toast.makeText(requireContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
-                        })
+                                    eventImg = uri.toString();
+                                    eventStoragePath = storagePath;  // for deleting later
+                                    progressBar.setVisibility(View.GONE);
+                                    Toast.makeText(requireContext(), "Image Uploaded", Toast.LENGTH_SHORT).show();
+                                })
                                 .addOnFailureListener(e -> {
                                     progressBar.setVisibility(View.GONE);
                                     Toast.makeText(requireContext(), "Uploaded Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
+                                });
                     })
                     .addOnFailureListener(e -> {
                         progressBar.setVisibility(View.GONE);

@@ -2,17 +2,25 @@ package com.example.eventlottery.view;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.IOException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,6 +34,8 @@ import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,10 +65,25 @@ public class EditEventDialog extends DialogFragment {
 
     private int currentWaitlistCount = 0;
 
-    public static EditEventDialog newInstance(Event event) {
+    private ImageView eventPosterPreview;
+    private Button changePosterButton;
+    private Button removePosterButton;
+    private Uri newPosterUri = null;
+    private static final int PICK_IMAGE_REQUEST = 1;
+    private FirebaseStorage storage;
+
+    /**
+     * Essentially a constructor for EditEventDialog. Pass in the event here, & its retrieved
+     * later once the dialog is actually created
+     * @param event The event we want to edit.
+     * @param isEditMode True if editing existing event, false if creating new event
+     * @return A new instance of {@link EditEventDialog} with the event attached.
+     */
+    public static EditEventDialog newInstance(Event event, boolean isEditMode) {
         EditEventDialog dialog = new EditEventDialog();
         Bundle args = new Bundle();
         args.putSerializable("event", event);
+        args.putBoolean("isEditMode", isEditMode);
         dialog.setArguments(args);
         return dialog;
     }
@@ -89,9 +114,13 @@ public class EditEventDialog extends DialogFragment {
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
 
         db = FirebaseFirestore.getInstance();
-        // Get event we want to edit
+        storage = FirebaseStorage.getInstance();
+
+        // Get event we want to edit and check mode
+        boolean isEditMode = false;
         if (getArguments() != null) {
             event = (Event) getArguments().getSerializable("event");
+            isEditMode = getArguments().getBoolean("isEditMode", false);
         }
 
         // Inflate dialog view
@@ -107,6 +136,7 @@ public class EditEventDialog extends DialogFragment {
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
         Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
 
+        // Set up lottery UI elements
         lotteryInputLayout = dialogView.findViewById(R.id.lotteryInputLayout);
         lotterySizeInput = dialogView.findViewById(R.id.lotterySizeInput);
         waitlistInfoText = dialogView.findViewById(R.id.waitlistInfoText);
@@ -114,18 +144,65 @@ public class EditEventDialog extends DialogFragment {
         lotteryStatusLayout = dialogView.findViewById(R.id.lotteryStatusLayout);
         lotteryResultText = dialogView.findViewById(R.id.lotteryResultText);
 
+        // Set up poster UI elements
+        eventPosterPreview = dialogView.findViewById(R.id.eventPosterPreview);
+        changePosterButton = dialogView.findViewById(R.id.changePosterButton);
+        removePosterButton = dialogView.findViewById(R.id.removePosterButton);
+        View posterSectionTitle = dialogView.findViewById(R.id.posterSectionTitle);
+        View lotterySectionTitle = dialogView.findViewById(R.id.lotterySectionTitle);
+
+        // Get initial upload buttons from XML
+        View initialUploadSection = dialogView.findViewById(R.id.initialUploadSection);
+        Button selectImageBtn = dialogView.findViewById(R.id.select_image_btn);
+        Button uploadImageBtn = dialogView.findViewById(R.id.upload_image_btn);
+
+        // Hide lottery and poster sections by default (this switches when in edit mode)
+        if (lotteryInputLayout != null) lotteryInputLayout.setVisibility(View.GONE);
+        if (lotteryStatusLayout != null) lotteryStatusLayout.setVisibility(View.GONE);
+        if (eventPosterPreview != null) eventPosterPreview.setVisibility(View.GONE);
+        if (changePosterButton != null) changePosterButton.setVisibility(View.GONE);
+        if (removePosterButton != null) removePosterButton.setVisibility(View.GONE);
+        if (posterSectionTitle != null) posterSectionTitle.setVisibility(View.GONE);
+        if (lotterySectionTitle != null) lotterySectionTitle.setVisibility(View.GONE);
+        if (initialUploadSection != null) initialUploadSection.setVisibility(View.GONE);
+
+        // Show sections based on mode
+        if (isEditMode) {
+            // edit shows lottery and change remove poster
+            if (lotteryInputLayout != null) lotteryInputLayout.setVisibility(View.VISIBLE);
+            if (eventPosterPreview != null) eventPosterPreview.setVisibility(View.VISIBLE);
+            if (changePosterButton != null) changePosterButton.setVisibility(View.VISIBLE);
+            if (removePosterButton != null) removePosterButton.setVisibility(View.VISIBLE);
+            if (posterSectionTitle != null) posterSectionTitle.setVisibility(View.VISIBLE);
+            if (lotterySectionTitle != null) lotterySectionTitle.setVisibility(View.VISIBLE);
+        } else {
+            // Create mode shows only the initial upload and settings
+            if (initialUploadSection != null) initialUploadSection.setVisibility(View.VISIBLE);
+        }
+
+        // Set click listeners for the TimePickerDialog
         startDate.setOnClickListener(v -> openDatePicker(startDate));
         endDate.setOnClickListener(v -> openDatePicker(endDate));
 
-        if (runLotteryButton != null) {
-            runLotteryButton.setOnClickListener(v -> showLotteryConfirmationDialog());
-        }
+        runLotteryButton.setOnClickListener(v -> showLotteryConfirmationDialog());
+
+        changePosterButton.setOnClickListener(v -> openImagePicker());
+
+        removePosterButton.setOnClickListener(v -> removePoster());
+
 
         loadWaitlistCount();
 
-        title.setText(event.getName());
-        description.setText(event.getDescription());
-        location.setText(event.getLocation());
+        /****************************************************
+         * 1. Update text fields to be what it currently is *
+         ****************************************************/
+        // Display current text for title, description, & location
+        String currentTitle = event.getName();
+        String currentDescription = event.getDescription();
+        String currentLocation = event.getLocation();
+        title.setText(currentTitle);
+        description.setText(currentDescription);
+        location.setText(currentLocation);
 
         // Display current waitlistMax if not default (Integer.MAX_VALUE)
         // I did it this way because I don't think we want the integer max to show. - John
@@ -140,6 +217,9 @@ public class EditEventDialog extends DialogFragment {
         endDate.setText(isoFormat.format(event.getEndTime()));
 
         geolocationSwitch.setChecked(event.getGeolocation());
+
+        // Display current poster if it exists
+        loadCurrentPoster();
 
         /*********************************
          * 2. Build and show AlertDialog *
@@ -254,7 +334,6 @@ public class EditEventDialog extends DialogFragment {
                 /***********************************************************
                  * 9. Update event locally & run OrganizerPanel's listener *
                  ***********************************************************/
-                // TODO: Can't update event image yet
                 event.setName(titleText);
                 event.setDescription(descriptionText);
                 event.setLocation(locationText);
@@ -262,6 +341,11 @@ public class EditEventDialog extends DialogFragment {
                 event.setStartTime(start);
                 event.setEndTime(end);
                 event.setGeolocation(geolocation);
+
+                // Update poster if changed
+                if (newPosterUri != null) {
+                    uploadPosterToStorage(newPosterUri);
+                }
 
                 if (listener != null) {
                     listener.onEventUpdated(event);
@@ -275,7 +359,9 @@ public class EditEventDialog extends DialogFragment {
         return dialog;
     }
 
-    // Checks the amount of users in the waitlist
+    /**
+     * Loads the current waitlist count from Firestore
+     */
     private void loadWaitlistCount() {
         if (event == null || event.getId() == null) return;
 
@@ -306,7 +392,7 @@ public class EditEventDialog extends DialogFragment {
         List<String> selectedIds = (List<String>) doc.get("selectedIds");
         Long lotteryDrawnAt = doc.getLong("lotteryDrawnAt");
 
-        // Switches after lottery is completed
+        // Makes sure some Ids were selected and the lottery worked properly
         if (selectedIds != null && lotteryDrawnAt != null) {
             int winnersCount = selectedIds.size();
             Date date = new Date(lotteryDrawnAt);
@@ -319,6 +405,9 @@ public class EditEventDialog extends DialogFragment {
         }
     }
 
+    /**
+     * Shows confirmation dialog before running lottery to confirm that organizer input is correct
+     */
     private void showLotteryConfirmationDialog() {
         String lotterySizeStr = lotterySizeInput.getText().toString().trim();
 
@@ -451,9 +540,222 @@ public class EditEventDialog extends DialogFragment {
                             }
                         }
                     })
-                    .addOnFailureListener(e -> Log.e(TAG, "Failed to fetch users for notification", e));
+                    .addOnFailureListener(e -> {
+                    });
         }
     }
+
+    /**
+     * Loads the current event poster from Firebase Storage
+     */
+    private void loadCurrentPoster() {
+        if (event == null || event.getId() == null || eventPosterPreview == null) return;
+
+        db.collection("event-p4")
+                .document(event.getId())
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists() && doc.contains("image")) {
+                        // gets the firebase url that contains the current poster
+                        String imageUrl = doc.getString("image");
+                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                            loadImageFromUrl(imageUrl);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to load poster", e);
+                });
+    }
+
+    /**
+     * Loads image from URL into ImageView
+     * * Source: <a href="https://stackoverflow.com/questions/6407324/how-to-display-image-from-url-on-android">...</a>
+     * * Source: <a href="https://developer.android.com/reference/android/os/NetworkOnMainThreadException">...</a>
+     */
+    private void loadImageFromUrl(String url) {
+        if (url == null || url.isEmpty() || eventPosterPreview == null) {
+            return;
+        }
+
+        // Needed because android does not allow network on main thread
+        new Thread(() -> {
+            try {
+                java.net.URL imageUrl = new java.net.URL(url);
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) imageUrl.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                java.io.InputStream input = connection.getInputStream();
+                Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(input);
+                input.close();
+
+                if (bitmap != null && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (eventPosterPreview != null && isAdded()) {
+                            eventPosterPreview.setImageBitmap(bitmap);
+                        }
+                    });
+                }
+            }
+            // Makes sure program does not crash if url does not work
+            catch (Exception e) {
+                Log.e(TAG, "Error loading image from URL: " + e.getMessage(), e);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (eventPosterPreview != null && isAdded()) {
+                            eventPosterPreview.setImageResource(android.R.color.darker_gray);
+                        }
+                    });
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Opens image picker to select a new poster
+     */
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICK_IMAGE_REQUEST);
+    }
+
+    /**
+     * Handles the result from image picker
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == android.app.Activity.RESULT_OK
+                && data != null && data.getData() != null) {
+            newPosterUri = data.getData();
+
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                        requireActivity().getContentResolver(), newPosterUri);
+
+                eventPosterPreview.setImageBitmap(bitmap);
+
+                Toast.makeText(requireContext(), "Poster updated (will save when you click Save)",
+                        Toast.LENGTH_SHORT).show();
+
+            } catch (IOException e) {
+                Toast.makeText(requireContext(), "Failed to load image",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * Removes the event poster (added just in case but could probably be removed)
+     */
+    private void removePoster() {
+        if (!isAdded()) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Remove Poster?")
+                .setMessage("Are you sure you want to remove the event poster?")
+                .setPositiveButton("Remove", (dialog, which) -> {
+
+                    db.collection("event-p4")
+                            .document(event.getId())
+                            .get()
+                            .addOnSuccessListener(doc -> {
+                                String storagePath = doc.getString("storagePath");
+
+                                if (storagePath != null && !storagePath.isEmpty()) {
+                                    storage.getReference(storagePath)
+                                            .delete()
+                                            .addOnSuccessListener(aVoid -> updateFirestoreAfterPosterRemoval())
+                                            .addOnFailureListener(e -> updateFirestoreAfterPosterRemoval());
+                                } else {
+                                    updateFirestoreAfterPosterRemoval();
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(requireContext(),
+                                        "Failed to remove poster", Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+
+    /**
+     * Updates Firestore after the poster is removed
+     */
+    private void updateFirestoreAfterPosterRemoval() {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("image", "");
+        updates.put("storagePath", "");
+
+        db.collection("event-p4")
+                .document(event.getId())
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    if (eventPosterPreview != null) {
+                        eventPosterPreview.setImageResource(android.R.color.darker_gray);
+                    }
+                    Toast.makeText(requireContext(), "Poster removed", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(),
+                            "Failed to remove poster", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+
+    /**
+     * Uploads poster to Firebase Storage and updates Firestore
+     */
+    private void uploadPosterToStorage(Uri imageUri) {
+        if (event == null || event.getId() == null || !isAdded()) return;
+
+        String storagePath = "images/" + java.util.UUID.randomUUID().toString();
+        StorageReference storageRef = storage.getReference(storagePath);
+
+        storageRef.putFile(imageUri)
+                .addOnSuccessListener(taskSnapshot ->
+                        storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("image", downloadUri.toString());
+                            updates.put("storagePath", storagePath);
+
+                            db.collection("event-p4")
+                                    .document(event.getId())
+                                    .update(updates)
+                                    .addOnSuccessListener(aVoid -> {
+                                        if (isAdded() && getContext() != null) {
+                                            Toast.makeText(getContext(),
+                                                    "Poster updated successfully!",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                        Log.d(TAG, "Poster uploaded: " + downloadUri.toString());
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e(TAG, "Failed to update Firestore", e);
+                                        if (isAdded() && getContext() != null) {
+                                            Toast.makeText(getContext(),
+                                                    "Failed to save poster info",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        })
+                )
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to upload to storage", e);
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(),
+                                "Failed to upload poster: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+
 
     /**
      * Opens the built-in DatePickerDialog from Android Studio, given a target text field.
