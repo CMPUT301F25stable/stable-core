@@ -440,9 +440,9 @@ public class OrganizerPanel extends AppCompatActivity {
             Event event = data.get(selectedEventIndex);
 
             Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
+            intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "chosen");
-            intent.putStringArrayListExtra("users", new ArrayList<>(event.getSelectedIds()));
             startActivity(intent);
         });
 
@@ -455,11 +455,9 @@ public class OrganizerPanel extends AppCompatActivity {
             Event event = data.get(selectedEventIndex);
 
             Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
+            intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "cancelled");
-            intent.putStringArrayListExtra("users", new ArrayList<>(event.getCancelledEntrants()));
-
-
             startActivity(intent);
         });
     }
