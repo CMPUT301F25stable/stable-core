@@ -201,7 +201,7 @@ public class UserPanel extends AppCompatActivity {
                 }
                 allEvents = MainActivity.instance.getAllEvents();
             }
-            eventListContainer.removeAllViews();
+            clearEvents();
             displayEvents();
 
             // Update username in the UI by fetching from Firestore
@@ -240,12 +240,21 @@ public class UserPanel extends AppCompatActivity {
     }
 
     /**
-     * Displays all events (waitlisted and registered) in the UI
+     * Clears all events from the event list container
      */
+    private void clearEvents() {
+        if (eventListContainer != null) {
+            eventListContainer.removeAllViews();
+        }
+    }
+
     /**
      * Displays all events (waitlisted and registered) in the UI
      */
     private void displayEvents() {
+        // Clear existing events before displaying
+        clearEvents();
+
         // Get user document from Firestore
         DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());
 
