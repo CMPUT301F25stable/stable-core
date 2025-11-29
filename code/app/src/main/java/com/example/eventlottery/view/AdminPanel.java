@@ -71,6 +71,12 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private SearchView eventSearchBar;
     /** SearchView for filtering users */
     private SearchView userSearchBar;
+    /** Holds ALL events for filtering */
+    private ArrayList<Event> allEvents;
+    /** Holds ALL users for filtering */
+    private ArrayList<User> allUsers;
+
+
 
 
     @Override
@@ -100,6 +106,8 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         backButton = findViewById(R.id.backButton);
         eventListData = new ArrayList<Event>();
         userList = new ArrayList<User>();
+        allEvents = new ArrayList<>();
+        allUsers = new ArrayList<>();
         db = FirebaseFirestore.getInstance();
         userAdapter = new UserAdapter(AdminPanel.this, userList);
         userListFragment.setAdapter(userAdapter);
@@ -214,10 +222,12 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         db.collection("event-p4")
                 .orderBy("startTime")
                 .addSnapshotListener((query, error) -> {
-                    if (error != null) {
+                    if (error != null || query == null) {
                         return;
                     }
 
+                    // Clear both the master list and the displayed list
+                    allEvents.clear();
                     eventListData.clear();
 
                     for (DocumentSnapshot doc : query) {
@@ -228,14 +238,17 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                             event.setId(doc.getId());
                         }
 
+                        allEvents.add(event);
                         eventListData.add(event);
                     }
 
                     if (eventAdapter != null) {
-                        eventAdapter.setFilteredList(new ArrayList<>(eventListData));
+                        // Show all events by default
+                        eventAdapter.setFilteredList(new ArrayList<>(allEvents));
                     }
                 });
     }
+
 
     /**
      * Adds every profile into userList.
@@ -243,25 +256,30 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private void loadProfilesFromFirestore() {
         db.collection("users-p4")
                 .addSnapshotListener((query, error) -> {
-                    if (error != null) {
+                    if (error != null || query == null) {
                         return;
                     }
+
+                    allUsers.clear();
                     userList.clear();
 
                     for (DocumentSnapshot doc : query) {
                         User user = doc.toObject(User.class);
-                        // If user doesn't exist, go to next user
                         if (user == null) continue;
-                        // Get waitlisted events (For some reason firebase isn't deserializing it properly so I'm setting it manually - John)
+
                         List<String> waitlistedEvents = (List<String>) doc.get("waitlistedEvents");
                         user.setWaitlistedEventIds(waitlistedEvents);
+
+                        allUsers.add(user);
                         userList.add(user);
                     }
+
                     if (userAdapter != null) {
-                        userAdapter.setFilteredList(new ArrayList<>(userList));
+                        userAdapter.setFilteredList(new ArrayList<>(allUsers));
                     }
                 });
     }
+
 
     /**
      * Helper function, deletes the event from firebase.
@@ -395,13 +413,13 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // If search is empty, show all events again
         if (q.isEmpty()) {
             if (eventAdapter != null) {
-                eventAdapter.setFilteredList(new ArrayList<>(eventListData));
+                eventAdapter.setFilteredList(new ArrayList<>(allEvents));
             }
             return;
         }
 
         ArrayList<Event> filteredList = new ArrayList<>();
-        for (Event item : eventListData) {   // use full list
+        for (Event item : allEvents) {
             if (item.getName() != null &&
                     item.getName().toLowerCase().contains(q)) {
                 filteredList.add(item);
@@ -411,12 +429,13 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         if (eventAdapter != null) {
             if (filteredList.isEmpty()) {
                 Toast.makeText(this, "No events found.", Toast.LENGTH_SHORT).show();
-                eventAdapter.setFilteredList(new ArrayList<>());  // show empty list
+                eventAdapter.setFilteredList(new ArrayList<>());
             } else {
                 eventAdapter.setFilteredList(filteredList);
             }
         }
     }
+
 
     /**
      * Filters the user list by user name (and/or ID) and updates the adapter.
@@ -427,13 +446,13 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         // If search is empty, show all users again
         if (q.isEmpty()) {
             if (userAdapter != null) {
-                userAdapter.setFilteredList(new ArrayList<>(userList));
+                userAdapter.setFilteredList(new ArrayList<>(allUsers));
             }
             return;
         }
 
         ArrayList<User> filteredList = new ArrayList<>();
-        for (User user : userList) {   // full list
+        for (User user : allUsers) {
             boolean matchesName = user.getName() != null &&
                     user.getName().toLowerCase().contains(q);
             boolean matchesId = user.getId() != null &&
@@ -453,6 +472,5 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             }
         }
     }
-
 
 }

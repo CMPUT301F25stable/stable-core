@@ -41,7 +41,7 @@ public class EventAdapter extends ArrayAdapter<Event> {
      * @param events  The list of {@link Event} objects to display.
      */
     public EventAdapter(Context context, ArrayList<Event> events) {
-        super(context, 0, new ArrayList<>(events));
+        super(context, 0, events);
         this.context = context;
     }
 
