@@ -31,6 +31,8 @@ import com.example.eventlottery.events.NotificationSystem;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -151,8 +153,11 @@ public class MainActivity extends AppCompatActivity {
             else {
                 // User does not exist - create a new user
                 Log.d("MainActivity", "User doesn't exist, creating new user");
-                DBConnector dbConnector = new DBConnector(this);
-                dbConnector.saveNewUser(this);
+                CollectionReference usersRef = db.collection("users-p4");
+                DocumentReference userDoc = usersRef.document(DEVICE_ID);
+                currentUser = new User(this);
+                userDoc.set(currentUser);
+                loadEventsFromFirestore();
             }
         });
 

@@ -89,7 +89,6 @@ public class DBConnector {
     /**
      * US 01.07.01
      * Saves a new user to the database, if the user doesn't already exist.
-     * Note: Every user is an organizer!
      * @param context The activity it's called in.
      */
     public void saveNewUser(Context context) {
@@ -144,6 +143,10 @@ public class DBConnector {
         });
     }
 
+    /**
+     * Updates the organizer's created events (i.e, adds to createdEvents array)
+     * @param organizer The organizer who we are updating created events for
+     */
     public void updateOrganizerCreatedEvents(User organizer) {
         CollectionReference users = db.collection("users-p4");
         DocumentReference user = users.document(organizer.getId());

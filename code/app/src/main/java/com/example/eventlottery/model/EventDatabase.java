@@ -151,7 +151,6 @@ public class EventDatabase {
 
     /**
      * Updates the event in firestore, according to what an organizer changes.
-     * TODO: Needs to be able to update the image
      * @param event The event to update.
      */
     public void organizerUpdateEvent(Event event) {
