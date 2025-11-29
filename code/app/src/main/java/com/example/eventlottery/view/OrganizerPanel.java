@@ -442,8 +442,7 @@ public class OrganizerPanel extends AppCompatActivity {
             Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "chosen");
-            intent.putExtra("users", event.getWaitlist().getWaitlistedUsers()); // CHANGE TO GET CHOSEN ENTRANTS
-
+            intent.putStringArrayListExtra("users", new ArrayList<>(event.getSelectedIds()));
             startActivity(intent);
         });
 
@@ -458,7 +457,7 @@ public class OrganizerPanel extends AppCompatActivity {
             Intent intent = new Intent(OrganizerPanel.this, DisplayEntrantsActivity.class);
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "cancelled");
-            intent.putExtra("users", event.getWaitlist().getWaitlistedUsers()); // CHANGE TO GET CANCELLED ENTRANTS
+            intent.putStringArrayListExtra("users", new ArrayList<>(event.getCancelledEntrants()));
 
 
             startActivity(intent);
