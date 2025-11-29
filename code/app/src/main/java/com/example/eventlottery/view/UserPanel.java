@@ -55,6 +55,7 @@ public class UserPanel extends AppCompatActivity {
     private LinearLayout eventListContainer;
     private ArrayList<Event> allEvents;
     private FirebaseFirestore db;
+    private com.google.firebase.firestore.ListenerRegistration userListener;
 
     /**
      * Lifecycle method called when the activity is created
@@ -170,16 +171,50 @@ public class UserPanel extends AppCompatActivity {
                 }
             });
 
-            // TESTING: Create test notified event - REMOVE AFTER TESTING
-            //createTestNotifiedEvent();
-
-            displayEvents();
+            setupRealtimeListener();
 
             // Go to EditUserInfoActivity
             findViewById(R.id.edit_icon).setOnClickListener(v -> {
                 Intent editIntent = new Intent(UserPanel.this, EditUserInfoActivity.class);
                 startActivity(editIntent);
             });
+        });
+    }
+
+    /**
+     * Sets up a real-time listener for user data changes
+     */
+    private void setupRealtimeListener() {
+        if (currentUser == null) {
+            return;
+        }
+
+        DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());
+
+        // Remove old listener if it exists
+        if (userListener != null) {
+            userListener.remove();
+        }
+
+        // Set up real-time listener
+        userListener = userDoc.addSnapshotListener((documentSnapshot, error) -> {
+            if (error != null) {
+                Log.e("RealtimeListener", "Listen failed: " + error.getMessage());
+                return;
+            }
+
+            if (documentSnapshot != null && documentSnapshot.exists()) {
+                // Update username in real-time
+                String name = documentSnapshot.getString("name");
+                TextView userNameView = findViewById(R.id.user_name);
+                if (name != null && userNameView != null) {
+                    userNameView.setText(name);
+                    currentUser.setName(name);
+                }
+
+                // Update events in real-time
+                displayEvents();
+            }
         });
     }
 
@@ -201,41 +236,20 @@ public class UserPanel extends AppCompatActivity {
                 }
                 allEvents = MainActivity.instance.getAllEvents();
             }
-            clearEvents();
-            displayEvents();
 
-            // Update username in the UI by fetching from Firestore
-            TextView userNameView = findViewById(R.id.user_name);
-            if (currentUser != null && userNameView != null) {
-                // Fetch the latest user data from Firestore
-                DocumentReference userDoc = db.collection("users-p4").document(currentUser.getId());
-                userDoc.get().addOnCompleteListener(task -> {
-                    // Check if the document was successfully retrieved
-                    if (task.isSuccessful()) {
-                        // Get the document snapshot from the completed task
-                        DocumentSnapshot document = task.getResult();
+            // Re-setup listener in case it was removed
+            setupRealtimeListener();
+        }
+    }
 
-                        // Verify that the document actually exists in the database
-                        if (document.exists()) {
-                            // Extract the updated "name" field from the document
-                            String name = document.getString("name");
-                            userNameView.setText(name);
-
-                            // Also update the current user object MIGHT CHANGE
-                            currentUser.setName(name);
-
-                        }
-                        else {
-                            // Document reference exists but no data found
-                            Log.d("Firestore", "No such document");
-                        }
-                    }
-                    else {
-                        // Handle any errors that occurred during the fetch
-                        Log.d("Firestore", "get failed with ", task.getException());
-                    }
-                });
-            }
+    /**
+     * Clean up listener when activity is destroyed
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (userListener != null) {
+            userListener.remove();
         }
     }
 
