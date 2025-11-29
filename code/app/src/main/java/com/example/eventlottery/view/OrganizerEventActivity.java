@@ -25,6 +25,8 @@ public class OrganizerEventActivity extends AppCompatActivity {
     private NotificationSystem notificationSystem;
     private OrganizerService organizerService;
     private Event currentEvent;
+    private String organizerId;
+    private String organizerName;
 
     private Button sendNotificationsButton;
     private EditText customMessageInput;
@@ -35,8 +37,12 @@ public class OrganizerEventActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_organizer_notification);
 
-        // Initialize systems and services
-        notificationSystem = new NotificationSystem(this);
+        // Get organizer info from Intent
+        organizerId = getIntent().getStringExtra("organizerId");
+        organizerName = getIntent().getStringExtra("organizerName");
+
+        // Initialize systems and services with organizer info
+        notificationSystem = new NotificationSystem(this, organizerId, organizerName);
         organizerService = new OrganizerService(notificationSystem);
 
         // Example: the currentEvent would normally be passed via Intent
@@ -44,7 +50,7 @@ public class OrganizerEventActivity extends AppCompatActivity {
 
         // Link layout elements
         sendNotificationsButton = findViewById(R.id.sendNotificationsButton);
-        customMessageInput = findViewById(R.id.customMessageInput); 
+        customMessageInput = findViewById(R.id.customMessageInput);
 
         sendNotificationsButton.setOnClickListener(v -> sendInvitations());
     }
@@ -68,7 +74,7 @@ public class OrganizerEventActivity extends AppCompatActivity {
         String customMessage = customMessageInput.getText().toString().trim();
         if (customMessage.isEmpty()) {
             // default message so error is not thrown
-            customMessage = "You’ve been invited to sign up for " + currentEvent.getName() + "!";
+            customMessage = "You've been invited to sign up for " + currentEvent.getName() + "!";
         }
 
         // Use OrganizerService to send invitations to chosen entrants

@@ -248,7 +248,9 @@ public class OrganizerPanel extends AppCompatActivity {
                     waitlistCount,
                     selectedCount,
                     cancelledCount,
-                    acceptedCount
+                    acceptedCount,
+                    organizer.getId(),
+                    organizer.getName()
             );
 
             getSupportFragmentManager().beginTransaction()
@@ -337,7 +339,11 @@ public class OrganizerPanel extends AppCompatActivity {
             if (selectedEventIndex != -1) {
                 selectedEvent = data.get(selectedEventIndex);
                 // checks if the selected event is an edit event
-                EditEventDialog dialog = EditEventDialog.newInstance(selectedEvent, true);
+                EditEventDialog dialog = EditEventDialog.newInstance(
+                        selectedEvent,
+                        true,
+                        organizer.getId(),
+                        organizer.getName());
 
                 // Updates event in Firestore and refreshes adapter when an edit is made
                 dialog.setOnEventUpdatedListener(updatedEvent -> {

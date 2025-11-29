@@ -72,6 +72,8 @@ public class EditEventDialog extends DialogFragment {
     private Uri newPosterUri = null;
     private static final int PICK_IMAGE_REQUEST = 1;
     private FirebaseStorage storage;
+    private String organizerId;
+    private String organizerName;
 
     /**
      * Essentially a constructor for EditEventDialog. Pass in the event here, & its retrieved
@@ -80,11 +82,13 @@ public class EditEventDialog extends DialogFragment {
      * @param isEditMode True if editing existing event, false if creating new event
      * @return A new instance of {@link EditEventDialog} with the event attached.
      */
-    public static EditEventDialog newInstance(Event event, boolean isEditMode) {
+    public static EditEventDialog newInstance(Event event, boolean isEditMode, String organizerId, String organizerName) {
         EditEventDialog dialog = new EditEventDialog();
         Bundle args = new Bundle();
         args.putSerializable("event", event);
         args.putBoolean("isEditMode", isEditMode);
+        args.putString("organizerId", organizerId);
+        args.putString("organizerName", organizerName);
         dialog.setArguments(args);
         return dialog;
     }
@@ -121,6 +125,9 @@ public class EditEventDialog extends DialogFragment {
         if (getArguments() != null) {
             event = (Event) getArguments().getSerializable("event");
             isEditMode = getArguments().getBoolean("isEditMode", false);
+            organizerId = getArguments().getString("organizerId");
+            organizerName = getArguments().getString("organizerName");
+            organizerName = getArguments().getString("organizerName");
         }
 
         // Inflate dialog view
@@ -537,7 +544,7 @@ public class EditEventDialog extends DialogFragment {
     private void notifyWinners(List<String> winnerIds) {
         if (winnerIds.isEmpty()) return;
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
 
         // notifies winners in batches so it does not notify too many users at once
         for (String winnerId : winnerIds) {
@@ -559,7 +566,7 @@ public class EditEventDialog extends DialogFragment {
     private void notifyLosers(List<String> loserIds) {
         if (loserIds.isEmpty()) return;
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
 
         // Notify losers in batches
         for (String loserId : loserIds) {

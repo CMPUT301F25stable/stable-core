@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.example.eventlottery.users.User;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,7 +18,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +51,10 @@ public class NotificationSystem {
     // Service account JSON file name in assets folder
     private static final String SERVICE_ACCOUNT_FILE = "service-account.json";
 
+    // Regular attributes
+    private String organizerId;
+    private String organizerName;
+
 
     // Other
     private Context context;
@@ -54,13 +62,17 @@ public class NotificationSystem {
     private GoogleCredentials googleCredentials;
     private ExecutorService executorService;
     private Handler mainHandler;
+    private FirebaseFirestore db;
 
     /**
      * Constructor for NotificationSystem.
      * @param context The application context.
      * */
-    public NotificationSystem(Context context) {
+    public NotificationSystem(Context context, String organizerId, String organizerName) {
         this.context = context;
+        this.db = FirebaseFirestore.getInstance();
+        this.organizerId = organizerId;
+        this.organizerName = organizerName;
         createNotificationChannel();
 
         // Initialize HTTP client
@@ -322,12 +334,20 @@ public class NotificationSystem {
                         if (response.isSuccessful()) {
                             Log.d(TAG, "FCM notification sent successfully to " + user.getName());
                             Log.d(TAG, "Response: " + responseBody);
+
+                            // Log to Firebase after successful send
+                            logNotificationToFirebase(
+                                    user.getId(),
+                                    user.getName(),
+                                    body,
+                                    eventName,
+                                    type
+                            );
                         } else {
                             Log.e(TAG, "FCM notification failed for " + user.getName());
                             Log.e(TAG, "Response code: " + response.code());
                             Log.e(TAG, "Response: " + responseBody);
 
-                            // Common error messages
                             if (response.code() <= 404 || response.code() >= 400) {
                                 Log.e(TAG, "Error: Invalid FCM token or token has been unregistered");
                                 Log.e(TAG, "User may need to re-enable notifications");
@@ -385,6 +405,10 @@ public class NotificationSystem {
 
     /**
      * Sends notification to accepted entrants with custom message.
+     * @param entrants the list of accepted entrants
+     * @param eventName the event name
+     * @param eventId the event id
+     * @param message custom message
      */
     public void notifyAcceptedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending accepted notifications to " + entrants.size() + " entrants");
@@ -396,6 +420,10 @@ public class NotificationSystem {
 
     /**
      * Sends an individual notification to an accepted entrant.
+     * @param entrant the entrant that is accepted
+     * @param eventName the eventName
+     * @param eventId the event id
+     * @param message the message going to be sent to the entrant
      */
     private void notifyAcceptedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending accepted notification to: " + entrant.getName());
@@ -431,6 +459,42 @@ public class NotificationSystem {
         if (executorService != null) {
             executorService.shutdown();
         }
+    }
+
+    /**
+     * Logs a notification to Firebase Firestore.
+     * @param recipientUserId The ID of the user receiving the notification
+     * @param recipientUserName The name of the user receiving the notification
+     * @param message The notification message sent
+     * @param eventName The name of the event
+     * @param notificationType The type of notification (waitlist, selected, cancelled, accepted)
+     */
+    private void logNotificationToFirebase(String recipientUserId, String recipientUserName,
+                                           String message, String eventName, String notificationType) {
+        Map<String, Object> notificationData = new HashMap<>();
+
+        // Organizer info (sender)
+        notificationData.put("senderUserId", organizerId);
+        notificationData.put("senderUserName", organizerName);
+
+        // Recipient info
+        notificationData.put("recipientUserId", recipientUserId);
+        notificationData.put("recipientUserName", recipientUserName);
+
+        // Notification details
+        notificationData.put("message", message);
+        notificationData.put("eventName", eventName);
+        notificationData.put("type", notificationType);
+        notificationData.put("timestamp", FieldValue.serverTimestamp());
+
+        db.collection("notification")
+                .add(notificationData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "Notification logged with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error logging notification to Firebase", e);
+                });
     }
 
     /**

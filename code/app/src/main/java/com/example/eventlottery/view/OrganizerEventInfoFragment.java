@@ -76,6 +76,8 @@ public class OrganizerEventInfoFragment extends Fragment {
     private int selectedCount;
     private int cancelledCount;
     private int acceptedCount;
+    private String organizerId;
+    private String organizerName;
 
     // Firebase
     private FirebaseFirestore db;
@@ -89,7 +91,8 @@ public class OrganizerEventInfoFragment extends Fragment {
      * @param waitlistCount The number of users on the waitlist
      */
     public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount,
-                                                         int selectedCount, int cancelledCount, int acceptedCount) {
+                                                         int selectedCount, int cancelledCount, int acceptedCount,
+                                                         String organizerId, String organizerName) {
         OrganizerEventInfoFragment fragment = new OrganizerEventInfoFragment();
 
         // Create a Bundle to store arguments - this ensures data survives configuration changes
@@ -100,6 +103,8 @@ public class OrganizerEventInfoFragment extends Fragment {
         args.putInt(ARG_SELECTED_COUNT, selectedCount);
         args.putInt(ARG_CANCELLED_COUNT, cancelledCount);
         args.putInt(ARG_ACCEPTED_COUNT, acceptedCount);
+        args.putString("organizerId", organizerId);
+        args.putString("organizerName", organizerName);
         fragment.setArguments(args);
         return fragment;
     }
@@ -120,6 +125,8 @@ public class OrganizerEventInfoFragment extends Fragment {
             selectedCount = getArguments().getInt(ARG_SELECTED_COUNT, 0);
             cancelledCount = getArguments().getInt(ARG_CANCELLED_COUNT, 0);
             acceptedCount = getArguments().getInt(ARG_ACCEPTED_COUNT, 0);
+            organizerId = getArguments().getString("organizerId");
+            organizerName = getArguments().getString("organizerName");
         }
     }
 
@@ -793,7 +800,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             return;
         }
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
         String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
 
         // Use the NotificationSystem instead of calling Cloud Function directly
@@ -825,7 +832,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             return;
         }
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
         String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
 
         // Use the selected entrants notification method
@@ -856,7 +863,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             return;
         }
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
         String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
 
         // Use the cancelled entrants notification method
@@ -885,7 +892,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             return;
         }
 
-        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext(), organizerId, organizerName);
         String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
 
         notificationSystem.notifyAcceptedEntrants(
