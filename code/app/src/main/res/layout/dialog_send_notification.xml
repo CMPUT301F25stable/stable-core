@@ -129,6 +129,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Thank you"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
             android:textSize="12sp"/>
 
         <com.google.android.material.chip.Chip
@@ -137,6 +139,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Update"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
             android:textSize="12sp"/>
 
         <com.google.android.material.chip.Chip
@@ -145,6 +149,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reminder"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/white"
             android:textSize="12sp"/>
 
     </com.google.android.material.chip.ChipGroup>

@@ -17,6 +17,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -130,7 +131,12 @@ public class NotificationSystem {
         String title = "Congratulations!";
         String body = "You've been selected for " + eventName + "!";
 
-        sendFCMNotification(winner, title, body, "winner", eventName, null);
+        // For single notifications, still log individually
+        List<User> singleRecipient = new ArrayList<>();
+        singleRecipient.add(winner);
+        logBatchNotificationToFirebase(singleRecipient, body, eventName, "winner");
+
+        sendFCMNotificationWithoutLogging(winner, title, body, "winner", eventName, null);
     }
 
     /**
@@ -142,7 +148,11 @@ public class NotificationSystem {
         String title = "Thank you for entering!";
         String body = "You were not selected for " + eventName + " this time.";
 
-        sendFCMNotification(user, title, body, "loser", eventName, null);
+        List<User> singleRecipient = new ArrayList<>();
+        singleRecipient.add(user);
+        logBatchNotificationToFirebase(singleRecipient, body, eventName, "loser");
+
+        sendFCMNotificationWithoutLogging(user, title, body, "loser", eventName, null);
     }
 
     /**
@@ -151,13 +161,17 @@ public class NotificationSystem {
     public void notifyInvitedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending invitation notifications to " + entrants.size() + " entrants");
 
+        // Log once for all recipients
+        logBatchNotificationToFirebase(entrants, message, eventName, "invitation");
+
+        // Send individual FCM notifications
         for (User entrant : entrants) {
             notifyInvitedEntrant(entrant, eventName, eventId, message);
         }
     }
 
     /**
-     * Sends an individual invitation notification.
+     * Sends an individual invitation notification (no logging here).
      */
     public void notifyInvitedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending invitation notification to: " + entrant.getName());
@@ -165,8 +179,9 @@ public class NotificationSystem {
         String title = "You're Invited! 🎉";
         String body = "You're invited to sign up for " + eventName + "!";
 
-        sendFCMNotification(entrant, title, body, "invitation", eventName, eventId);
+        sendFCMNotificationWithoutLogging(entrant, title, body, "invitation", eventName, eventId);
     }
+
 
     /**
      * Sends notification to waitlisted entrants with custom message.
@@ -179,6 +194,10 @@ public class NotificationSystem {
     public void notifyWaitlistedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending waitlist notifications to " + entrants.size() + " entrants");
 
+        // Log once for all recipients
+        logBatchNotificationToFirebase(entrants, message, eventName, "waitlist");
+
+        // Send individual FCM notifications
         for (User entrant : entrants) {
             notifyWaitlistedEntrant(entrant, eventName, eventId, message);
         }
@@ -198,7 +217,8 @@ public class NotificationSystem {
         String title = "Waiting List Update 📢";
         String body = message;
 
-        sendFCMNotification(entrant, title, body, "waitlist", eventName, eventId);
+        // Don't log individual notifications anymore
+        sendFCMNotificationWithoutLogging(entrant, title, body, "waitlist", eventName, eventId);
     }
 
     /**
@@ -211,6 +231,8 @@ public class NotificationSystem {
      */
     public void notifySelectedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending selected notifications to " + entrants.size() + " entrants");
+
+        logBatchNotificationToFirebase(entrants, message, eventName, "selected");
 
         for (User entrant : entrants) {
             notifySelectedEntrant(entrant, eventName, eventId, message);
@@ -227,11 +249,10 @@ public class NotificationSystem {
      */
     private void notifySelectedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending selected notification to: " + entrant.getName());
-
         String title = "You've Been Selected! 🎉";
         String body = message;
 
-        sendFCMNotification(entrant, title, body, "selected", eventName, eventId);
+        sendFCMNotificationWithoutLogging(entrant, title, body, "selected", eventName, eventId);
     }
 
     /**
@@ -245,9 +266,11 @@ public class NotificationSystem {
      * @param eventName Name of the event.
      * @param eventId ID of the event.
      */
-    private void sendFCMNotification(User user, String title, String body,
-                                     String type, String eventName, String eventId) {
-        // Get FCM token stored by MainActivity
+    /**
+     * Core method to send FCM push notifications using V1 API without individual logging.
+     */
+    private void sendFCMNotificationWithoutLogging(User user, String title, String body,
+                                                   String type, String eventName, String eventId) {
         String fcmToken = user.getFcmToken();
 
         if (fcmToken == null || fcmToken.isEmpty()) {
@@ -255,23 +278,19 @@ public class NotificationSystem {
             return;
         }
 
-        // Check to see if notifications are disabled, if so, do not send
         if (!user.getNotifications()) {
             Log.d(TAG, "User " + user.getName() + " has notifications disabled");
             return;
         }
 
-        // Run network operation on background thread
         executorService.execute(() -> {
             try {
-                // Get OAuth2 access token (this makes network calls)
                 String accessToken = getAccessToken();
                 if (accessToken == null) {
                     Log.e(TAG, "Cannot send notification: no access token");
                     return;
                 }
 
-                // Build FCM V1 message JSON structure
                 JSONObject message = new JSONObject();
                 JSONObject messageContent = new JSONObject();
                 JSONObject notification = new JSONObject();
@@ -279,11 +298,9 @@ public class NotificationSystem {
                 JSONObject android = new JSONObject();
                 JSONObject androidNotification = new JSONObject();
 
-                // Notification payload
                 notification.put("title", title);
                 notification.put("body", body);
 
-                // Data payload
                 data.put("type", type);
                 data.put("eventName", eventName);
                 if (eventId != null) {
@@ -297,7 +314,6 @@ public class NotificationSystem {
                 android.put("priority", "high");
                 android.put("notification", androidNotification);
 
-                // Assemble message
                 messageContent.put("token", fcmToken);
                 messageContent.put("notification", notification);
                 messageContent.put("data", data);
@@ -305,9 +321,6 @@ public class NotificationSystem {
 
                 message.put("message", messageContent);
 
-                Log.d(TAG, "FCM Message JSON: " + message.toString());
-
-                // Create HTTP request
                 RequestBody requestBody = RequestBody.create(
                         message.toString(),
                         MediaType.parse("application/json")
@@ -320,7 +333,6 @@ public class NotificationSystem {
                         .post(requestBody)
                         .build();
 
-                // Send the request (OkHttp already handles this asynchronously)
                 httpClient.newCall(request).enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
@@ -333,25 +345,10 @@ public class NotificationSystem {
 
                         if (response.isSuccessful()) {
                             Log.d(TAG, "FCM notification sent successfully to " + user.getName());
-                            Log.d(TAG, "Response: " + responseBody);
-
-                            // Log to Firebase after successful send
-                            logNotificationToFirebase(
-                                    user.getId(),
-                                    user.getName(),
-                                    body,
-                                    eventName,
-                                    type
-                            );
                         } else {
                             Log.e(TAG, "FCM notification failed for " + user.getName());
                             Log.e(TAG, "Response code: " + response.code());
                             Log.e(TAG, "Response: " + responseBody);
-
-                            if (response.code() <= 404 || response.code() >= 400) {
-                                Log.e(TAG, "Error: Invalid FCM token or token has been unregistered");
-                                Log.e(TAG, "User may need to re-enable notifications");
-                            }
                         }
                     }
                 });
@@ -398,6 +395,8 @@ public class NotificationSystem {
     public void notifyCancelledEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending cancelled notifications to " + entrants.size() + " entrants");
 
+        logBatchNotificationToFirebase(entrants, message, eventName, "cancelled");
+
         for (User entrant : entrants) {
             notifyCancelledEntrant(entrant, eventName, eventId, message);
         }
@@ -413,6 +412,8 @@ public class NotificationSystem {
     public void notifyAcceptedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending accepted notifications to " + entrants.size() + " entrants");
 
+        logBatchNotificationToFirebase(entrants, message, eventName, "accepted");
+
         for (User entrant : entrants) {
             notifyAcceptedEntrant(entrant, eventName, eventId, message);
         }
@@ -427,11 +428,9 @@ public class NotificationSystem {
      */
     private void notifyAcceptedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending accepted notification to: " + entrant.getName());
-
         String title = "Event Confirmed ✓";
         String body = message;
-
-        sendFCMNotification(entrant, title, body, "accepted", eventName, eventId);
+        sendFCMNotificationWithoutLogging(entrant, title, body, "accepted", eventName, eventId);
     }
 
 
@@ -445,11 +444,9 @@ public class NotificationSystem {
      */
     private void notifyCancelledEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending cancelled notification to: " + entrant.getName());
-
         String title = "Event Update 📌";
         String body = message;
-
-        sendFCMNotification(entrant, title, body, "cancelled", eventName, eventId);
+        sendFCMNotificationWithoutLogging(entrant, title, body, "cancelled", eventName, eventId);
     }
 
     /**
@@ -462,24 +459,27 @@ public class NotificationSystem {
     }
 
     /**
-     * Logs a notification to Firebase Firestore.
-     * @param recipientUserId The ID of the user receiving the notification
-     * @param recipientUserName The name of the user receiving the notification
+     * Logs a single notification to Firebase with multiple recipients.
+     * @param recipients List of users receiving the notification
      * @param message The notification message sent
      * @param eventName The name of the event
      * @param notificationType The type of notification (waitlist, selected, cancelled, accepted)
      */
-    private void logNotificationToFirebase(String recipientUserId, String recipientUserName,
-                                           String message, String eventName, String notificationType) {
+    private void logBatchNotificationToFirebase(List<User> recipients, String message,
+                                                String eventName, String notificationType) {
         Map<String, Object> notificationData = new HashMap<>();
 
         // Organizer info (sender)
         notificationData.put("senderUserId", organizerId);
         notificationData.put("senderUserName", organizerName);
 
-        // Recipient info
-        notificationData.put("recipientUserId", recipientUserId);
-        notificationData.put("recipientUserName", recipientUserName);
+        // Recipients as a map with userId as key and username as value
+        Map<String, String> recipientsMap = new HashMap<>();
+        for (User recipient : recipients) {
+            recipientsMap.put(recipient.getId(), recipient.getName());
+        }
+        notificationData.put("recipients", recipientsMap);
+        notificationData.put("recipientCount", recipients.size());
 
         // Notification details
         notificationData.put("message", message);
@@ -490,10 +490,11 @@ public class NotificationSystem {
         db.collection("notification")
                 .add(notificationData)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "Notification logged with ID: " + documentReference.getId());
+                    Log.d(TAG, "Batch notification logged with ID: " + documentReference.getId() +
+                            " for " + recipients.size() + " recipients");
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error logging notification to Firebase", e);
+                    Log.e(TAG, "Error logging batch notification to Firebase", e);
                 });
     }
 
