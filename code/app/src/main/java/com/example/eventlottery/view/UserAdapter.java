@@ -30,7 +30,7 @@ public class UserAdapter extends ArrayAdapter<User> {
      * @param users The arraylist of users to display.
      */
     public UserAdapter(Context context, ArrayList<User> users) {
-        super(context, 0, new ArrayList<>(users));
+        super(context, 0, users);
         this.context = context;
     }
 
