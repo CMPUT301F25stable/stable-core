@@ -421,6 +421,16 @@ public class InfoActivity extends AppCompatActivity {
                                                     .addOnSuccessListener(aVoid3 -> {
                                                         android.util.Log.d("InfoActivity", "Replacement user notified (now a winner)");
 
+                                                        // Add replacement user to selectedIds
+                                                        db.collection("event-p4").document(eventId)
+                                                                .update("selectedIds", com.google.firebase.firestore.FieldValue.arrayUnion(replacementUserId))
+                                                                .addOnSuccessListener(aVoid4 -> {
+                                                                    Log.d("InfoActivity", "Replacement added to selectedIds");
+                                                                })
+                                                                .addOnFailureListener(e -> {
+                                                                    Log.w("InfoActivity", "Failed to add replacement to selectedIds");
+                                                                });
+
                                                         // Step 6: Remove event from replacement's waitlistedEvents array
                                                         db.collection("users-p4").document(replacementUserId)
                                                                 .update("waitlistedEvents",
