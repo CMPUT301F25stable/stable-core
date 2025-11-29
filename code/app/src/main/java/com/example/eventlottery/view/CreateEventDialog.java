@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -113,6 +114,7 @@ public class CreateEventDialog extends DialogFragment {
         EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
         EditText endDate = dialogView.findViewById(R.id.endDateInput);
+        EditText filterTag = dialogView.findViewById(R.id.filterTagInput);
         Switch geolocationSwitch = dialogView.findViewById(R.id.geolocationSwitch);
         Button selectImgBtn = dialogView.findViewById(R.id.select_image_btn);
         Button uploadImgBtn = dialogView.findViewById(R.id.upload_image_btn);
@@ -137,6 +139,8 @@ public class CreateEventDialog extends DialogFragment {
         if (removePosterButton != null) removePosterButton.setVisibility(View.GONE);
         if (posterSectionTitle != null) posterSectionTitle.setVisibility(View.GONE);
         if (lotterySectionTitle != null) lotterySectionTitle.setVisibility(View.GONE);
+
+
 
         // Show only initial upload section
         if (initialUploadSection != null) initialUploadSection.setVisibility(View.VISIBLE);
@@ -190,8 +194,33 @@ public class CreateEventDialog extends DialogFragment {
                     return;
                 }
 
+                /***********************************
+                 * 3. Get filter tag input
+                 * @author Harjot Singh
+                 ***********************************/
+                String filterTagText = filterTag.getText().toString().trim();
+
+                // require at least one tag
+                if (filterTagText.isEmpty()) {
+                    Toast.makeText(requireContext(), "Filter tag can't be empty", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                List<String> filterTags = new ArrayList<>();
+
+                // split by commas (allows for multiple tags)
+                String[] tags = filterTagText.split(",");
+                for (String part: tags) {
+                    String tag = part.trim();
+                    if (!tag.isEmpty()) {
+                        filterTags.add(tag);
+                    }
+                }
+
+
+
                 /*************************
-                 * 3. Get location input *
+                 * 4. Get location input *
                  *************************/
                 String locationText = location.getText().toString();
                 if (locationText.isEmpty()) {
@@ -200,7 +229,7 @@ public class CreateEventDialog extends DialogFragment {
                 }
 
                 /*****************************
-                 * 4. Get waitlist max input *
+                 * 5. Get waitlist max input *
                  *****************************/
                 String waitlistMaxText = waitlistMax.getText().toString();
 
@@ -224,7 +253,7 @@ public class CreateEventDialog extends DialogFragment {
                 }
 
                 /***************************
-                 * 5. Get valid date input *
+                 * 6. Get valid date input *
                  ***************************/
                 // Get date inputs
                 String startDateText = startDate.getText().toString();
@@ -268,7 +297,7 @@ public class CreateEventDialog extends DialogFragment {
                 end = cal.getTime();
 
                 /****************************
-                 * 6. Get geolocation input *
+                 * 7. Get geolocation input *
                  ****************************/
                 boolean geolocation;
                 if (geolocationSwitch.isChecked()) {
@@ -276,7 +305,7 @@ public class CreateEventDialog extends DialogFragment {
                 } else { geolocation = false; }
 
                 /****************************
-                 * 7. Select and upload image
+                 * 8. Select and upload image
                  ****************************/
                 if (eventImg == null || eventImg.isEmpty()) {
                     Toast.makeText(requireContext(), "Please select and upload an image", Toast.LENGTH_SHORT).show();
@@ -284,9 +313,9 @@ public class CreateEventDialog extends DialogFragment {
                 }
 
                 /*************************************
-                 * 8. Create event, given the inputs *
+                 * 9. Create event, given the inputs *
                  *************************************/
-                Event newEvent = new Event(titleText, descriptionText, locationText, organizerName, eventImg, start, end, new ArrayList<>(), geolocation);
+                Event newEvent = new Event(titleText, descriptionText, locationText, organizerName, eventImg, start, end, filterTags, geolocation);
                 // Set waitlistmax & storage path
                 newEvent.setWaitlistMax(maxSize);
                 newEvent.setStoragePath(eventStoragePath);

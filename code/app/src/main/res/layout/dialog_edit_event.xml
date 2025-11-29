@@ -67,6 +67,30 @@
             android:paddingLeft="12dp">
 
             <TextView
+                android:id="@+id/filterTagText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filter Tag(s): "
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/filterTagInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="e.g. sports, music, charity"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:paddingLeft="12dp">
+
+            <TextView
                 android:id="@+id/locationText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -138,6 +138,7 @@ public class EditEventDialog extends DialogFragment {
         // Set up variables for getting input
         EditText title = dialogView.findViewById(R.id.titleInput);
         EditText description = dialogView.findViewById(R.id.descriptionInput);
+        EditText filterTag = dialogView.findViewById(R.id.filterTagInput);
         EditText location = dialogView.findViewById(R.id.locationInput);
         EditText waitlistMax = dialogView.findViewById(R.id.waitlistMaxInput);
         EditText startDate = dialogView.findViewById(R.id.startDateInput);
@@ -267,8 +268,30 @@ public class EditEventDialog extends DialogFragment {
                     return;
                 }
 
+                /***********************************
+                 * 5. Get filter tag input
+                 ***********************************/
+                String filterTagText = filterTag.getText().toString().trim();
+                List<String> filterTags = new ArrayList<>();
+
+                if (filterTagText.isEmpty()) {
+                    // User didn't edit tags – keep the existing ones
+                    if (event.getFilterTags() != null) {
+                        filterTags.addAll(event.getFilterTags());
+                    }
+                } else {
+                    // User entered new tags, so parse and replace
+                    String[] tags = filterTagText.split(",");
+                    for (String part : tags) {
+                        String tag = part.trim();
+                        if (!tag.isEmpty()) {
+                            filterTags.add(tag);
+                        }
+                    }
+                }
+
                 /*************************
-                 * 5. Get location input *
+                 * 6. Get location input *
                  *************************/
                 String locationText = location.getText().toString();
                 if (locationText.isEmpty()) {
@@ -277,7 +300,7 @@ public class EditEventDialog extends DialogFragment {
                 }
 
                 /*****************************
-                 * 6. Get waitlist max input *
+                 * 7. Get waitlist max input *
                  *****************************/
                 String waitlistMaxText = waitlistMax.getText().toString();
                 int maxSize = Integer.MAX_VALUE;
@@ -297,7 +320,7 @@ public class EditEventDialog extends DialogFragment {
                 }
 
                 /***************************
-                 * 7. Get valid date input *
+                 * 8. Get valid date input *
                  ***************************/
                 // Get date inputs
                 String startDateText = startDate.getText().toString();
@@ -340,12 +363,12 @@ public class EditEventDialog extends DialogFragment {
                 end = cal.getTime();
 
                 /****************************
-                 * 8. Get geolocation input *
+                 * 9. Get geolocation input *
                  ****************************/
                 boolean geolocation = geolocationSwitch.isChecked();
 
                 /***********************************************************
-                 * 9. Update event locally & run OrganizerPanel's listener *
+                 * 10. Update event locally & run OrganizerPanel's listener *
                  ***********************************************************/
                 event.setName(titleText);
                 event.setDescription(descriptionText);
@@ -354,6 +377,21 @@ public class EditEventDialog extends DialogFragment {
                 event.setStartTime(start);
                 event.setEndTime(end);
                 event.setGeolocation(geolocation);
+                event.setFilterTags(filterTags);
+                event.setFilterTags(filterTags);
+
+                db.collection("event-p4")
+                        .document(event.getId())
+                        .update("filterTags", filterTags)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d(TAG, "Filter tags updated in Firestore");
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "Failed to update filter tags", e);
+                            Toast.makeText(requireContext(),
+                                    "Failed to update filter tags: " + e.getMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                        });
 
                 // Update poster if changed
                 if (newPosterUri != null) {
