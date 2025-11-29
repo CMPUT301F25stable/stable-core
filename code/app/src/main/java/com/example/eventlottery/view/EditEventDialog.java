@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -450,12 +451,19 @@ public class EditEventDialog extends DialogFragment {
             return;
         }
 
-        new AlertDialog.Builder(requireContext())
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Run Lottery Drawing?")
                 .setMessage("This will randomly select " + lotterySize + " entrants from " + currentWaitlistCount + " on the waitlist.\n\nSelected entrants will be notified and moved to the selected list.\n\nThis action cannot be undone. Continue?")
-                .setPositiveButton("Run Lottery", (dialog, which) -> runLottery(lotterySize))
+                .setPositiveButton("Run Lottery", (d, which) -> runLottery(lotterySize))
                 .setNegativeButton("Cancel", null)
                 .show();
+
+        // access the buttons from dialog
+        Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+        // Change their colours
+        positiveButton.setTextColor(Color.BLACK);
+        negativeButton.setTextColor(Color.BLACK);
     }
 
     private void runLottery(int numberOfWinners) {
