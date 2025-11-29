@@ -384,6 +384,30 @@ public class NotificationSystem {
     }
 
     /**
+     * Sends notification to accepted entrants with custom message.
+     */
+    public void notifyAcceptedEntrants(List<User> entrants, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending accepted notifications to " + entrants.size() + " entrants");
+
+        for (User entrant : entrants) {
+            notifyAcceptedEntrant(entrant, eventName, eventId, message);
+        }
+    }
+
+    /**
+     * Sends an individual notification to an accepted entrant.
+     */
+    private void notifyAcceptedEntrant(User entrant, String eventName, String eventId, String message) {
+        Log.d(TAG, "Sending accepted notification to: " + entrant.getName());
+
+        String title = "Event Confirmed ✓";
+        String body = message;
+
+        sendFCMNotification(entrant, title, body, "accepted", eventName, eventId);
+    }
+
+
+    /**
      * Sends an individual notification to a cancelled entrant.
      * Add this method to your NotificationSystem class.
      * @param entrant User to send notification to.

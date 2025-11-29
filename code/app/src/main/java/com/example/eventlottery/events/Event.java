@@ -463,6 +463,21 @@ public class Event implements Serializable {
     }
 
     /**
+     * Gets the list of user IDs who accepted their invitation
+     * @return List of accepted entrant IDs
+     */
+    public List<String> getAcceptedIds() {
+        if (finalizedList == null || finalizedList.getFinalizedUsers() == null) {
+            return new ArrayList<>();
+        }
+        List<String> acceptedIds = new ArrayList<>();
+        for (User user : finalizedList.getFinalizedUsers()) {
+            acceptedIds.add(user.getId());
+        }
+        return acceptedIds;
+    }
+
+    /**
      * Sets the list of cancelled entrants
      * @param cancelledEntrants List of user IDs who declined
      * */

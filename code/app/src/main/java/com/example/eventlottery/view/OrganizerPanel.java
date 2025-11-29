@@ -231,6 +231,9 @@ public class OrganizerPanel extends AppCompatActivity {
             int waitlistCount = selectedEvent.getWaitlist().getWaitlistedUsers().size();
             int selectedCount = selectedEvent.getSelectedIds().size();
             int cancelledCount = selectedEvent.getCancelledEntrants().size();
+            int acceptedCount = selectedEvent.getFinalizedList() != null &&
+                    selectedEvent.getFinalizedList().getFinalizedUsers() != null ?
+                    selectedEvent.getFinalizedList().getFinalizedUsers().size() : 0;
             chosenEntrantsBtn.setVisibility(View.VISIBLE);
             cancelledEntrantsBtn.setVisibility(View.VISIBLE);
             downloadQRCode.setVisibility(View.VISIBLE);
@@ -244,7 +247,8 @@ public class OrganizerPanel extends AppCompatActivity {
                     selectedEvent.getName(),
                     waitlistCount,
                     selectedCount,
-                    cancelledCount
+                    cancelledCount,
+                    acceptedCount
             );
 
             getSupportFragmentManager().beginTransaction()

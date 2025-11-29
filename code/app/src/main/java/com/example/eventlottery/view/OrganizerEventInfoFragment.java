@@ -50,11 +50,13 @@ public class OrganizerEventInfoFragment extends Fragment {
     private static final String ARG_WAITLIST_COUNT = "waitlist_count";
     private static final String ARG_SELECTED_COUNT = "selected_count";
     private static final String ARG_CANCELLED_COUNT = "cancelled_count";
+    private static final String ARG_ACCEPTED_COUNT = "accepted_count";
 
     private enum EntrantType {
         WAITLIST,
         SELECTED,
-        CANCELLED
+        CANCELLED,
+        ACCEPTED
     }
 
     // UI elements
@@ -62,15 +64,18 @@ public class OrganizerEventInfoFragment extends Fragment {
     private TextView waitingCountText;
     private TextView selectedCountText;
     private TextView cancelledCountText;
+    private TextView acceptedCountText;
     private CardView waitingListCard;
     private CardView selectedListCard;
     private CardView cancelledListCard;
+    private CardView acceptedListCard;
 
     // Data fields
     private String eventId;
     private int waitlistCount;
     private int selectedCount;
     private int cancelledCount;
+    private int acceptedCount;
 
     // Firebase
     private FirebaseFirestore db;
@@ -83,7 +88,8 @@ public class OrganizerEventInfoFragment extends Fragment {
      * @param eventName The name of the event
      * @param waitlistCount The number of users on the waitlist
      */
-    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount, int selectedCount, int cancelledCount) {
+    public static OrganizerEventInfoFragment newInstance(String eventId, String eventName, int waitlistCount,
+                                                         int selectedCount, int cancelledCount, int acceptedCount) {
         OrganizerEventInfoFragment fragment = new OrganizerEventInfoFragment();
 
         // Create a Bundle to store arguments - this ensures data survives configuration changes
@@ -93,6 +99,7 @@ public class OrganizerEventInfoFragment extends Fragment {
         args.putInt(ARG_WAITLIST_COUNT, waitlistCount);
         args.putInt(ARG_SELECTED_COUNT, selectedCount);
         args.putInt(ARG_CANCELLED_COUNT, cancelledCount);
+        args.putInt(ARG_ACCEPTED_COUNT, acceptedCount);
         fragment.setArguments(args);
         return fragment;
     }
@@ -112,6 +119,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             waitlistCount = getArguments().getInt(ARG_WAITLIST_COUNT, 0);
             selectedCount = getArguments().getInt(ARG_SELECTED_COUNT, 0);
             cancelledCount = getArguments().getInt(ARG_CANCELLED_COUNT, 0);
+            acceptedCount = getArguments().getInt(ARG_ACCEPTED_COUNT, 0);
         }
     }
 
@@ -138,11 +146,13 @@ public class OrganizerEventInfoFragment extends Fragment {
         waitingCountText = view.findViewById(R.id.waitingCount);
         selectedCountText = view.findViewById(R.id.selectedCount);
         cancelledCountText = view.findViewById(R.id.cancelledCount);
+        acceptedCountText = view.findViewById(R.id.acceptedCount);
 
         // Get references to the clickable cards
         waitingListCard = view.findViewById(R.id.waitingListCard);
         selectedListCard = view.findViewById(R.id.selectedCard);
         cancelledListCard = view.findViewById(R.id.cancelledCard);
+        acceptedListCard = view.findViewById(R.id.acceptedCard);
 
         // Close Button
         ImageButton closeButton = view.findViewById(R.id.closeButton);
@@ -157,6 +167,7 @@ public class OrganizerEventInfoFragment extends Fragment {
             waitingCountText.setText(String.valueOf(waitlistCount));
             selectedCountText.setText(String.valueOf(selectedCount));
             cancelledCountText.setText(String.valueOf(cancelledCount));
+            acceptedCountText.setText(String.valueOf(acceptedCount));
         }
 
         // Set up click listeners for user interactions
@@ -208,6 +219,18 @@ public class OrganizerEventInfoFragment extends Fragment {
         List<String> cancelledEntrants = (List<String>) snapshot.get("cancelledEntrants");
         cancelledCount = (cancelledEntrants != null) ? cancelledEntrants.size() : 0;
 
+        // Get accepted count
+        List<String> acceptedIds = new ArrayList<>();
+        Map<String, Object> finalizedList = (Map<String, Object>) snapshot.get("finalizedList");
+        if (finalizedList != null) {
+            List<Map<String, Object>> finalizedUsers =
+                    (List<Map<String, Object>>) finalizedList.get("finalizedUsers");
+            acceptedCount = (finalizedUsers != null) ? finalizedUsers.size() : 0;
+        }
+        else {
+            acceptedCount = 0;
+        }
+
         // Update UI
         if (waitingCountText != null) {
             waitingCountText.setText(String.valueOf(waitlistCount));
@@ -217,6 +240,9 @@ public class OrganizerEventInfoFragment extends Fragment {
         }
         if (cancelledCountText != null) {
             cancelledCountText.setText(String.valueOf(cancelledCount));
+        }
+        if (acceptedCountText != null) {
+            acceptedCountText.setText(String.valueOf(acceptedCount));
         }
     }
 
@@ -270,6 +296,18 @@ public class OrganizerEventInfoFragment extends Fragment {
                         Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Click listener for acceptedCard
+        acceptedListCard.setOnClickListener(v -> {
+            if (acceptedCount > 0) {
+                showNotificationDialog(EntrantType.ACCEPTED);
+            }
+            else {
+                Toast.makeText(requireContext(),
+                        "No entrants have accepted",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -300,7 +338,10 @@ public class OrganizerEventInfoFragment extends Fragment {
             count = waitlistCount;
         } else if (entrantType == EntrantType.SELECTED) {
             count = selectedCount;
-        } else {
+        } else if (entrantType == EntrantType.ACCEPTED) {
+            count = acceptedCount;
+        }
+        else {
             count = cancelledCount;
         }
 
@@ -336,7 +377,16 @@ public class OrganizerEventInfoFragment extends Fragment {
                     "Important information for selected participants of " + eventNameStr + ": ");
             suggestionTemplates.put(suggestionChip3,
                     "Reminder: Don't forget to confirm your spot for " + eventNameStr + "!");
-        } else { // CANCELLED
+        } else if (entrantType == EntrantType.ACCEPTED) {
+            suggestionTemplates.put(suggestionChip1,
+                    "Thank you for accepting! Here are the details for " + eventNameStr + ":");
+            suggestionTemplates.put(suggestionChip2,
+                    "Important information for accepted participants of " + eventNameStr + ": ");
+            suggestionTemplates.put(suggestionChip3,
+                    "Reminder: We're looking forward to seeing you at " + eventNameStr + "!");
+        }
+
+        else { // CANCELLED
             suggestionTemplates.put(suggestionChip1,
                     "We noticed you cancelled your spot for " + eventNameStr + ". You're welcome to join again!");
             suggestionTemplates.put(suggestionChip2,
@@ -418,7 +468,11 @@ public class OrganizerEventInfoFragment extends Fragment {
                     sendWaitlistNotifications(message);
                 } else if (entrantType == EntrantType.SELECTED) {
                     sendSelectedNotifications(message);
-                } else { // CANCELLED
+                } else if (entrantType == EntrantType.ACCEPTED) {
+                    sendAcceptedNotifications(message);
+                }
+
+                else { // CANCELLED
                     sendCancelledNotifications(message);
                 }
             } else {
@@ -611,6 +665,50 @@ public class OrganizerEventInfoFragment extends Fragment {
     }
 
     /**
+     * Fetches accepted entrants from Firebase and sends notifications to them.
+     */
+    private void sendAcceptedNotifications(String message) {
+        Toast.makeText(requireContext(), "Sending notifications...", Toast.LENGTH_SHORT).show();
+
+        db.collection("event-p4")
+                .document(eventId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Map<String, Object> finalizedList =
+                                (Map<String, Object>) documentSnapshot.get("finalizedList");
+
+                        if (finalizedList != null) {
+                            List<Map<String, Object>> finalizedUsers =
+                                    (List<Map<String, Object>>) finalizedList.get("finalizedUsers");
+
+                            if (finalizedUsers != null && !finalizedUsers.isEmpty()) {
+                                fetchUsersAndSendNotifications(finalizedUsers, message, "accepted");
+                            } else {
+                                Toast.makeText(requireContext(),
+                                        "No accepted entrants found",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(requireContext(),
+                                    "No accepted entrants found",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(requireContext(),
+                                "Event not found",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching accepted users data", e);
+                    Toast.makeText(requireContext(),
+                            "Failed to send notifications: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
+    }
+
+    /**
      * Common method to fetch user documents and send notifications.
      * Works with users-p4 collection and checks for FCM tokens.
      *
@@ -653,7 +751,10 @@ public class OrganizerEventInfoFragment extends Fragment {
                                     sendNotificationsToWaitlistedUsers(usersWithTokens, message);
                                 } else if (type.equals("selected")) {
                                     sendNotificationsToSelectedUsers(usersWithTokens, message);
-                                } else { // cancelled
+                                } else if (type.equals("accepted")) {
+                                    sendNotificationsToAcceptedUsers(usersWithTokens, message);
+                                }
+                                else { // cancelled
                                     sendNotificationsToCancelledUsers(usersWithTokens, message);
                                 }
                             }
@@ -771,6 +872,34 @@ public class OrganizerEventInfoFragment extends Fragment {
                 Toast.LENGTH_LONG).show();
 
         Log.d(TAG, "Successfully sent notifications to " + users.size() + " cancelled entrants");
+    }
+
+    /**
+     * Helper method to send notifications to accepted users with FCM tokens.
+     */
+    private void sendNotificationsToAcceptedUsers(List<User> users, String message) {
+        if (users.isEmpty()) {
+            Toast.makeText(requireContext(),
+                    "No users with notification tokens found",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        NotificationSystem notificationSystem = new NotificationSystem(requireContext());
+        String eventNameStr = getArguments().getString(ARG_EVENT_NAME);
+
+        notificationSystem.notifyAcceptedEntrants(
+                users,
+                eventNameStr,
+                eventId,
+                message
+        );
+
+        Toast.makeText(requireContext(),
+                "Notifications sent to " + users.size() + " accepted entrants",
+                Toast.LENGTH_LONG).show();
+
+        Log.d(TAG, "Successfully sent notifications to " + users.size() + " accepted entrants");
     }
 
     /**
