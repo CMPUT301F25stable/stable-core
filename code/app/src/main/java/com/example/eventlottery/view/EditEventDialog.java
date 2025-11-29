@@ -462,6 +462,8 @@ public class EditEventDialog extends DialogFragment {
             if (!winnerIds.contains(user.getId())) {
                 Map<String, Object> userData = new HashMap<>();
                 userData.put("id", user.getId());
+                userData.put("name", user.getName());
+                userData.put("email", user.getEmailAddress());
                 newWaitlist.add(userData);
             }
         }
