@@ -277,18 +277,22 @@ public class UserPanel extends AppCompatActivity {
                 List<String> waitlistedEvents = (List<String>) documentSnapshot.get("waitlistedEvents");
                 Map<String, Object> registeredEventsMap = (Map<String, Object>) documentSnapshot.get("registeredEvents");
 
-                // Only update if data exists - don't overwrite with empty data
-                if (waitlistedEvents != null && !waitlistedEvents.isEmpty()) {
+                // FIXED: Always update the lists, even if empty (to clear them)
+                if (waitlistedEvents != null) {
                     currentUser.setWaitlistedEventIds(waitlistedEvents);
+                } else {
+                    currentUser.setWaitlistedEventIds(new ArrayList<>());
                 }
 
                 // Convert Map<String, Object> to HashMap<String, String> for registeredEvents
-                if (registeredEventsMap != null && !registeredEventsMap.isEmpty()) {
+                if (registeredEventsMap != null) {
                     HashMap<String, String> registeredEvents = new HashMap<>();
                     for (Map.Entry<String, Object> entry : registeredEventsMap.entrySet()) {
                         registeredEvents.put(entry.getKey(), entry.getValue().toString());
                     }
                     currentUser.setRegisteredEvents(registeredEvents);
+                } else {
+                    currentUser.setRegisteredEvents(new HashMap<>());
                 }
 
                 // Check if user has any events
@@ -308,11 +312,14 @@ public class UserPanel extends AppCompatActivity {
                     }
                 }
 
-                // Display waitlisted events
+                // FIXED: Display waitlisted events ONLY if they're not already in registeredEvents
                 for (String eventId : currentUser.getWaitlistedEvents()) {
-                    Event event = findEventById(eventId);
-                    if (event != null) {
-                        addEventCard(event, "Waitlisted");
+                    // Skip if this event is already shown as a registered event
+                    if (!currentUser.getRegisteredEvents().containsKey(eventId)) {
+                        Event event = findEventById(eventId);
+                        if (event != null) {
+                            addEventCard(event, "Waitlisted");
+                        }
                     }
                 }
             }
