@@ -21,7 +21,7 @@ import java.util.List;
  * References: https://medium.com/mindorks/custom-array-adapters-made-easy-b6c4930560dd
  */
 public class UserAdapter extends ArrayAdapter<User> {
-    private ArrayList<User> userList = new ArrayList<>();
+
     private Context context;
 
     /**
@@ -30,20 +30,22 @@ public class UserAdapter extends ArrayAdapter<User> {
      * @param users The arraylist of users to display.
      */
     public UserAdapter(Context context, ArrayList<User> users) {
-        super(context, 0, users);
+        super(context, 0, new ArrayList<>(users));
         this.context = context;
-        this.userList = users;
     }
 
     /**
      * Sets the filtered list of users.
      * @param filteredList
      */
+
     public void setFilteredList(List<User> filteredList) {
-        if (filteredList == null) filteredList = new ArrayList<>();
-        this.userList = new ArrayList<>(filteredList);
-        clear();
-        addAll(this.userList);
+        clear();  // clear ArrayAdapter's internal list
+
+        if (filteredList != null) {
+            addAll(filteredList);  // repopulate with filtered/full data
+        }
+
         notifyDataSetChanged();
     }
 
@@ -69,11 +71,19 @@ public class UserAdapter extends ArrayAdapter<User> {
                     .inflate(R.layout.user_list_item, parent, false);
         }
         // Get user, the text fields, & set the text
-        User user = userList.get(position);
+        User user = getItem(position);
         TextView userNameText = convertView.findViewById(R.id.userNameText);
         TextView userIdText = convertView.findViewById(R.id.userIdText);
-        userNameText.setText(user.getName());
-        userIdText.setText(user.getId());
+
+        if (user != null) {
+            userNameText.setText(user.getName());
+            userIdText.setText(user.getId());
+        } else {
+            userNameText.setText("");
+            userIdText.setText("");
+        }
+
         return convertView;
+
     }
 }
