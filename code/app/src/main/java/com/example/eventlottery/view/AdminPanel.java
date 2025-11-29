@@ -322,13 +322,13 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         db.collection("event-p4").document(eventId).delete();
     }
 
-    /*
+    /**
      * Deletes the selected User
      * @param user: the user to be deleted
      */
     private void deleteSelectedUser(User user) {
         AlertDialog.Builder builder = new AlertDialog.Builder(AdminPanel.this);
-        builder.setTitle("This Will Delete the account of " + user.getName())
+        builder.setTitle("This will delete " + user.getName() + "'s account?")
                 .setMessage("Are You Sure?")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", (dialogInterface, i) -> {
@@ -388,9 +388,10 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     }
 
     /**
-     * Option menu for selecting a user
-     * Note: for now only deleting a user is possible
-     * @param menuItem: firestore get data request
+     * Option menu for selecting a user:
+     * - Deleting the User
+     * - Organizer permission change
+     * @param menuItem: the option the user selected
      */
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {

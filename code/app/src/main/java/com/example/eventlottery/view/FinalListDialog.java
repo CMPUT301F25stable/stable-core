@@ -73,6 +73,10 @@ public class FinalListDialog extends DialogFragment {
             userNames.add(user.getName());
         }
 
+        if (userNames.isEmpty()) {
+            userNames.add("List is Empty");
+        }
+
         // Set adapter
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_list_item_1, userNames);
@@ -90,7 +94,7 @@ public class FinalListDialog extends DialogFragment {
 
         // Build the AlertDialog
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Finalized Entrants");
+        builder.setTitle("Accepted Entrants");
         builder.setView(dialogView);
         builder.setPositiveButton("Close", (dialog, which) -> dialog.dismiss());
 
@@ -106,7 +110,7 @@ public class FinalListDialog extends DialogFragment {
 
         try {
             Context context = requireContext();
-            String filename = "FinalListOfUsers.csv";
+            String filename = "AcceptedListOfUsers.csv";
 
             // Save
             FileOutputStream outputStream = context.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -118,7 +122,7 @@ public class FinalListDialog extends DialogFragment {
             Uri uri = FileProvider.getUriForFile(context, "com.example.eventlottery.fileprovider", fileLocation);
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/csv");
-            intent.putExtra(Intent.EXTRA_SUBJECT, "Final List of Users");
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Accepted List of Users");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.putExtra(Intent.EXTRA_STREAM, uri);
             startActivity(Intent.createChooser(intent, "Send Data"));
