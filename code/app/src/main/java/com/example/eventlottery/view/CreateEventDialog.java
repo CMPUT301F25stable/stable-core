@@ -161,14 +161,16 @@ public class CreateEventDialog extends DialogFragment {
         builder.setNegativeButton("Close", (dialog, which) -> dialog.dismiss());
         builder.setPositiveButton("Save", null);
         AlertDialog dialog = builder.create();
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
 
         // Override Save button logic so that it only closes when all inputs are valid
         // Reference: https://stackoverflow.com/questions/2620444/how-to-prevent-a-dialog-from-closing-when-a-button-is-clicked
         dialog.setOnShowListener(d -> {
+            // Get buttons & change color
             Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            Button cancelButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            saveButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+            cancelButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+            // Set click listener for save button (so that it only closes when all inputs are valid)
             saveButton.setOnClickListener(v -> {
                 /**********************
                  * 1. Get title input *
