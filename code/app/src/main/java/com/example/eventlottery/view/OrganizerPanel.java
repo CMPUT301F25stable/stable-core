@@ -107,6 +107,8 @@ public class OrganizerPanel extends AppCompatActivity {
 
     private Button cancelledEntrantsBtn;
 
+    private Button redrawButton;
+
 
 
 
@@ -139,6 +141,7 @@ public class OrganizerPanel extends AppCompatActivity {
         map = findViewById(R.id.mapButton);
         chosenEntrantsBtn = findViewById(R.id.viewChosenEntrantsButton);
         cancelledEntrantsBtn = findViewById(R.id.viewCancelledEntrantsButton);
+        redrawButton = findViewById(R.id.redrawEventButton);
         setClickListeners();
 
 
@@ -459,6 +462,41 @@ public class OrganizerPanel extends AppCompatActivity {
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "cancelled");
             startActivity(intent);
+        });
+
+        redrawButton.setOnClickListener(v -> {
+            if (selectedEventIndex == -1) {
+                Toast.makeText(this, "Please click on an event first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            selectedEvent = data.get(selectedEventIndex);
+
+            // Get current waitlist size
+            int waitlistSize = selectedEvent.getWaitlist() != null &&
+                    selectedEvent.getWaitlist().getWaitlistedUsers() != null ?
+                    selectedEvent.getWaitlist().getWaitlistedUsers().size() : 0;
+
+            if (waitlistSize == 0) {
+                Toast.makeText(this, "No users on waitlist to draw from", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Show redraw dialog
+            RedrawEventDialog dialog = RedrawEventDialog.newInstance(
+                    selectedEvent.getId(),
+                    selectedEvent.getName(),
+                    waitlistSize
+            );
+
+            // Refresh event list after redraw completes
+            dialog.setOnRedrawCompleteListener(drawnCount -> {
+                // Reload the event daata to show updated counts
+                organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
+                adapter.notifyDataSetChanged();
+            });
+
+            dialog.show(getSupportFragmentManager(), "RedrawEventDialog");
         });
     }
 

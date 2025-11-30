@@ -277,7 +277,7 @@ public class InfoActivity extends AppCompatActivity {
      * Implements User Story 01.05.01: Replace declined user with new one from waitlist.
      *
      * Winners are defined as users with "Notified" or "Accepted" status.
-     * When a winner declines, they are replaced by someone from the waitlist.
+     * Updated to NOT automatically draw replacement - organizer does this manually via redraw button.
      */
     private void handleDecline() {
         if (currentEvent == null || currentUser == null) {
@@ -304,7 +304,7 @@ public class InfoActivity extends AppCompatActivity {
         // Update the declining user's status in Firestore
         Map<String, Object> userUpdates = new HashMap<>();
         userUpdates.put("registeredEvents." + eventId, "Declined");
-      
+
         db.collection("users-p4").document(currentUser.getId())
                 .update(userUpdates)
                 .addOnSuccessListener(aVoid -> {
@@ -313,167 +313,33 @@ public class InfoActivity extends AppCompatActivity {
                     currentStatus = "Declined";
                     updateStatusDisplay();
 
-                    // If user was NOT a winner, no need to do lottery replacement
-                    if (!wasWinner) {
-                        android.util.Log.d("InfoActivity", "User was not a winner, no replacement needed");
-                        Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
-                        finishActivityWithResult(eventId, "Declined");
-                        return;
+                    // If user was a winner, add to cancelled list and remove from selected
+                    if (wasWinner) {
+                        Log.d("InfoActivity", "Adding user to cancelled entrants list");
+
+                        // Add to cancelled entrants
+                        db.collection("event-p4").document(eventId)
+                                .update("cancelledEntrants", com.google.firebase.firestore.FieldValue.arrayUnion(userId))
+                                .addOnSuccessListener(aVoid2 -> {
+                                    Log.d("InfoActivity", "User added to cancelled list");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.w("InfoActivity", "Failed to add to cancelled list");
+                                });
+
+                        // Remove user from selectedIds
+                        db.collection("event-p4").document(eventId)
+                                .update("selectedIds", com.google.firebase.firestore.FieldValue.arrayRemove(userId))
+                                .addOnSuccessListener(aVoid2 -> {
+                                    Log.d("InfoActivity", "User removed from selectedIds");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.w("InfoActivity", "Failed to remove from selectedIds");
+                                });
                     }
 
-                    // Track the cancelled entrant
-                    Log.d("InfoActivity", "Adding user to cancelled entrants list");
-                    db.collection("event-p4").document(eventId)
-                            .update("cancelledEntrants", com.google.firebase.firestore.FieldValue.arrayUnion(userId))
-                            .addOnSuccessListener(aVoid2 -> {
-                                Log.d("InfoActivity", "User added to cancelled list");
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.w("InfoActivity", "Failed to add to cancelled list");
-                            });
-
-                    // Remove user from selectedIds
-                    db.collection("event-p4").document(eventId)
-                            .update("selectedIds", com.google.firebase.firestore.FieldValue.arrayRemove(userId))
-                            .addOnSuccessListener(aVoid2 -> {
-                                Log.d("InfoActivity", "User removed from selectedIds");
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.w("InfoActivity", "Failed to remove from selectedIds");
-                            });
-
-
-                    // User WAS a winner - need to find replacement from waitlist
-                    android.util.Log.d("InfoActivity", "User was a winner, searching for replacement...");
-
-                    // Step 2: Retrieve event document to access lottery system data
-                    db.collection("event-p4").document(eventId)
-                            .get()
-                            .addOnSuccessListener(eventDoc -> {
-                                if (!eventDoc.exists()) {
-                                    Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
-                                    finishActivityWithResult(eventId, "Declined");
-                                    return;
-                                }
-
-                                // Get waitlist object from event
-                                Map<String, Object> waitlistMap = (Map<String, Object>) eventDoc.get("waitlist");
-                                if (waitlistMap == null) {
-                                    android.util.Log.d("InfoActivity", "No waitlist found in event");
-                                    Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
-                                    finishActivityWithResult(eventId, "Declined");
-                                    return;
-                                }
-
-                                // Get waitlistedUsers array from waitlist map
-                                ArrayList<Map<String, Object>> waitlistedUsers =
-                                        (ArrayList<Map<String, Object>>) waitlistMap.get("waitlistedUsers");
-
-                                if (waitlistedUsers == null) {
-                                    waitlistedUsers = new ArrayList<>();
-                                }
-
-                                android.util.Log.d("InfoActivity", "Waitlist size: " + waitlistedUsers.size());
-
-                                if (waitlistedUsers.isEmpty()) {
-                                    // No replacement available - winner declined but no one to replace them
-                                    android.util.Log.d("InfoActivity", "Waitlist is empty, no replacement available");
-                                    Toast.makeText(this, "You declined. No replacement available.", Toast.LENGTH_SHORT).show();
-                                    finishActivityWithResult(eventId, "Declined");
-                                    return;
-                                }
-
-                                // Step 3: User was a winner - select random replacement from waitlist
-                                Random random = new Random();
-                                int randomIndex = random.nextInt(waitlistedUsers.size());
-                                Map<String, Object> replacementUserMap = waitlistedUsers.get(randomIndex);
-
-                                String replacementUserId = (String) replacementUserMap.get("id");
-                                String replacementUserName = (String) replacementUserMap.get("name");
-
-                                android.util.Log.d("InfoActivity", "Random index selected: " + randomIndex);
-                                android.util.Log.d("InfoActivity", "Replacement user: " + replacementUserName + " (ID: " + replacementUserId + ")");
-
-                                if (replacementUserId == null || replacementUserId.isEmpty()) {
-                                    Toast.makeText(this, "Failed to find replacement user", Toast.LENGTH_SHORT).show();
-                                    reEnableButtons();
-                                    return;
-                                }
-
-                                // Remove replacement from waitlist
-                                waitlistedUsers.remove(randomIndex);
-
-                                // Step 4: Update event document with new waitlist
-                                Map<String, Object> eventUpdates = new HashMap<>();
-                                eventUpdates.put("waitlist.waitlistedUsers", waitlistedUsers);
-
-                                db.collection("event-p4").document(eventId)
-                                        .update(eventUpdates)
-                                        .addOnSuccessListener(aVoid2 -> {
-                                            android.util.Log.d("InfoActivity", "Waitlist updated successfully");
-
-                                            // Step 5: Update replacement user's status to "Notified" (making them a winner)
-                                            Map<String, Object> replacementUpdates = new HashMap<>();
-                                            replacementUpdates.put("registeredEvents." + eventId, "Notified");
-
-                                            db.collection("users-p4").document(replacementUserId)
-                                                    .update(replacementUpdates)
-                                                    .addOnSuccessListener(aVoid3 -> {
-                                                        android.util.Log.d("InfoActivity", "Replacement user notified (now a winner)");
-
-                                                        // Add replacement user to selectedIds
-                                                        db.collection("event-p4").document(eventId)
-                                                                .update("selectedIds", com.google.firebase.firestore.FieldValue.arrayUnion(replacementUserId))
-                                                                .addOnSuccessListener(aVoid4 -> {
-                                                                    Log.d("InfoActivity", "Replacement added to selectedIds");
-                                                                })
-                                                                .addOnFailureListener(e -> {
-                                                                    Log.w("InfoActivity", "Failed to add replacement to selectedIds");
-                                                                });
-
-                                                        // Step 6: Remove event from replacement's waitlistedEvents array
-                                                        db.collection("users-p4").document(replacementUserId)
-                                                                .update("waitlistedEvents",
-                                                                        com.google.firebase.firestore.FieldValue.arrayRemove(eventId))
-                                                                .addOnSuccessListener(aVoid4 -> {
-                                                                    android.util.Log.d("InfoActivity", "Removed event from replacement's waitlist");
-                                                                    Toast.makeText(this,
-                                                                            "You declined. " + replacementUserName + " selected from waitlist!",
-                                                                            Toast.LENGTH_SHORT).show();
-                                                                    finishActivityWithResult(eventId, "Declined");
-                                                                })
-                                                                .addOnFailureListener(e -> {
-                                                                    // Still successful, just couldn't update array
-                                                                    android.util.Log.w("InfoActivity", "Couldn't remove from waitlistedEvents: " + e.getMessage());
-                                                                    Toast.makeText(this,
-                                                                            "You declined. Replacement selected from waitlist.",
-                                                                            Toast.LENGTH_SHORT).show();
-                                                                    finishActivityWithResult(eventId, "Declined");
-                                                                });
-                                                    })
-                                                    .addOnFailureListener(e -> {
-                                                        android.util.Log.e("InfoActivity", "Failed to notify replacement: " + e.getMessage());
-                                                        Toast.makeText(this,
-                                                                "Failed to notify replacement: " + e.getMessage(),
-                                                                Toast.LENGTH_SHORT).show();
-                                                        reEnableButtons();
-                                                    });
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            android.util.Log.e("InfoActivity", "Failed to update waitlist: " + e.getMessage());
-                                            Toast.makeText(this,
-                                                    "Failed to update waitlist: " + e.getMessage(),
-                                                    Toast.LENGTH_SHORT).show();
-                                            reEnableButtons();
-                                        });
-                            })
-                            .addOnFailureListener(e -> {
-                                android.util.Log.e("InfoActivity", "Failed to retrieve event: " + e.getMessage());
-                                Toast.makeText(this,
-                                        "Failed to retrieve event: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                                reEnableButtons();
-                            });
+                    Toast.makeText(this, "You declined the invitation.", Toast.LENGTH_SHORT).show();
+                    finishActivityWithResult(eventId, "Declined");
                 })
                 .addOnFailureListener(e -> {
                     android.util.Log.e("InfoActivity", "Failed to save decline: " + e.getMessage());
