@@ -52,11 +52,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
         backButton.setOnClickListener(v -> finish());
 
         if (eventId == null || type == null) {
-            Toast.makeText(
-                this,
-                "Missing event information",
-                Toast.LENGTH_SHORT
-            ).show();
+            Toast.makeText(this, "Missing event information", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -85,17 +81,12 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
      * "cancelled" -> cancelledEntrants
      */
     private void fetchUserIdsForEvent(String eventId, String type) {
-        db
-            .collection("event-p4")
+        db.collection("event-p4")
             .document(eventId)
             .get()
             .addOnSuccessListener(doc -> {
                 if (!doc.exists()) {
-                    Toast.makeText(
-                        this,
-                        "Event not found",
-                        Toast.LENGTH_SHORT
-                    ).show();
+                    Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -108,20 +99,12 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                     // cancelledEntrants: list of user IDs
                     userIds = (List<String>) doc.get("cancelledEntrants");
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Unknown entrant type",
-                        Toast.LENGTH_SHORT
-                    ).show();
+                    Toast.makeText(this, "Unknown entrant type", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (userIds == null || userIds.isEmpty()) {
-                    Toast.makeText(
-                        this,
-                        "No users found for this event",
-                        Toast.LENGTH_SHORT
-                    ).show();
+                    Toast.makeText(this, "No users found for this event", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -129,11 +112,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
             })
             .addOnFailureListener(e -> {
                 Log.e(TAG, "Failed to fetch event document", e);
-                Toast.makeText(
-                    this,
-                    "Failed to load entrants.",
-                    Toast.LENGTH_SHORT
-                ).show();
+                Toast.makeText(this, "Failed to load entrants.", Toast.LENGTH_SHORT).show();
             });
     }
 
@@ -155,21 +134,13 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                         }
                     }
                 } else {
-                    Log.e(
-                        TAG,
-                        "Failed to load user " + userId,
-                        task.getException()
-                    );
+                    Log.e(TAG, "Failed to load user " + userId, task.getException());
                 }
 
                 // When all async calls are done, display the entrants
                 if (remaining.decrementAndGet() == 0) {
                     if (users.isEmpty()) {
-                        Toast.makeText(
-                            this,
-                            "No users found for this event",
-                            Toast.LENGTH_SHORT
-                        ).show();
+                        Toast.makeText(this, "No users found for this event", Toast.LENGTH_SHORT).show();
                     } else {
                         displayEntrants(users);
                     }
@@ -189,11 +160,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
         String eventId = getIntent().getStringExtra("eventId");
 
         for (User user : users) {
-            View row = inflater.inflate(
-                R.layout.item_display_entrant,
-                entrantsContainer,
-                false
-            );
+            View row = inflater.inflate(R.layout.item_display_entrant, entrantsContainer, false);
 
             TextView nameText = row.findViewById(R.id.entrantNameText);
             TextView emailText = row.findViewById(R.id.entrantEmailText);
