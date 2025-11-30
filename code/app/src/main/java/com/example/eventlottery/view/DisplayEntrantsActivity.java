@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class DisplayEntrantsActivity extends AppCompatActivity {
@@ -33,8 +35,6 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
     private DBConnector userDatabase;
     private FirebaseFirestore db;
     private final ArrayList<User> users = new ArrayList<>();
-    private Button drawReplacementButton;
-    private Event currentEvent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,6 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
 
         TextView title = findViewById(R.id.chosenEntrantsTitle);
         entrantsContainer = findViewById(R.id.chosenEntrantsContainer);
-        drawReplacementButton = findViewById(R.id.drawReplacementButton);
 
         String eventName = getIntent().getStringExtra("eventName");
         String type = getIntent().getStringExtra("type");
@@ -58,25 +57,22 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
             return;
         }
 
-        final String finalEventName = eventName != null ? eventName : "";
+        if (eventName == null) {
+            eventName = "";
+        }
 
         if ("chosen".equals(type)) {
-            title.setText("Chosen Entrants - " + finalEventName);
+            title.setText("Chosen Entrants - " + eventName);
         } else if ("cancelled".equals(type)) {
-            title.setText("Cancelled Entrants - " + finalEventName);
-            // Show draw replacement button only for cancelled entrants
-            drawReplacementButton.setVisibility(View.VISIBLE);
-            drawReplacementButton.setOnClickListener(v ->
-                showDrawReplacementDialog(eventId, finalEventName)
-            );
-        } else {title.setText("Entrants - " + finalEventName);
+            title.setText("Cancelled Entrants - " + eventName);
+        } else {
+            title.setText("Entrants - " + eventName);
         }
 
         userDatabase = new DBConnector(this);
         db = FirebaseFirestore.getInstance();
 
         fetchUserIdsForEvent(eventId, type);
-        loadEventData(eventId);
     }
 
     /**
@@ -85,8 +81,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
      * "cancelled" -> cancelledEntrants
      */
     private void fetchUserIdsForEvent(String eventId, String type) {
-        db
-            .collection("event-p4")
+        db.collection("event-p4")
             .document(eventId)
             .get()
             .addOnSuccessListener(doc -> {
@@ -161,11 +156,15 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
         entrantsContainer.removeAllViews();
 
+        String type = getIntent().getStringExtra("type");
+        String eventId = getIntent().getStringExtra("eventId");
+
         for (User user : users) {
             View row = inflater.inflate(R.layout.item_display_entrant, entrantsContainer, false);
 
             TextView nameText = row.findViewById(R.id.entrantNameText);
             TextView emailText = row.findViewById(R.id.entrantEmailText);
+            Button cancelButton = row.findViewById(R.id.cancelEntrantButton);
 
             nameText.setText("Name: " + user.getName());
 
@@ -176,107 +175,33 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                 emailText.setText("Email: " + email);
             }
 
+            // Show cancel button for the entrants
+            cancelButton.setVisibility(View.VISIBLE);
+            cancelButton.setOnClickListener(v ->
+                showCancelConfirmation(user, eventId)
+            );
+
             entrantsContainer.addView(row);
         }
     }
 
     /**
-     * Loads the event data from Firestore given the event ID
+     * Shows confirmation dialog before cancelling an entrant
      */
-    private void loadEventData(String eventId) {
-        db
-            .collection("event-p4")
-            .document(eventId)
-            .get()
-            .addOnSuccessListener(doc -> {
-                if (doc.exists()) {
-                    currentEvent = doc.toObject(Event.class);
-                    if (currentEvent != null) {
-                        currentEvent.setId(eventId);
-                    }
-                }
-            })
-
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Failed to load event data", e);
-            });
-    }
-
-    /**
-     * Shows a selection dialog for choosing a replacement applicant for the event
-     */
-    private void showDrawReplacementDialog(String eventId, String eventName) {
-        if (currentEvent == null) {
-            Toast.makeText(
-                this,
-                "Event data not loaded yet. Please try again.",
-                Toast.LENGTH_SHORT
-            ).show();
-            return;
-        }
-
-        // Check if there are eligible users (losers) to select from
-        List<User> eligibleUsers = currentEvent.getLosers();
-        if (eligibleUsers == null || eligibleUsers.isEmpty()) {
-            Toast.makeText(
-                this,
-                "No eligible applicants remaining on waitlist",
-                Toast.LENGTH_LONG
-            ).show();
-            return;
-        }
-
-        // Create array of user names for display (also includes email for added info)
-        String[] userNames = new String[eligibleUsers.size()];
-        for (int i = 0; i < eligibleUsers.size(); i++) {
-            User user = eligibleUsers.get(i);
-            String email = user.getEmailAddress();
-            if (email == null || email.trim().isEmpty()) {
-                userNames[i] = user.getName();
-            } else {
-                userNames[i] = user.getName() + " (" + email + ")";
-            }
-        }
-
-        // Show the selection dialog
-        AlertDialog dialog = new AlertDialog.Builder(this)
-            .setTitle("Select Replacement Applicant")
-            .setItems(userNames, (d, which) -> {
-                // User selected an applicant at index 'which'
-                User selectedUser = eligibleUsers.get(which);
-                confirmReplacementSelection(eventId, eventName, selectedUser);
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-
-        // Makes it clear the cancel button is to be used for cancellation
-        Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-        if (negativeButton != null) {
-            negativeButton.setTextColor(Color.BLACK);
-        }
-    }
-
-    /**
-     * Shows confirmation dialog before selecting the replacement
-     */
-    private void confirmReplacementSelection(
-        String eventId,
-        String eventName,
-        User selectedUser
-    ) {
+    private void showCancelConfirmation(User user, String eventId) {
         String message =
-            "Select " +
-            selectedUser.getName() +
-            " as a replacement?\n\n" +
-            "They will be notified and added to the selected list.";
+            "Cancel " +
+            user.getName() +
+            " from this event?\n\n" +
+            "They will be moved to the cancelled list and will not be allowed to renter.";
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-            .setTitle("Confirm Replacement")
+            .setTitle("Cancel Entrant")
             .setMessage(message)
-            .setPositiveButton("Confirm", (d, which) ->
-                selectReplacement(eventId, eventName, selectedUser)
+            .setPositiveButton("Cancel Entrant", (d, which) ->
+                cancelEntrant(user, eventId)
             )
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Keep", null) // does nothing if not canceled
             .show();
 
         // Style the buttons
@@ -287,143 +212,50 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Selects a user as a replacement
+     * Cancels an entrant
      */
-    private void selectReplacement(
-        String eventId,
-        String eventName,
-        User selectedUser
-    ) {
-        if (currentEvent == null) {
-            Toast.makeText(
-                this,
-                "Event data not loaded",
-                Toast.LENGTH_SHORT
-            ).show();
-            return;
-        }
-
-        if (selectedUser == null) {
-            Toast.makeText(
-                this,
-                "Invalid user selection",
-                Toast.LENGTH_SHORT
-            ).show();
-            return;
-        }
-
-        // Add the selected user to the chosen entrants list
-        if (!currentEvent.getSelectedIds().contains(selectedUser.getId())) {
-            currentEvent.getSelectedIds().add(selectedUser.getId());
-        }
-        if (!currentEvent.getChosenEntrants().contains(selectedUser)) {
-            currentEvent.getChosenEntrants().add(selectedUser);
-        }
-
-        // Update Firestore with the new selected user
-        updateFirestoreAfterReplacement(eventId, eventName, selectedUser);
-    }
-
-
-    /**
-     * Updates Firestore after drawing a replacement
-     */
-    private void updateFirestoreAfterReplacement(
-        String eventId,
-        String eventName,
-        User replacement
-    ) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("selectedIds", FieldValue.arrayUnion(replacement.getId()));
-
+    private void cancelEntrant(User user, String eventId) {
+        // Remove from selectedIds and add to cancelledEntrants
         db
             .collection("event-p4")
             .document(eventId)
-            .update(updates)
+            .update("selectedIds", FieldValue.arrayRemove(user.getId()), "cancelledEntrants", FieldValue.arrayUnion(user.getId()))
             .addOnSuccessListener(aVoid -> {
-                // Update the user's document
-                updateReplacementUserDocument(eventId, replacement);
+                // Update user's status from Notified/Accepted to Declined
+                updateCancelledUserStatus(user.getId(), eventId);
 
-                // Notify the replacement user
-                notifyReplacement(eventName, replacement);
+                Toast.makeText(this, user.getName() + " has been cancelled from the event", Toast.LENGTH_SHORT).show();
 
-                Toast.makeText(
-                    this,
-                    "Replacement drawn: " + replacement.getName(),
-                    Toast.LENGTH_LONG
-                ).show();
+                // Reload the display
+                users.remove(user);
+                displayEntrants(users);
 
-                Log.d(
-                    TAG,
-                    "Replacement drawn successfully: " + replacement.getId()
-                );
+                Log.d(TAG, "Successfully cancelled entrant: " + user.getId());
             })
             .addOnFailureListener(e -> {
-                Log.e(TAG, "Failed to update after drawing replacement", e);
-                Toast.makeText(
-                    this,
-                    "Failed to draw replacement: " + e.getMessage(),
-                    Toast.LENGTH_LONG
-                ).show();
+                Log.e(TAG, "Failed to cancel entrant", e);
+                Toast.makeText(this, "Failed to cancel entrant: " + e.getMessage(), Toast.LENGTH_LONG).show();
             });
     }
 
     /**
-     * Updates the replacement user's document to reflect their new status
+     * Updates the cancelled user's status in their user document on firebase
      */
-    private void updateReplacementUserDocument(
-        String eventId,
-        User replacement
-    ) {
+    private void updateCancelledUserStatus(String userId, String eventId) {
         Map<String, Object> userUpdates = new HashMap<>();
 
-        // Add to registeredEvents with "Notified" status
-        userUpdates.put("registeredEvents." + eventId, "Notified");
-
-        // Remove from waitlistedEvents array
-        userUpdates.put("waitlistedEvents", FieldValue.arrayRemove(eventId));
-        userUpdates.put("waitlistedEventIds", FieldValue.arrayRemove(eventId));
+        // Update registeredEvents status to "Declined"
+        userUpdates.put("registeredEvents." + eventId, "Declined");
 
         db
             .collection("users-p4")
-            .document(replacement.getId())
+            .document(userId)
             .update(userUpdates)
             .addOnSuccessListener(aVoid -> {
-                Log.d(
-                    TAG,
-                    "Updated user document for replacement: " +
-                        replacement.getId()
-                );
+                Log.d(TAG, "Updated user status for cancelled entrant: " + userId);
             })
             .addOnFailureListener(e -> {
-                Log.e(
-                    TAG,
-                    "Failed to update user document for: " +
-                        replacement.getId(),
-                    e
-                );
+                Log.e(TAG, "Failed to update user status: " + userId, e);
             });
-    }
-
-    /**
-     * Sends a notification to the replacement applicant after they have been selected by the organizer
-     */
-    private void notifyReplacement(String eventName, User replacement) {
-
-        // Get organizer info from the intent
-        String organizerId = getIntent().getStringExtra("organizerId");
-        String organizerName = getIntent().getStringExtra("organizerName");
-
-        // If organizer info is not available for any reason use the defaults
-        if (organizerId == null) organizerId = "";
-        if (organizerName == null) organizerName = "Event Organizer";
-
-        // Uses Notification system to inform who was drawn from organizer
-        NotificationSystem notificationSystem = new NotificationSystem(
-            this,
-            organizerId,
-            organizerName
-        );
-        notificationSystem.notifyLotteryWinner(replacement, eventName);
     }
 }
