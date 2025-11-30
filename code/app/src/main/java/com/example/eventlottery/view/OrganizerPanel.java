@@ -443,6 +443,8 @@ public class OrganizerPanel extends AppCompatActivity {
             intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "chosen");
+            intent.putExtra("organizerId", organizer.getId());
+            intent.putExtra("organizerName", organizer.getName());
             startActivity(intent);
         });
 
@@ -458,6 +460,8 @@ public class OrganizerPanel extends AppCompatActivity {
             intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "cancelled");
+            intent.putExtra("organizerId", organizer.getId());
+            intent.putExtra("organizerName", organizer.getName());
             startActivity(intent);
         });
     }
