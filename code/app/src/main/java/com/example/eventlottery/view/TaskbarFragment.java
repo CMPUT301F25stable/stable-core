@@ -20,12 +20,15 @@ import com.example.eventlottery.events.Event;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
 public class TaskbarFragment extends Fragment {
     private DBConnector db;
+    private ListenerRegistration listener;
     private User user;
+    private View view;
 
     /**
      * Creates a new instance of the taskbar, given a user as an input.
@@ -40,6 +43,37 @@ public class TaskbarFragment extends Fragment {
         return fragment;
     }
 
+    private void updateTaskbar() {
+        View adminIcon = view.findViewById(R.id.adminPanelIcon);
+        if (user.isAdmin()) {
+            adminIcon.setVisibility(View.VISIBLE);
+        } else {
+            adminIcon.setVisibility(View.GONE);
+        }
+    }
+
+    private void loadUser() {
+        final String userId = db.getUserId();
+
+        listener = db.getUserDoc(userId).addSnapshotListener((snapshot, error) -> {
+            if (error != null) return;
+
+            if (snapshot != null && snapshot.exists()) {
+                user = snapshot.toObject(User.class);
+            }
+
+            if (user != null) {
+                if (user.isCreationBan() && (getActivity() instanceof OrganizerPanel) && isResumed()) {
+                    Intent intent = new Intent(getActivity(), MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                    startActivity(intent);
+                    Toast.makeText(getContext(), "Your organizer permissions have been revoked due to violation of app policy.", Toast.LENGTH_LONG).show();
+                }
+                updateTaskbar();
+            }
+        });
+    }
+
     /**
      * Retrieves newInstance inputs & puts them into a private variable
      * @param savedInstanceState If the fragment is being re-created from
@@ -49,15 +83,10 @@ public class TaskbarFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         db = new DBConnector(getContext());
-
-        if (getArguments() != null) {
-            user = (User) getArguments().getSerializable("User");
-        }
     }
 
     /**
-     * Inflates one of two taskbars: the default, & the one with the admin panel
-     * depending on if the user is an admin.
+     * Inflates the taskbar.
      * @param inflater The LayoutInflater object that can be used to inflate
      * any views in the fragment,
      * @param container If non-null, this is the parent view that the fragment's
@@ -71,12 +100,9 @@ public class TaskbarFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate admin taskbar if user is loaded in & is an admin
-        if (user != null && user.isAdmin()) {
-            return inflater.inflate(R.layout.fragment_admin_taskbar, container, false);
-        } else {
-            return inflater.inflate(R.layout.fragment_home_taskbar, container, false);
-        }
+        view = inflater.inflate(R.layout.fragment_home_taskbar, container, false);
+        loadUser();
+        return view;
     }
 
     /**
@@ -96,28 +122,17 @@ public class TaskbarFragment extends Fragment {
          */
         View organizerIcon = view.findViewById(R.id.OrganizerIcon);
         organizerIcon.setOnClickListener(v -> {
-            if (!(getActivity() instanceof OrganizerPanel)) { // Prevents redundant calls to the database from OrganizerPanel
-                db.loadUserInfo(db.getUserId(), task -> {
-                    if (task.isSuccessful()) {
-                        DocumentSnapshot document = task.getResult();
-                        if (document.exists()) {
-                            user = document.toObject(User.class);
-
-                            if (user != null && !user.isCreationBan()) {
-                                Intent intent = new Intent(getActivity(), OrganizerPanel.class);
-                                // If exists in stack, retrieve it instead of making a new one
-                                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                                startActivity(intent);
-                            } else {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                                builder.setTitle("Organizer Access Revoked")
-                                        .setMessage("Your organizer permissions have been revoked due to violation of app policy.")
-                                        .setPositiveButton("Ok", null)
-                                        .show();
-                            }
-                        }
-                    }
-                });
+            if (user != null && !user.isCreationBan()) {
+                Intent intent = new Intent(getActivity(), OrganizerPanel.class);
+                // If exists in stack, retrieve it instead of making a new one
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+            } else {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Organizer Access Revoked")
+                        .setMessage("Your organizer permissions have been revoked due to violation of app policy.")
+                        .setPositiveButton("Ok", null)
+                        .show();
             }
         });
 
@@ -152,16 +167,18 @@ public class TaskbarFragment extends Fragment {
         });
 
         /**
-         * Set event listener for admin panel, if it exists (only shown it as an admin)
+         * Set event listener for admin panel (only shown if the user is an admin)
          */
         View adminIcon = view.findViewById(R.id.adminPanelIcon);
-        if (adminIcon != null) {
-            adminIcon.setOnClickListener(v -> {
+        adminIcon.setOnClickListener(v -> {
+            if (user == null) return;
+
+            if (user.isAdmin()) {
                 Intent intent = new Intent(getActivity(), AdminPanel.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
-            });
-        }
+            }
+        });
 
         /**
          * This handles the QR scanner's results and launches the Join/Leave Waitlist activity if the scanned content of the QR code is valid.
@@ -213,5 +230,15 @@ public class TaskbarFragment extends Fragment {
             scanOptions.setCaptureActivity(QRScanActivity.class);
             qrLauncher.launch(scanOptions);
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (listener != null) {
+            listener.remove();
+            Log.d("TaskbarFragment", "Firebase snapshot listener removed.");
+        }
     }
 }
