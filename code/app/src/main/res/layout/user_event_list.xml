@@ -41,10 +41,10 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:src="@drawable/edit_icon"
-                android:tint="@android:color/white"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="4dp"
-                android:contentDescription="Edit Profile" />
+                android:contentDescription="Edit Profile"
+                app:tint="@android:color/white" />
         </RelativeLayout>
 
         <!-- Registered Events Title -->
