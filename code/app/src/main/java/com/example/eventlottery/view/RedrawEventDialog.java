@@ -17,11 +17,14 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.events.NotificationSystem;
+import com.example.eventlottery.users.User;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -38,11 +41,16 @@ public class RedrawEventDialog extends DialogFragment {
     private static final String ARG_EVENT_ID = "eventId";
     private static final String ARG_EVENT_NAME = "eventName";
     private static final String ARG_WAITLIST_SIZE = "waitlistSize";
+    private static final String ARG_ORGANIZER_ID = "organizerId";
+    private static final String ARG_ORGANIZER_NAME = "organizerName";
 
     private String eventId;
     private String eventName;
     private int waitlistSize;
+    private String organizerId;
+    private String organizerName;
     private FirebaseFirestore db;
+    private NotificationSystem notificationSystem;
 
     private TextView waitlistCountText;
     private EditText numberOfEntrantsInput;
@@ -55,12 +63,15 @@ public class RedrawEventDialog extends DialogFragment {
 
     private OnRedrawCompleteListener listener;
 
-    public static RedrawEventDialog newInstance(String eventId, String eventName, int waitlistSize) {
+    public static RedrawEventDialog newInstance(String eventId, String eventName, int waitlistSize,
+                                                String organizerId, String organizerName) {
         RedrawEventDialog dialog = new RedrawEventDialog();
         Bundle args = new Bundle();
         args.putString(ARG_EVENT_ID, eventId);
         args.putString(ARG_EVENT_NAME, eventName);
         args.putInt(ARG_WAITLIST_SIZE, waitlistSize);
+        args.putString(ARG_ORGANIZER_ID, organizerId);
+        args.putString(ARG_ORGANIZER_NAME, organizerName);
         dialog.setArguments(args);
         return dialog;
     }
@@ -76,8 +87,15 @@ public class RedrawEventDialog extends DialogFragment {
             eventId = getArguments().getString(ARG_EVENT_ID);
             eventName = getArguments().getString(ARG_EVENT_NAME);
             waitlistSize = getArguments().getInt(ARG_WAITLIST_SIZE);
+            organizerId = getArguments().getString(ARG_ORGANIZER_ID);
+            organizerName = getArguments().getString(ARG_ORGANIZER_NAME);
         }
         db = FirebaseFirestore.getInstance();
+
+        // Initialize notification system
+        if (getContext() != null) {
+            notificationSystem = new NotificationSystem(getContext(), organizerId, organizerName);
+        }
     }
 
     @NonNull
@@ -208,61 +226,133 @@ public class RedrawEventDialog extends DialogFragment {
      */
     private void updateDrawnUsers(ArrayList<Map<String, Object>> drawnUsers, int totalDrawn) {
         int[] successCount = {0};
+        List<User> notifiedUsers = new ArrayList<>();
 
         for (Map<String, Object> userMap : drawnUsers) {
             String userId = (String) userMap.get("id");
+            String userName = (String) userMap.get("name");
+            String userEmail = (String) userMap.get("emailAddress");
 
             if (userId == null || userId.isEmpty()) {
                 continue;
             }
 
-            // Update user status to Notified
-            Map<String, Object> userUpdates = new HashMap<>();
-            userUpdates.put("registeredEvents." + eventId, "Notified");
-
+            // Fetch the full user object to get FCM token and notification preferences
             db.collection("users-p4").document(userId)
-                    .update(userUpdates)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "User " + userId + " notified");
-
-                        // Add to selectedIds
-                        db.collection("event-p4").document(eventId)
-                                .update("selectedIds", FieldValue.arrayUnion(userId))
-                                .addOnSuccessListener(aVoid2 -> {
-                                    Log.d(TAG, "User " + userId + " added to selectedIds");
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.w(TAG, "Failed to add user to selectedIds: " + e.getMessage());
-                                });
-
-                        // Remove from waitlistedEvents array
-                        db.collection("users-p4").document(userId)
-                                .update("waitlistedEvents", FieldValue.arrayRemove(eventId))
-                                .addOnSuccessListener(aVoid3 -> {
-                                    Log.d(TAG, "Event removed from user's waitlist");
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.w(TAG, "Failed to remove from waitlistedEvents: " + e.getMessage());
-                                });
-
-                        successCount[0]++;
-
-                        // If all users updated successfully
-                        if (successCount[0] == totalDrawn) {
-                            Toast.makeText(getContext(),
-                                    "Successfully drew " + totalDrawn + " replacement(s)",
-                                    Toast.LENGTH_SHORT).show();
-
-                            if (listener != null) {
-                                listener.onRedrawComplete(totalDrawn);
-                            }
-
-                            dismiss();
+                    .get()
+                    .addOnSuccessListener(userDoc -> {
+                        if (!userDoc.exists()) {
+                            Log.w(TAG, "User document not found for userId: " + userId);
+                            return;
                         }
+
+                        User user = userDoc.toObject(User.class);
+                        if (user == null) {
+                            Log.w(TAG, "Failed to parse user object for userId: " + userId);
+                            return;
+                        }
+
+                        // Update user status to Notified
+                        Map<String, Object> userUpdates = new HashMap<>();
+                        userUpdates.put("registeredEvents." + eventId, "Notified");
+
+                        db.collection("users-p4").document(userId)
+                                .update(userUpdates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "User " + userId + " notified");
+
+                                    // Add to selectedIds
+                                    db.collection("event-p4").document(eventId)
+                                            .update("selectedIds", FieldValue.arrayUnion(userId))
+                                            .addOnSuccessListener(aVoid2 -> {
+                                                Log.d(TAG, "User " + userId + " added to selectedIds");
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w(TAG, "Failed to add user to selectedIds: " + e.getMessage());
+                                            });
+
+                                    // Remove from waitlistedEvents array
+                                    db.collection("users-p4").document(userId)
+                                            .update("waitlistedEvents", FieldValue.arrayRemove(eventId))
+                                            .addOnSuccessListener(aVoid3 -> {
+                                                Log.d(TAG, "Event removed from user's waitlist");
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w(TAG, "Failed to remove from waitlistedEvents: " + e.getMessage());
+                                            });
+
+                                    // Add user to notification list
+                                    notifiedUsers.add(user);
+                                    successCount[0]++;
+
+                                    // If all users updated successfully
+                                    if (successCount[0] == totalDrawn) {
+                                        // Send notifications to all drawn users
+                                        sendNotificationsToDrawnUsers(notifiedUsers, totalDrawn);
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Failed to notify user: " + e.getMessage());
+                                });
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to notify user: " + e.getMessage());
+                        Log.e(TAG, "Failed to fetch user document: " + e.getMessage());
                     });
+        }
+    }
+
+    /**
+     * Sends notifications to all users who were drawn from the waitlist
+     */
+    private void sendNotificationsToDrawnUsers(List<User> drawnUsers, int count) {
+        if (notificationSystem == null) {
+            Log.w(TAG, "NotificationSystem not initialized, skipping notifications");
+            showSuccessAndDismiss(count);
+            return;
+        }
+
+        if (drawnUsers.isEmpty()) {
+            Log.w(TAG, "No users to notify");
+            showSuccessAndDismiss(count);
+            return;
+        }
+
+        // Use the existing notifySelectedEntrants method since "selected" = "notified"
+        String message = "Congratulations! You've been selected for " + eventName +
+                ". Please check your invitations to accept or decline.";
+
+        notificationSystem.notifySelectedEntrants(drawnUsers, eventName, eventId, message);
+
+        Log.d(TAG, "Notifications sent to " + drawnUsers.size() + " newly selected users");
+
+        showSuccessAndDismiss(count);
+    }
+
+    /**
+     * Shows success message and dismisses the dialog
+     */
+    private void showSuccessAndDismiss(int count) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(),
+                        "Successfully drew " + count + " replacement(s) and sent notifications",
+                        Toast.LENGTH_LONG).show();
+
+                if (listener != null) {
+                    listener.onRedrawComplete(count);
+                }
+
+                dismiss();
+            });
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Cleanup notification system
+        if (notificationSystem != null) {
+            notificationSystem.shutdown();
         }
     }
 }

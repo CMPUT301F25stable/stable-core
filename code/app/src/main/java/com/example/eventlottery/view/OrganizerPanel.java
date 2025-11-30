@@ -482,16 +482,18 @@ public class OrganizerPanel extends AppCompatActivity {
                 return;
             }
 
-            // Show redraw dialog
+            // Show redraw dialog with organizer information for notifications
             RedrawEventDialog dialog = RedrawEventDialog.newInstance(
                     selectedEvent.getId(),
                     selectedEvent.getName(),
-                    waitlistSize
+                    waitlistSize,
+                    organizer.getId(),
+                    organizer.getName()
             );
 
             // Refresh event list after redraw completes
             dialog.setOnRedrawCompleteListener(drawnCount -> {
-                // Reload the event daata to show updated counts
+                // Reload the event data to show updated counts
                 organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
                 adapter.notifyDataSetChanged();
             });
