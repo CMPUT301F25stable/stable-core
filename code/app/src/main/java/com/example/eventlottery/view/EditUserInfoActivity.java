@@ -173,6 +173,8 @@ public class EditUserInfoActivity extends AppCompatActivity {
     public void deleteUser(Task<Void> task) {
         if (task.isSuccessful()) {
             Toast.makeText(EditUserInfoActivity.this, "Deleted", Toast.LENGTH_SHORT).show();
+            db.saveNewUser(this);
+            MainActivity.instance.getDeviceToken();
         } else {
             Log.d(TAG, "Failed deleting user:" + id);
         }

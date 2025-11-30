@@ -203,13 +203,6 @@ public class OrganizerPanel extends AppCompatActivity {
                     adapter = new EventAdapter(OrganizerPanel.this, data);
                     organizerEventDatabase.organizerGetEvents(organizer, data, adapter);
                     eventList.setAdapter(adapter);
-
-                    // Replace taskbar with admin taskbar if user is an admin
-                    TaskbarFragment taskbar = TaskbarFragment.newInstance(organizer);
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragmentContainerView, taskbar)
-                            .commitAllowingStateLoss();
                 } else {
                     Log.d(TAG, "No organizer found");
                 }
