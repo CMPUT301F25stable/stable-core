@@ -157,12 +157,21 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         });
 
         // Set click listener for going back
-         backButton.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
-                 finish();
-             }
-         });
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        Button viewNotificationLogsButton = findViewById(R.id.viewNotificationLogsButton);
+        viewNotificationLogsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(AdminPanel.this, AdminNotificationLogsActivity.class);
+                startActivity(intent);
+            }
+        });
 
         // Delete Selected User
         userListFragment.setOnItemClickListener((parent, v, p, id) -> {

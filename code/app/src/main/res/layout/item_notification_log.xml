@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp"
+    app:cardUseCompatPadding="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/timestampText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="May 30, 2003 at 6:00 AM"
+            android:textSize="14sp"
+            android:textColor="@color/Grey"
+            android:textStyle="italic"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/organizerText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Organizer: Joe Smith"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/eventNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Event: Winter Concert"
+            android:textSize="16sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/typeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Type: Loser"
+            android:textSize="14sp"
+            android:textColor="@color/Blue"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/recipientCountText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recipients: 12"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Message: Congratulations! You have been selected."
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/recipientsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recipients: Bill, Harold, Alex..."
+            android:textSize="12sp"
+            android:textColor="@color/Grey"
+            android:textStyle="italic" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
