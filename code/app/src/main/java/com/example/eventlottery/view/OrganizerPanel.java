@@ -26,6 +26,7 @@ import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.events.FinalizedList;
+import com.example.eventlottery.events.NotificationSystem;
 import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.model.QRCode;
 import com.example.eventlottery.users.User;
@@ -176,6 +177,10 @@ public class OrganizerPanel extends AppCompatActivity {
             }
         });
 
+        // USED FOR CLEARING NOTIFICAITONS IN FIREBASE, COMMENT OUT EVERYTHING HERE IF U NEED TO USE THIS
+        //NotificationSystem tempNotificationSystem = new NotificationSystem(this, userID, "Organizer");
+        //tempNotificationSystem.clearAllNotifications();
+        //tempNotificationSystem.shutdown();
 
 
     }
@@ -446,6 +451,8 @@ public class OrganizerPanel extends AppCompatActivity {
             intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "chosen");
+            intent.putExtra("organizerId", organizer.getId());
+            intent.putExtra("organizerName", organizer.getName());
             startActivity(intent);
         });
 
@@ -461,6 +468,8 @@ public class OrganizerPanel extends AppCompatActivity {
             intent.putExtra("eventId", event.getId());
             intent.putExtra("eventName", event.getName());
             intent.putExtra("type", "cancelled");
+            intent.putExtra("organizerId", organizer.getId());
+            intent.putExtra("organizerName", organizer.getName());
             startActivity(intent);
         });
 

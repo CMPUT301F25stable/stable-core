@@ -30,12 +30,14 @@ import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Firebase;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageKt;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
@@ -294,15 +296,25 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
             // Remove eventId from user's CreatedEvents() array (if they made it)
             ArrayList<String> createdEvents = user.getCreatedEvents();
             if (createdEvents != null && createdEvents.contains(eventId)) {
-                user.getCreatedEvents().remove(eventId);
-                db.collection("users-p4").document(user.getId()).set(user);
+                db.collection("users-p4")
+                        .document(user.getId())
+                        .update("createdEvents", FieldValue.arrayRemove(eventId));
             }
 
             // Remove eventId from user's Waitlist (if they joined it)
             ArrayList<String> waitlistedEvents = user.getWaitlistedEvents();
             if (waitlistedEvents != null && waitlistedEvents.contains(eventId)) {
-                user.getWaitlistedEvents().remove(eventId);
-                db.collection("users-p4").document(user.getId()).set(user);
+                db.collection("users-p4")
+                        .document(user.getId())
+                        .update("waitlistedEvents", FieldValue.arrayRemove(eventId));
+            }
+
+            // Remove eventId from user's registeredEvents (if they registered)
+            HashMap<String, String> registeredEvents = user.getRegisteredEvents();
+            if (registeredEvents != null && registeredEvents.containsKey(eventId)) {
+                db.collection("users-p4")
+                        .document(user.getId())
+                        .update("registeredEvents." + eventId, FieldValue.delete());
             }
         }
 
