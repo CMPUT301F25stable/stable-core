@@ -164,9 +164,13 @@ public class OrganizerEventInfoFragment extends Fragment {
         // Close Button
         ImageButton closeButton = view.findViewById(R.id.closeButton);
         closeButton.setOnClickListener(v -> {
-            // Close the fragment
-            requireActivity().getSupportFragmentManager().popBackStack();
+            if (requireActivity() instanceof OrganizerPanel) {
+                ((OrganizerPanel) requireActivity()).showEventList();
+            } else {
+                requireActivity().getSupportFragmentManager().popBackStack();
+            }
         });
+
 
         // Populate the UI with data from arguments
         if (getArguments() != null) {
