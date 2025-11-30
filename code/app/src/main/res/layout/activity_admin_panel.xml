@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+>
 
     <!-- Main Content Layout -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -13,7 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#F5F5F5"
-        tools:context=".view.OrganizerPanel">
+        tools:context=".view.OrganizerPanel"
+    >
 
 
         <!-- Event search bar -->
@@ -28,7 +29,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView1" />
+            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView1"
+        />
 
         <!-- Container for Eventlist -->
         <androidx.fragment.app.FragmentContainerView
@@ -40,7 +42,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@id/userSearchBar"
-            app:layout_constraintVertical_weight="1" />
+            app:layout_constraintVertical_weight="1"
+        />
 
         <!-- User search bar -->
         <androidx.appcompat.widget.SearchView
@@ -54,7 +57,8 @@
             app:layout_constraintTop_toBottomOf="@id/fragmentContainerView1"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView2" />
+            app:layout_constraintBottom_toTopOf="@id/fragmentContainerView2"
+        />
 
         <!-- Container for UserList -->
         <androidx.fragment.app.FragmentContainerView
@@ -66,7 +70,27 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@id/backButton"
-            app:layout_constraintVertical_weight="1" />
+            app:layout_constraintVertical_weight="1"
+        />
+        <Button
+            android:id="@+id/viewNotificationLogsButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View Notification Logs"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="@color/black"
+            android:textColor="#FFFFFF"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="12dp"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/backButton"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+        />
+
         <Button
             android:id="@+id/backButton"
             android:layout_width="wrap_content"
@@ -74,17 +98,18 @@
             android:text="Go Back"
             android:textAllCaps="false"
             android:layout_marginBottom="16dp"
+            android:layout_marginStart="8dp"
             android:backgroundTint="#000000"
             android:textColor="#FFFFFF"
             android:paddingHorizontal="24dp"
             android:paddingVertical="12dp"
             app:cornerRadius="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintStart_toEndOf="@id/viewNotificationLogsButton"
+            app:layout_constraintEnd_toEndOf="parent"
+        />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
-

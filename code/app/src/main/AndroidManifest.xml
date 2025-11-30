@@ -24,11 +24,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EventLottery">
+
         <activity
             android:name=".view.AdminEventView"
             android:exported="false" />
         <activity
             android:name=".view.AdminPanel"
+            android:exported="false" />
+        <activity
+            android:name=".view.AdminNotificationLogsActivity"
             android:exported="false" />
 
         <meta-data
@@ -67,17 +71,19 @@
         <activity
             android:name=".view.MapActivity"
             android:exported="false" />
-        <activity android:name=".view.NotificationActivity"
+        <activity
+            android:name=".view.NotificationActivity"
             android:exported="false" />
+
         <activity
             android:name=".view.SplashScreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".view.DisplayEntrantsActivity" />
 
         <service
@@ -103,6 +109,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
     </application>
 
 </manifest>
