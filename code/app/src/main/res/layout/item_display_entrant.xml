@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:text="Cancel"
         android:textColor="@android:color/white"
-        android:backgroundTint="@color/Red"
+        android:backgroundTint="@color/Black"
         android:visibility="gone"
     />
 </LinearLayout>
