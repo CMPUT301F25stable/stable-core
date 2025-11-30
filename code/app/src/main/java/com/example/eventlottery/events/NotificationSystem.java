@@ -146,7 +146,7 @@ public class NotificationSystem {
         Log.d(TAG, "Sending notification to loser: " + user.getName());
 
         String title = "Thank you for entering!";
-        String body = "You were not selected for " + eventName + " this time.";
+        String body = "You were not selected for " + eventName + " this time. You are still on the waitlist and still have a chance to be selected";
 
         List<User> singleRecipient = new ArrayList<>();
         singleRecipient.add(user);
@@ -503,5 +503,36 @@ public class NotificationSystem {
      */
     private int generateNotificationId(String userId) {
         return userId.hashCode();
+    }
+
+    /**
+     * Clears all notifications from the Firestore notification collection.
+     * This is useful for testing or cleanup purposes.
+     *
+     * WARNING: This will permanently delete ALL notification records.
+     */
+    public void clearAllNotifications() {
+        Log.d(TAG, "Clearing all notifications...");
+
+        db.collection("notification")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        Log.d(TAG, "No notifications to delete");
+                        return;
+                    }
+
+                    int totalDocs = querySnapshot.size();
+                    Log.d(TAG, "Deleting " + totalDocs + " notifications");
+
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        doc.getReference().delete();
+                    }
+
+                    Log.d(TAG, "✓ All notifications cleared");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "✗ Failed to clear notifications", e);
+                });
     }
 }
