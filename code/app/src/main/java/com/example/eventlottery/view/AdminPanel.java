@@ -26,6 +26,7 @@ import androidx.appcompat.widget.SearchView;
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
+import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Firebase;
@@ -77,6 +78,8 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private ArrayList<Event> allEvents;
     /** Holds ALL users for filtering */
     private ArrayList<User> allUsers;
+    /** Firestore database connector for performing user operations. */
+    private EventDatabase eventDatabase;
 
 
 
@@ -353,6 +356,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                 .setMessage("Are You Sure?")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", (dialogInterface, i) -> {
+                    userDatabase.deleteUserCreatedEvents(selectedUser, selectedUser.getCreatedEvents());
                     userDatabase.deleteUserAcc(user.getId(), AdminPanel.this::deleteUser);
                 })
                 .show();
@@ -365,6 +369,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private void deleteUser(Task<Void> task) {
         if (task.isSuccessful()) {
             Toast.makeText(AdminPanel.this, "Deleted Account", Toast.LENGTH_SHORT).show();
+            eventDatabase.deleteUserFromEventLists(selectedUser);
         } else {
             Log.d(TAG, "Failed deleting user");
         }

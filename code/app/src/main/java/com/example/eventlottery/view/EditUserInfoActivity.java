@@ -19,6 +19,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.eventlottery.R;
 import com.example.eventlottery.events.DBConnector;
+import com.example.eventlottery.model.EventDatabase;
+import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -49,6 +51,10 @@ public class EditUserInfoActivity extends AppCompatActivity {
     private DBConnector db;
     /** The current user's ID, retrieved from the database. */
     private String id;
+    /** The current user object, retrieved from the database. */
+    private User currentUser;
+    /** Firestore database connector for performing user operations. */
+    private EventDatabase eventDatabase;
 
     /**
      * onCreate method for this activity
@@ -67,6 +73,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
 
         // connection to db
         db = new DBConnector(EditUserInfoActivity.this);
+        eventDatabase = new EventDatabase();
 
         // For testing
         String mockID = getIntent().getStringExtra("mockID");
@@ -75,6 +82,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
         } else {
             id = mockID;
         }
+        getUserObject();
 
         nameEditText = findViewById(R.id.name_edit_text);
         emailEditText = findViewById(R.id.email_edit_text);
@@ -103,6 +111,7 @@ public class EditUserInfoActivity extends AppCompatActivity {
                     .setMessage("Are You Sure?")
                     .setNegativeButton("No", null)
                     .setPositiveButton("Yes", (dialogInterface, i) -> {
+                                db.deleteUserCreatedEvents(currentUser, currentUser.getCreatedEvents());
                                 db.deleteUserAcc(id, this::deleteUser);
                             })
                     .show();
@@ -173,10 +182,29 @@ public class EditUserInfoActivity extends AppCompatActivity {
     public void deleteUser(Task<Void> task) {
         if (task.isSuccessful()) {
             Toast.makeText(EditUserInfoActivity.this, "Deleted", Toast.LENGTH_SHORT).show();
+            eventDatabase.deleteUserFromEventLists(currentUser);
             db.saveNewUser(this);
             MainActivity.instance.getDeviceToken();
         } else {
             Log.d(TAG, "Failed deleting user:" + id);
         }
+    }
+
+    /**
+     * Gets the current User into a User object
+     */
+    private void getUserObject() {
+        db.loadUserInfo(id, task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                if (snapshot.exists()) {
+                    currentUser = snapshot.toObject(User.class);
+                } else {
+                    Log.d(TAG, "Snapshot DNE:" + id);
+                }
+            } else {
+                Log.d(TAG, "Failed loading user" + id);
+            }
+        });
     }
 }

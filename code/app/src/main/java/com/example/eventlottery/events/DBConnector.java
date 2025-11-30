@@ -5,6 +5,7 @@ import android.content.Context;
 import android.provider.Settings;
 import android.util.Log;
 
+import com.example.eventlottery.model.EventDatabase;
 import com.example.eventlottery.users.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.CollectionReference;
@@ -13,7 +14,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -201,4 +204,31 @@ public class DBConnector {
      * @return UUID of the user
      */
     public String getUserId() { return this.id; }
+
+    /**
+     * Deletes the created events by the user
+     * @param user the current user
+     */
+    public void deleteUserCreatedEvents(User user, ArrayList<String> userCreatedEvents) {
+        EventDatabase eventDatabase = new EventDatabase();
+        getUserDoc(user.getId()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (!documentSnapshot.exists()) return;
+
+                    if (userCreatedEvents == null || userCreatedEvents.isEmpty()) return;
+
+                    for (String event : userCreatedEvents) {
+                        eventDatabase.getEventsRef()
+                                .document(event)
+                                .delete()
+                                .addOnSuccessListener(aVoid ->
+                                    Log.d(TAG, "Deleted: " + event))
+                                .addOnFailureListener(e ->
+                                        Log.e(TAG, "Failed to delete: " + event, e));
+                    }
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Failed to get user info", e));
+
+    }
 }
