@@ -510,6 +510,16 @@ public class EditEventDialog extends DialogFragment {
     }
 
     private void updateFirestoreAfterLottery(List<String> winnerIds) {
+        // Get losers BEFORE modifying the waitlist
+        List<User> losers = event.getLosers();
+        List<String> loserIds = new ArrayList<>();
+        for (User loser : losers) {
+            loserIds.add(loser.getId());
+        }
+
+        Log.d(TAG, "Winners: " + winnerIds.size() + ", Losers: " + loserIds.size());
+
+        // Now proceed with Firestore updates
         Map<String, Object> updates = new HashMap<>();
         updates.put("selectedIds", FieldValue.arrayUnion(winnerIds.toArray()));
         updates.put("lotteryDrawn", true);
@@ -534,14 +544,7 @@ public class EditEventDialog extends DialogFragment {
                 .addOnSuccessListener(aVoid -> {
                     updateWinnerUserDocuments(winnerIds);
                     notifyWinners(winnerIds);
-
-                    // Get losers and notify them
-                    List<User> losers = event.getLosers();
-                    List<String> loserIds = new ArrayList<>();
-                    for (User loser : losers) {
-                        loserIds.add(loser.getId());
-                    }
-                    notifyLosers(loserIds);
+                    notifyLosers(loserIds);  // Now this will have the correct loser IDs
 
                     loadWaitlistCount();
 
