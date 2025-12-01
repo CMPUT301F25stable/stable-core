@@ -2,6 +2,7 @@ package com.example.eventlottery.model;
 
 import android.util.Log;
 
+import com.example.eventlottery.events.DBConnector;
 import com.example.eventlottery.events.Event;
 import com.example.eventlottery.users.User;
 import com.example.eventlottery.view.EventAdapter;
@@ -9,12 +10,17 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -218,5 +224,49 @@ public class EventDatabase {
         }
 
         return formattedParts;
+    }
+
+    /**
+     * Deletes the user from cancelledEntrants, chosenEntrants, waitlistedUsers,
+     * and finalizedUsers in all Events they entered
+     * @param user the user to remove.
+     */
+    public void deleteUserFromEventLists(User user) {
+        String userId = user.getId();
+
+        Map<String, Object> userInfoForWaitList = new HashMap<>();
+        userInfoForWaitList.put("id", userId);
+        userInfoForWaitList.put("name", user.getName());
+        userInfoForWaitList.put("email", user.getEmailAddress());
+
+        Map<String, Object> userInfoForFinalList = new HashMap<>();
+        userInfoForFinalList.put("id", userId);
+        userInfoForFinalList.put("name", user.getName());
+        userInfoForFinalList.put("emailAddress", user.getEmailAddress());
+        userInfoForFinalList.put("phoneNumber", user.getPhoneNumber());
+
+        eventsRef.get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                            WriteBatch batch = db.batch();
+
+                            for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
+                                DocumentReference reference = documentSnapshot.getReference();
+                                batch.update(reference,
+                                        "cancelledEntrants", FieldValue.arrayRemove(userId),
+                                        "chosenEntrants", FieldValue.arrayRemove(userId),
+                                        "waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfoForWaitList),
+                                        "finalizedList.finalizedUsers", FieldValue.arrayRemove(userInfoForFinalList));
+                            }
+                            batch.commit()
+                                    .addOnSuccessListener(aVoid ->
+                                            Log.d("EventDatabase", "User removed from Events" + userId))
+                                    .addOnFailureListener(e -> {
+                                        Log.e("EventDatabase", "Batch failed to remove user from Events" + userId, e);
+                                    });
+                        }
+                )
+                .addOnFailureListener(e -> {
+                    Log.e("EventDatabase", "Failed get Events" + userId, e);
+                });
     }
 }
