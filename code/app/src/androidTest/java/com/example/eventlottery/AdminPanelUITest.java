@@ -5,6 +5,7 @@ import static org.hamcrest.CoreMatchers.anything;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -25,12 +26,18 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 
 import com.example.eventlottery.events.DBConnector;
+import com.example.eventlottery.users.User;
 import com.example.eventlottery.view.AdminPanel;
 import com.example.eventlottery.view.MainActivity;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -155,6 +162,96 @@ public class AdminPanelUITest {
         // members doc. If you want to test, comment out Click No option above and uncomment
         // below and see firestore for changes
         //onView(withText("Yes")).perform(click());
+    }
+
+    /**
+     * This matcher compares the user id of an object in a list
+     * to a provided user id.
+     * @param userId The user id that is being compared.
+     * @return Matcher to be used in a test.
+     */
+    private Matcher<Object> withUserId(String userId) {
+        return new TypeSafeMatcher<>() {
+            @Override
+            protected boolean matchesSafely(Object item) {
+                if (item instanceof User) {
+                    User user = (User) item;
+                    return user.getId().equals(userId);
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("userId: " + userId);
+            }
+        };
+    }
+
+    /**
+     * US 03.07.01
+     * Tests changing organizer permissions
+     */
+    @Test
+    public void changeUserPermsTest() {
+        String testUserId = "user-perms-test";
+        User testUser = new User(testUserId, "User Permissions Test", "");
+
+        CollectionReference usersRef = FirebaseFirestore.getInstance().collection("users-p4");
+        DocumentReference userDoc = usersRef.document(testUserId);
+        userDoc.set(testUser);
+
+        // Wait for AdminPanel to load
+        SystemClock.sleep(3000);
+
+        // Navigate to AdminPanel
+        onView(withId(R.id.adminPanelIcon)).perform(click());
+
+        SystemClock.sleep(3000);
+
+        // Find user in the list with the "users-perms-test" id.
+        onData(withUserId(testUser.getId()))
+                .inAdapterView(withId(R.id.userList))
+                .onChildView(withId(R.id.userIdText))
+                .check(matches(withText(testUser.getId())))
+                .perform(click());
+
+        onView(withText("Change Organizer Permissions")).check(matches(isDisplayed()));
+
+        SystemClock.sleep(500);
+
+        onView(withText("Change Organizer Permissions")).perform(click());
+
+        SystemClock.sleep(500);
+
+        // Tests confirm message
+        onView(withText("Yes")).check(matches(isDisplayed()));
+        onView(withText("No")).check(matches(isDisplayed()));
+
+        // Click Yes option
+        onView(withText("Yes")).perform(click());
+
+        SystemClock.sleep(1000);
+
+        userDoc.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot doc = task.getResult();
+                if (doc != null && doc.exists()) {
+                    User finalUser = doc.toObject(User.class);
+                    assertNotNull(finalUser);
+                    assertTrue(finalUser.isCreationBan());
+
+                    userDoc.delete();
+                } else {
+                    userDoc.delete();
+                    fail("Test user data failed to load.");
+                }
+            } else {
+                userDoc.delete();
+                fail("Test user data failed to load.");
+            }
+        });
     }
 
     /**
