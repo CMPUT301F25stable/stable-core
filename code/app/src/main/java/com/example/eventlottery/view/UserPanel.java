@@ -124,13 +124,6 @@ public class UserPanel extends AppCompatActivity {
                 connector.saveNewUser(this);
             }
 
-            // Replace taskbar with admin taskbar if user is an admin
-            TaskbarFragment fragment = TaskbarFragment.newInstance(currentUser);
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainerView, fragment)
-                    .commitAllowingStateLoss();
-
             // Get Events
             if (MainActivity.instance != null) {
                 allEvents = MainActivity.instance.getAllEvents();
