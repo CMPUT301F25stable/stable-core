@@ -356,6 +356,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
                 .setMessage("Are You Sure?")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", (dialogInterface, i) -> {
+                    //eventDatabase.deleteUserFromEventLists(selectedUser);
                     userDatabase.deleteUserCreatedEvents(selectedUser, selectedUser.getCreatedEvents());
                     userDatabase.deleteUserAcc(user.getId(), AdminPanel.this::deleteUser);
                 })
@@ -369,7 +370,6 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
     private void deleteUser(Task<Void> task) {
         if (task.isSuccessful()) {
             Toast.makeText(AdminPanel.this, "Deleted Account", Toast.LENGTH_SHORT).show();
-            eventDatabase.deleteUserFromEventLists(selectedUser);
         } else {
             Log.d(TAG, "Failed deleting user");
         }

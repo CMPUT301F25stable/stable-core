@@ -107,6 +107,7 @@ public class Event implements Serializable {
         this.chosenEntrants = new ArrayList<>();
         this.selectedIds = new ArrayList<>();
         this.cancelledEntrants = new ArrayList<>();
+        this.finalizedList = new FinalizedList();
     }
 
     public Event(String name, String description, String location, String organizer, String image, Date startTime, Date endTime, List<String> filterTags, boolean geolocation) { // For new events (not yet in database)
@@ -125,6 +126,7 @@ public class Event implements Serializable {
         this.chosenEntrants = new ArrayList<>();
         this.selectedIds = new ArrayList<>();
         this.cancelledEntrants = new ArrayList<>();
+        this.finalizedList = new FinalizedList();
         formatDates();
     }
 
