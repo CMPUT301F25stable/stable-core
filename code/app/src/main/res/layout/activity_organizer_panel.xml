@@ -9,32 +9,43 @@
     android:background="#F5F5F5"
     tools:context=".view.OrganizerPanel">
 
-    <!-- Search Bar -->
-    <SearchView
-        android:id="@+id/searchBar"
+    <!-- Top Title Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/titleCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:background="@color/white"
-        android:elevation="2dp"
-        android:iconifiedByDefault="false"
-        android:queryHint="Search Events"
-        android:textColor="#000000"
-        android:textColorHint="#999999"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="5dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="6dp"
+        android:backgroundTint="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <!-- Fragment Container - Now displays either EventlistFragment or OrganizerEventInfoFragment -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Organizer Panel"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:background="#252525"
+            android:gravity="center"
+            android:textColor="@color/white" />
+    </androidx.cardview.widget.CardView>
+
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/eventListFragment"
         android:name="com.example.eventlottery.view.EventlistFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout5"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/titleCard"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/searchBar" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout5" />
 
     <!-- Control Section -->
     <LinearLayout
@@ -168,7 +179,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
-                android:text="Chosen Entrants"
+                android:text="Chosen"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="#3A3A3A"
@@ -182,7 +193,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:text="Cancelled Entrants"
+                android:text="Cancelled"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="#3A3A3A"
@@ -196,7 +207,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                android:text="Download QR Code"
+                android:text="QR Code"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="#3A3A3A"

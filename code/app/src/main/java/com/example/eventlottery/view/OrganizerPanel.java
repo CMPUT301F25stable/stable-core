@@ -150,6 +150,11 @@ public class OrganizerPanel extends AppCompatActivity {
         chosenEntrantsBtn.setVisibility(View.GONE);
         cancelledEntrantsBtn.setVisibility(View.GONE);
         downloadQRCode.setVisibility(View.GONE);
+        map.setVisibility(View.GONE);
+        redrawButton.setVisibility(View.GONE);
+        viewWaitlist.setVisibility(View.GONE);
+        viewFinalList.setVisibility(View.GONE);
+        editEvent.setVisibility(View.GONE);
 
 
         // Initialize databases and organizer info
@@ -238,6 +243,11 @@ public class OrganizerPanel extends AppCompatActivity {
             chosenEntrantsBtn.setVisibility(View.VISIBLE);
             cancelledEntrantsBtn.setVisibility(View.VISIBLE);
             downloadQRCode.setVisibility(View.VISIBLE);
+            map.setVisibility(View.VISIBLE);
+            redrawButton.setVisibility(View.VISIBLE);
+            viewWaitlist.setVisibility(View.VISIBLE);
+            viewFinalList.setVisibility(View.VISIBLE);
+            editEvent.setVisibility(View.VISIBLE);
 
             // Show the fragment container (which dims the background)
             //findViewById(R.id.fragment_container).setVisibility(View.VISIBLE);
@@ -507,10 +517,18 @@ public class OrganizerPanel extends AppCompatActivity {
     /**
      * Helper method to return to the event list view
      */
-    private void showEventList() {
+    public void showEventList() {
         // Show the search bar and button panel again
-        findViewById(R.id.searchBar).setVisibility(View.VISIBLE);
         findViewById(R.id.linearLayout5).setVisibility(View.VISIBLE);
+        chosenEntrantsBtn.setVisibility(View.GONE);
+        cancelledEntrantsBtn.setVisibility(View.GONE);
+        downloadQRCode.setVisibility(View.GONE);
+        map.setVisibility(View.GONE);
+        redrawButton.setVisibility(View.GONE);
+        viewWaitlist.setVisibility(View.GONE);
+        viewFinalList.setVisibility(View.GONE);
+        editEvent.setVisibility(View.GONE);
+
 
         // Pop the back stack to return to the event list
         getSupportFragmentManager().popBackStack();
