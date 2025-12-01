@@ -12,6 +12,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.text.SimpleDateFormat;
@@ -247,26 +248,34 @@ public class EventDatabase {
 
         eventsRef.get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                            WriteBatch batch = db.batch();
+                    WriteBatch batch = db.batch();
 
-                            for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
-                                DocumentReference reference = documentSnapshot.getReference();
-                                batch.update(reference,
-                                        "cancelledEntrants", FieldValue.arrayRemove(userId),
-                                        "chosenEntrants", FieldValue.arrayRemove(userId),
-                                        "waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfoForWaitList),
-                                        "finalizedList.finalizedUsers", FieldValue.arrayRemove(userInfoForFinalList));
-                            }
-                            batch.commit()
-                                    .addOnSuccessListener(aVoid ->
-                                            Log.d("EventDatabase", "User removed from Events" + userId))
-                                    .addOnFailureListener(e -> {
-                                        Log.e("EventDatabase", "Batch failed to remove user from Events" + userId, e);
-                                    });
+                    for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
+                        DocumentReference reference = documentSnapshot.getReference();
+
+                        // Use set with merge to avoid errors if fields don't exist
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("cancelledEntrants", FieldValue.arrayRemove(userId));
+                        updates.put("chosenEntrants", FieldValue.arrayRemove(userId));
+
+                        // Check if nested fields exist before trying to update them
+                        if (documentSnapshot.contains("waitlist.waitlistedUsers")) {
+                            updates.put("waitlist.waitlistedUsers", FieldValue.arrayRemove(userInfoForWaitList));
                         }
-                )
-                .addOnFailureListener(e -> {
-                    Log.e("EventDatabase", "Failed get Events" + userId, e);
-                });
+                        if (documentSnapshot.contains("finalizedList.finalizedUsers")) {
+                            updates.put("finalizedList.finalizedUsers", FieldValue.arrayRemove(userInfoForFinalList));
+                        }
+
+                        batch.set(reference, updates, SetOptions.merge());
+                    }
+
+                    batch.commit()
+                            .addOnSuccessListener(aVoid ->
+                                    Log.d("EventDatabase", "User removed from Events: " + userId))
+                            .addOnFailureListener(e ->
+                                    Log.e("EventDatabase", "Batch failed to remove user from Events: " + userId, e));
+                })
+                .addOnFailureListener(e ->
+                        Log.e("EventDatabase", "Failed to get Events for user: " + userId, e));
     }
 }
