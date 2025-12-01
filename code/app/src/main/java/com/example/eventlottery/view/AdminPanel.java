@@ -352,7 +352,7 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
      */
     private void deleteSelectedUser(User user) {
         AlertDialog.Builder builder = new AlertDialog.Builder(AdminPanel.this);
-        builder.setTitle("This will delete " + user.getName() + "'s account?")
+        builder.setTitle("This will delete " + user.getName() + "'s account.")
                 .setMessage("Are You Sure?")
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", (dialogInterface, i) -> {
