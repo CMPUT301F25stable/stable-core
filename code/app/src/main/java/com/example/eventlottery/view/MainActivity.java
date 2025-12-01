@@ -255,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Filters the list of events based on the given search text.
      * @param text The search text used to filter events by name
+     * source: https://www.youtube.com/watch?v=tQ7V7iBg5zE
      */
     private void filterList(String text) {
         String q = text == null ? "" : text.trim().toLowerCase();

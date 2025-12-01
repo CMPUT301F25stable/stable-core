@@ -40,6 +40,12 @@ import java.util.List;
  * @see Event
  * @see RecyclerView.Adapter
  */
+
+/**
+ * Reference:
+ * https://www.youtube.com/watch?v=TAEbP_ccjsk&t=246s
+ * https://www.youtube.com/watch?v=de3kFn4DzGg
+ */
 public class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
     /**
