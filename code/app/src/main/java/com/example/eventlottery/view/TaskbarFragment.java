@@ -124,8 +124,7 @@ public class TaskbarFragment extends Fragment {
         organizerIcon.setOnClickListener(v -> {
             if (user != null && !user.isCreationBan()) {
                 Intent intent = new Intent(getActivity(), OrganizerPanel.class);
-                // If exists in stack, retrieve it instead of making a new one
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                // Create new instance every time so that user info is refreshed & events load properly - John
                 startActivity(intent);
             } else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -152,6 +151,9 @@ public class TaskbarFragment extends Fragment {
         View homeIcon = view.findViewById(R.id.homeIcon);
         homeIcon.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), MainActivity.class);
+            // Again, create a new instance so that user info is refreshed & events load properly
+            // I did it this way because after you create a new event, and go back to this panel,
+            // the new event was showing up despite it not being supposed to (this was because the user info 'createdEvents' was not refreshed) - John
             startActivity(intent);
         });
 

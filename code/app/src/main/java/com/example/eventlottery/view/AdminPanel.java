@@ -163,7 +163,9 @@ public class AdminPanel extends AppCompatActivity implements PopupMenu.OnMenuIte
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                Intent intent = new Intent(AdminPanel.this, OrganizerPanel.class);
+                // Create new instance every time so that user info is refreshed & events load properly - John
+                startActivity(intent);
             }
         });
 

@@ -148,9 +148,9 @@ public class EventDatabase {
 
                         if (eventIDs.contains(event.getId())) {
                             data.add(event);
-                            adapter.notifyDataSetChanged();
                         }
                     }
+                    adapter.notifyDataSetChanged();
                 });
     }
 
