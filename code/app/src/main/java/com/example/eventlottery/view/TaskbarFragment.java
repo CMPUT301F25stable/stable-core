@@ -152,7 +152,6 @@ public class TaskbarFragment extends Fragment {
         View homeIcon = view.findViewById(R.id.homeIcon);
         homeIcon.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             startActivity(intent);
         });
 
