@@ -559,35 +559,11 @@ public class UserPanel extends AppCompatActivity {
 
     /**
      * Helper method to convert dp to pixels to help look the same size on all screens
+     * @param dp Given a dp value
+     * @return a pixel value
      */
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
-    }
-
-    /**
-     * TESTING FUNCTION
-     * */
-    private void createTestNotifiedEvent() {
-        if (currentUser == null || allEvents == null || allEvents.isEmpty()) {
-            Log.e("TestEvent", "Cannot create test event - user or events not loaded");
-            return;
-        }
-
-        // Get the first event ID for testing
-        String testEventId = allEvents.get(2).getId();
-
-        // Update Firestore
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("registeredEvents." + testEventId, "Notified");
-
-        db.collection("users-p4").document(currentUser.getId())
-                .update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d("TestEvent", "Test notified event created successfully!");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("TestEvent", "Error creating test event: " + e.getMessage());
-                });
     }
 }

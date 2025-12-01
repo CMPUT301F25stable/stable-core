@@ -109,7 +109,14 @@ public class OrganizerEventInfoFragment extends Fragment {
         return fragment;
     }
 
-
+    /**
+     * Called when the fragment is first created.
+     * @param savedInstanceState If the fragment is being re-created from a previous state,
+     *                           this is the saved instance state
+     *                           of the previous version of the fragment.
+     *                           Note that this can be null if this is the first creation.
+     *                           This is used to restore the state of the fragment
+     * */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,6 +140,13 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Called to create the view hierarchy associated with the fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate
+     *                 any views in the fragment
+     * @param container If non-null, this is the parent view that the fragment's
+     *                  UI should be attached to.
+     * @param savedInstanceState If the fragment is being re-created from a previous state,
+     *                           this is the saved instance state of the previous version of the fragment.
+     *
      */
     @Nullable
     @Override
@@ -143,6 +157,9 @@ public class OrganizerEventInfoFragment extends Fragment {
     /**
      * Called immediately after onCreateView() when the fragment's view hierarchy has been created.
      * This is where we initialize UI components and set up listeners.
+     * @param view The root view of the fragment's layout
+     * @param savedInstanceState If the fragment is being re-created from a previous state,
+     *                           this is the saved instance state
      */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -210,6 +227,7 @@ public class OrganizerEventInfoFragment extends Fragment {
 
     /**
      * Updates counts from a Firestore document snapshot
+     * @param snapshot The Firestore document snapshot to update from
      */
     private void updateCountsFromSnapshot(DocumentSnapshot snapshot) {
         // Get waitlist count
@@ -257,6 +275,10 @@ public class OrganizerEventInfoFragment extends Fragment {
         }
     }
 
+    /**
+     * Called when the fragment is no longer visible to the user.
+     * Stops the real-time listener.
+     * */
     @Override
     public void onDestroyView() {
         super.onDestroyView();

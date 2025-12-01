@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
     /** Static reference to the MainActivity instance for global access. */
     public static MainActivity instance;
+    // DBConnector for interacting with the database
     private DBConnector connector;
 
     /** Launcher for requesting notification permission.
@@ -154,11 +155,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Test notification system
-        //User testUser = new User("u123", "Alice", "alice@gmail.com");
-        //NotificationSystem notifier = new NotificationSystem(this);
-        //notifier.notifyLotteryLoser(testUser, "Tyler the Creator Concert Lottery");
-
         // Initialize RecyclerView
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -197,6 +193,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * resume activity when user returns to it
+     * laod the filters if they exist
+     * else load all events
+     * */
     @Override
     protected void onResume() {
         super.onResume();
@@ -208,7 +209,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-  
+
+    /**
+     * Handles the result of the FilterActivity.
+     * @param requestCode The request code used when starting the FilterActivity
+     * @param resultCode The result code returned by the FilterActivity
+     * @param dataIntent The intent containing the selected tags and dates
+     * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent dataIntent) {
         super.onActivityResult(requestCode, resultCode, dataIntent);
@@ -234,22 +241,6 @@ public class MainActivity extends AppCompatActivity {
                 adapter.setFilteredList(new ArrayList<>(data));
             }
         }
-    }
-
-    /**
-     * Creates a Date object for the specified year, month, day, hour, and minute.
-     * @param year The year (e.g., 2025)
-     * @param month The month (0-based, e.g., Calendar.NOVEMBER)
-     * @param day The day of the month
-     * @param hour24 The hour in 24-hour format
-     * @param minute The minute
-     * @return A Date object representing the specified date and time
-     */
-    private Date dateOf(int year, int month, int day, int hour24, int minute) {
-        Calendar c = Calendar.getInstance(Locale.CANADA);
-        c.set(year, month, day, hour24, minute, 0);
-        c.set(Calendar.MILLISECOND, 0);
-        return c.getTime();
     }
 
     /**
@@ -350,8 +341,8 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Applies the given filters to the data.
-     * @param tags
-     * @param datesMidnight
+     * @param tags The tags to filter by
+     * @param datesMidnight The dates to filter by in midnight format
      */
     private void applyFilters(List<String> tags, Set<Long> datesMidnight) {
         boolean hasTagFilter = (tags != null && !tags.isEmpty());
@@ -388,6 +379,8 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Returns true if the event happens on ANY of the selected days.
      * Each selected day is a 24-hour window [midnight..11:59:59.999].
+     * @param event The event to check
+     * @param selectedDaysMidnight The selected days in midnight format
      */
     private boolean occursOnAnySelectedDate(Event event, Set<Long> selectedDaysMidnight) {
         Date start = event.getStartTime();
@@ -406,6 +399,10 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    /**
+     * Collects all tags from all events
+     * @param events The list of events to collect tags from
+     * */
     private ArrayList<String> collectAllTags(List<Event> events) {
         Set<String> allTags = new HashSet<>();
         for (Event event : events) {
@@ -417,7 +414,9 @@ public class MainActivity extends AppCompatActivity {
         return new ArrayList<>(allTags);
     }
 
-
+    /**
+     * Destroys the listener when the activity is destroyed
+     * */
     @Override
     protected void onDestroy() {
         super.onDestroy();

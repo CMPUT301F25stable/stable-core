@@ -68,6 +68,8 @@ public class NotificationSystem {
     /**
      * Constructor for NotificationSystem.
      * @param context The application context.
+     * @param organizerId the organizer id (userid)
+     * @param organizerName the organizer name (username)
      * */
     public NotificationSystem(Context context, String organizerId, String organizerName) {
         this.context = context;
@@ -124,6 +126,8 @@ public class NotificationSystem {
 
     /**
      * Sends a "winner" notification to a user when they are selected for an event.
+     * @param winner User who won the lottery.
+     * @param eventName Name of the event.
      */
     public void notifyLotteryWinner(User winner, String eventName) {
         Log.d(TAG, "Sending notification to winner: " + winner.getName());
@@ -141,6 +145,8 @@ public class NotificationSystem {
 
     /**
      * Sends a "not selected" notification to a user.
+     * @param user User who did not win the lottery.
+     * @param eventName Name of the event.
      */
     public void notifyLotteryLoser(User user, String eventName) {
         Log.d(TAG, "Sending notification to loser: " + user.getName());
@@ -157,6 +163,10 @@ public class NotificationSystem {
 
     /**
      * Sends invitation notification to chosen entrants.
+     * @param entrants List of users to send notifications to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     public void notifyInvitedEntrants(List<User> entrants, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending invitation notifications to " + entrants.size() + " entrants");
@@ -172,12 +182,16 @@ public class NotificationSystem {
 
     /**
      * Sends an individual invitation notification (no logging here).
+     * @param entrant User to send notification to.
+     * @param eventName Name of the event.
+     * @param eventId ID of the event.
+     * @param message Custom message to send.
      */
     public void notifyInvitedEntrant(User entrant, String eventName, String eventId, String message) {
         Log.d(TAG, "Sending invitation notification to: " + entrant.getName());
 
         String title = "You're Invited! 🎉";
-        String body = "You're invited to sign up for " + eventName + "!";
+        String body = message;
 
         sendFCMNotificationWithoutLogging(entrant, title, body, "invitation", eventName, eventId);
     }
@@ -496,13 +510,6 @@ public class NotificationSystem {
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error logging batch notification to Firebase", e);
                 });
-    }
-
-    /**
-     * Generates a unique notification ID based on the user's ID.
-     */
-    private int generateNotificationId(String userId) {
-        return userId.hashCode();
     }
 
     /**

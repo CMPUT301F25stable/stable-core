@@ -547,6 +547,10 @@ public class OrganizerPanel extends AppCompatActivity {
     });
 
     /* Reference: https://stackoverflow.com/a/3013625 */
+    /**
+     * Downloads the QR code for the selected event.
+     * @param uri The URI of the file to be downloaded
+     * */
     private void downloadQRCode(Uri uri) {
         Bitmap qrCode = selectedEventQR.getQrCode();
         ExecutorService executor = Executors.newSingleThreadExecutor();

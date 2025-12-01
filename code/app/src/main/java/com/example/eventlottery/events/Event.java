@@ -450,6 +450,10 @@ public class Event implements Serializable {
         return new ArrayList<>(selectedIds);
     }
 
+    /**
+     * Sets the list of user IDS who accepted their invitation
+     * @param selectedIds List of user IDs who accepted their invitation
+     * */
     public void setSelectedIds(List<String> selectedIds) {
         this.selectedIds = selectedIds;
     }
