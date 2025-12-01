@@ -126,6 +126,8 @@ public class QRScanUITest {
         intent.putExtra("location", event.getLocation());
         intent.putExtra("organizer", event.getOrganizer());
         intent.putExtra("image", event.getImage());
+        intent.putExtra("geolocation", false);
+        intent.putExtra("waitlistMax", event.getWaitlistMax());
         return intent;
     }
 
