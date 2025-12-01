@@ -31,11 +31,29 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
 
     private static final String TAG = "DisplayEntrantsActivity";
 
+    // Container that holds the entrants
     private LinearLayout entrantsContainer;
+
+    // Helper to load users from Firestore
     private DBConnector userDatabase;
+
+    // Firestore reference
     private FirebaseFirestore db;
+
+    // In memory list of User objects currently displayed
     private final ArrayList<User> users = new ArrayList<>();
 
+    // Counts the number of users loaded from Firestore
+    private int usersLoadedCount = 0;
+
+    /**
+     * Initializes the UI, reads the intent, and fetches the list of entrants.
+     * Called when the activity is first created.
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
+     *
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,11 +63,12 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
         entrantsContainer = findViewById(R.id.chosenEntrantsContainer);
 
         String eventName = getIntent().getStringExtra("eventName");
-        String type = getIntent().getStringExtra("type");
+        String type = getIntent().getStringExtra("type"); // "chosen" or "cancelled"
         String eventId = getIntent().getStringExtra("eventId");
 
         Button backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
+
 
         if (eventId == null || type == null) {
             Toast.makeText(this, "Missing event information", Toast.LENGTH_SHORT).show();
@@ -61,6 +80,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
             eventName = "";
         }
 
+        // Set the title based on the type of entrants being displayed
         if ("chosen".equals(type)) {
             title.setText("Chosen Entrants - " + eventName);
         } else if ("cancelled".equals(type)) {
@@ -76,9 +96,9 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Fetches the list of user IDs for this event and type from Firestore.
-     * "chosen"  -> selectedIds
-     * "cancelled" -> cancelledEntrants
+     * Fetches the list of user IDs for the given event and entrant type
+     * @param eventId The ID of the event
+     * @param type The type of entrants (chosen or cancelled)
      */
     private void fetchUserIdsForEvent(String eventId, String type) {
         db.collection("event-p4")
@@ -93,10 +113,10 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                 List<String> userIds;
 
                 if ("chosen".equals(type)) {
-                    // selectedIds: list of user IDs
+                    // selectedIds: list of user IDs for selected entrants
                     userIds = (List<String>) doc.get("selectedIds");
                 } else if ("cancelled".equals(type)) {
-                    // cancelledEntrants: list of user IDs
+                    // cancelledEntrants: list of user IDs for cancelled entrants
                     userIds = (List<String>) doc.get("cancelledEntrants");
                 } else {
                     Toast.makeText(this, "Unknown entrant type", Toast.LENGTH_SHORT).show();
@@ -107,7 +127,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                     Toast.makeText(this, "No users found for this event", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
+                // Load full User objects for all user IDs
                 fetchUsersFromIds(new ArrayList<>(userIds));
             })
             .addOnFailureListener(e -> {
@@ -117,11 +137,15 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Given a list of user IDs, fetches each User from Firestore via DBConnector
-     * and then displays them once all are loaded.
+     * Loads each user in the given list of user
+     * IDs from Firestore and adds them to {@link #users}.
+     * When all users are loaded, the entrants list on the screen is refreshed.
+     * @param userIds List of user document IDs to load.
      */
     private void fetchUsersFromIds(ArrayList<String> userIds) {
-        AtomicInteger remaining = new AtomicInteger(userIds.size());
+        int total = userIds.size();
+        usersLoadedCount = 0; // reset counter
+        users.clear();        // clear old users if needed
 
         for (String userId : userIds) {
             userDatabase.loadUserInfo(userId, task -> {
@@ -137,8 +161,10 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
                     Log.e(TAG, "Failed to load user " + userId, task.getException());
                 }
 
-                // When all async calls are done, display the entrants
-                if (remaining.decrementAndGet() == 0) {
+                usersLoadedCount++;
+
+                // Check if all users have been processed
+                if (usersLoadedCount == total) {
                     if (users.isEmpty()) {
                         Toast.makeText(this, "No users found for this event", Toast.LENGTH_SHORT).show();
                     } else {
@@ -151,6 +177,7 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
 
     /**
      * Populates the LinearLayout with rows for each user.
+     * @param users List of User objects to display.
      */
     private void displayEntrants(ArrayList<User> users) {
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -187,6 +214,8 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
 
     /**
      * Shows confirmation dialog before cancelling an entrant
+     * @param user The entrant to cancel
+     * @param eventId The ID of the event they will be cancelled from
      */
     private void showCancelConfirmation(User user, String eventId) {
         String message =
@@ -212,7 +241,9 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
     }
 
     /**
-     * Cancels an entrant
+     * Cancels the given entrant from the event and updates their status in Firestore
+     * @param user The entrant to cancel
+     * @param eventId The ID of the event they will be cancelled from
      */
     private void cancelEntrant(User user, String eventId) {
         // Remove from selectedIds and add to cancelledEntrants
@@ -240,6 +271,8 @@ public class DisplayEntrantsActivity extends AppCompatActivity {
 
     /**
      * Updates the cancelled user's status in their user document on firebase
+     * @param userId The ID of the user to update
+     * @param eventId The ID of the event they will be cancelled from
      */
     private void updateCancelledUserStatus(String userId, String eventId) {
         Map<String, Object> userUpdates = new HashMap<>();

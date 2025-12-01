@@ -21,6 +21,11 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+/** References:
+ * https://stackoverflow.com/questions/60708558/android-wrap-buttons-within-view
+ * https://stackoverflow.com/questions/48407340/use-flexboxlayout-programmatically
+ */
+
 public class FilterActivity extends AppCompatActivity {
 
     // --- Filters ---
@@ -83,26 +88,29 @@ public class FilterActivity extends AppCompatActivity {
 
         filterContainer.post(() -> {
             final int numberOfColumns = 3;
-            float density = getResources().getDisplayMetrics().density;
-            int buttonSideMarginPx = Math.round(density * 6);
+            float density = getResources().getDisplayMetrics().density; // Screen density for converting dp to px
+            int buttonSideMarginPx = Math.round(density * 6); // Horizontal margin for each button
             int containerHorizontalPadding = filterContainer.getPaddingLeft() + filterContainer.getPaddingRight();
-            int totalButtonMargins = buttonSideMarginPx * 2 * numberOfColumns;
-            int totalContainerWidth = filterContainer.getWidth();
-            int buttonWidth = (totalContainerWidth - containerHorizontalPadding - totalButtonMargins) / numberOfColumns;
+            int totalButtonMargins = buttonSideMarginPx * 2 * numberOfColumns; // Total horizontal margin used by all the buttons in that row
+            int totalContainerWidth = filterContainer.getWidth(); // Actual width of the container after it's been laid
+            int buttonWidth = (totalContainerWidth - containerHorizontalPadding - totalButtonMargins) / numberOfColumns; // Width of each button
 
             for (String tag : finalTags) {
                 MaterialButton button = new MaterialButton(this);
                 button.setText(tag);
                 button.setAllCaps(false);
 
+                // Style the button
                 button.setStrokeWidth(2);
                 button.setCornerRadius(12);
                 button.setMinWidth(0);
                 button.setMinimumWidth(0);
                 button.setMaxLines(1);
 
+                // Apply selected and unselected styles
                 styleTagButton(button, selectedTags.contains(tag));
 
+                // Layout params for flexbox: fixed width, wrap height, margins
                 FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(buttonWidth, FlexboxLayout.LayoutParams.WRAP_CONTENT);
                 lp.setMargins(
                         buttonSideMarginPx,
@@ -147,12 +155,12 @@ public class FilterActivity extends AppCompatActivity {
     /**
      * Clears all filters and resets the UI.
      */
-
     private void clearAllFilters() {
         selectedTags.clear();
         selectedDates.clear();
         updateSelectedDatesText();
 
+        // Reset the button styles to unselected
         for (int i = 0; i < filterContainer.getChildCount(); i++) {
             if (filterContainer.getChildAt(i) instanceof MaterialButton) {
                 MaterialButton btn = (MaterialButton) filterContainer.getChildAt(i);
